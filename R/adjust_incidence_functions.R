@@ -52,3 +52,77 @@ adjustIncidence<-function(obj, pdig = plnorm((1:20)*7, 2.5016, 1.1013)){
   obj
 }
 
+
+
+# fitDelayModel ---------------------------------------------------------------------
+#'@description Fit lognormal model to the notification delay and return the parameters. See
+#'details in doi: http://dx.doi.org/10.1101/046193     
+#'@title Fit lognormal model to the notification delay
+#'@param cities geocode of one of more cities. If more than one city, a single model is fitted to the whole dataset.  
+#'@param period range of dates for the analysis. Format: c("2010-01-01","2015-12-31"). 
+#'Default is the whole period available. 
+#'@param datasource sql connection
+#'@param plotar if TRUE, show plot of the fitted model
+#'@return object with a summary of the analysis and suggestion of best model
+#'@examples
+#'con <- DenguedbConnect()
+#'res<-fitDelayModel(cities=330240, datasource=con)
+#'res<-fitDelayModel(cities=330240, period=c("2013-01-01","2016-01-01"), datasource=con)
+#'# Parameters are
+#'list(meanlog=res$icoef[1], sdlog=exp(res$icoef[2]))
+
+fitDelayModel<-function(cities, period, plotar = TRUE, datasource){
+      
+      ncities = length(cities)
+      if(nchar(cities)[1] == 6) for (i in ncities) cities[i] <- sevendigitgeocode(cities[i])
+      
+      result <- c()
+      
+      if (class(datasource) == "PostgreSQLConnection"){
+            
+            sql1 = paste("'", cities[1], sep = "")
+            if (ncities > 1) for (i in 2:ncities) sql1 = paste(sql1, cities[i], sep = "','")
+            sql1 <- paste(sql1, "'", sep = "")
+            
+            sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, dt_digita from \"Municipio\".\"Notificacao\" WHERE municipio_geocodigo IN(", sql1, ")")
+            dd <- dbGetQuery(datasource,sqlselect)
+            
+      }
+      
+      if (dim(dd)[1]==0) {
+            message(paste("No notification in this(these) cities"))
+            return()
+            
+      } else {
+            
+            # seleciona periodo
+            if (!missing(period)) dd<-subset(dd, (dd$dt_notific > as.Date(period[1]) & (dd$dt_notific > as.Date(period[2]))))
+            
+            dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_notific)
+            nrow.before <- dim(dd)[1] 
+            dd <-dd[-which(is.na(dd$diasdigit)==TRUE),]
+            dd <-dd[-which(dd$diasdigit>180 | dd$diasdigit == 0),] # remove records with more than 6 mo delay
+            nrow.after <- dim(dd)[1]
+            loss <- nrow.before - nrow.after
+            
+            message(paste(loss, "cases removed for lack of information or delay > 6 months. Number of cases is ",nrow.after))
+            
+            if (dim(dd)[1]==0) {
+                  message(paste("No cases left."))
+                  return()
+            }
+            # Models
+            dd$status<-TRUE
+            y <- Surv(time=dd$diasdigit, event=dd$status==TRUE)
+            km <- survfit(y~1, data = dd)
+            mlognorm<-survreg(y~1,dist="lognormal",x=TRUE,y=TRUE,model=TRUE)
+            
+            if(plotar == TRUE){
+                  plot(km,xlim=c(0,60),main="delay model",xlab="day", ylab="fraction not reported")
+                  meanlog=mlognorm$icoef[1]; sdlog=exp(mlognorm$icoef[2])
+                  lines(0:60,(1-plnorm(0:60,meanlog,sdlog)), lwd=3,col=3)
+            }
+            
+            return(mlognorm)                  
+      }
+}

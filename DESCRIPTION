@@ -14,7 +14,8 @@ Imports:
     RPostgreSQL,
     zoo,
     maptools,
-    knitr
+    knitr,
+    survival
 Suggests:
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
