@@ -66,17 +66,15 @@ adjustIncidence<-function(obj, pdig = plnorm((1:20)*7, 2.5016, 1.1013)){
 #'@return object with a summary of the analysis and suggestion of best model
 #'@examples
 #'con <- DenguedbConnect()
-#'res<-fitDelayModel(cities=330240, datasource=con)
+#'res1<-fitDelayModel(cities=330240, datasource=con)
 #'res<-fitDelayModel(cities=330240, period=c("2013-01-01","2016-01-01"), datasource=con)
 #'# Parameters are
 #'list(meanlog=res$icoef[1], sdlog=exp(res$icoef[2]))
 
-fitDelayModel<-function(cities, period, plotar = TRUE, datasource){
+fitDelayModel<-function(cities, period, plotar = TRUE, datasource, verbose=TRUE){
       
       ncities = length(cities)
-      if(nchar(cities)[1] == 6) for (i in ncities) cities[i] <- sevendigitgeocode(cities[i])
-      
-      result <- c()
+      if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
       
       if (class(datasource) == "PostgreSQLConnection"){
             
@@ -90,8 +88,8 @@ fitDelayModel<-function(cities, period, plotar = TRUE, datasource){
       }
       
       if (dim(dd)[1]==0) {
-            message(paste("No notification in this(these) cities"))
-            return()
+            if(verbose==TRUE) message(paste("No notification in this(these) cities"))
+            return(NULL)
             
       } else {
             
@@ -100,16 +98,17 @@ fitDelayModel<-function(cities, period, plotar = TRUE, datasource){
             
             dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_notific)
             nrow.before <- dim(dd)[1] 
-            dd <-dd[-which(is.na(dd$diasdigit)==TRUE),]
+            # check if there is na
+            if(sum(is.na(dd$diasdigit))>0) dd <-dd[-which(is.na(dd$diasdigit)==TRUE),]
             dd <-dd[-which(dd$diasdigit>180 | dd$diasdigit == 0),] # remove records with more than 6 mo delay
             nrow.after <- dim(dd)[1]
             loss <- nrow.before - nrow.after
             
-            message(paste(loss, "cases removed for lack of information or delay > 6 months. Number of cases is ",nrow.after))
+            if(verbose==TRUE) message(paste(loss, "cases removed for lack of information or delay > 6 months. Number of cases is ",nrow.after))
             
             if (dim(dd)[1]==0) {
-                  message(paste("No cases left."))
-                  return()
+                  if(verbose==TRUE)  message(paste("No cases left."))
+                  return(NULL)
             }
             # Models
             dd$status<-TRUE
@@ -118,11 +117,84 @@ fitDelayModel<-function(cities, period, plotar = TRUE, datasource){
             mlognorm<-survreg(y~1,dist="lognormal",x=TRUE,y=TRUE,model=TRUE)
             
             if(plotar == TRUE){
-                  plot(km,xlim=c(0,60),main="delay model",xlab="day", ylab="fraction not reported")
+                  par(mar=c(1,1,1,1))
+                  plot(km,xlim=c(0,60),xlab="", ylab="")
                   meanlog=mlognorm$icoef[1]; sdlog=exp(mlognorm$icoef[2])
                   lines(0:60,(1-plnorm(0:60,meanlog,sdlog)), lwd=3,col=3)
+                  
             }
             
             return(mlognorm)                  
       }
 }
+
+# updateDelayModel ---------------------------------------------------------------------
+#'@description Apply the fitDelayModel to all or a subset of cities.
+#'@title Update notification delay model.
+#'@param cities geocode of one of more cities.
+#'@param ufs list of ufs (full name as in the database). Required even if only a subset of cities is the target  
+#'@param regional TRUE, if model should be fitted at the regional level too
+#'@param period range of dates for the analysis. Format: c("2010-01-01","2015-12-31"). 
+#'Default is the whole period available. 
+#'@param datasource sql connection.
+#'@param plotar if TRUE, show plot of the fitted model.
+#'@param write TRUE if result.
+#'@return object with a summary of the analysis and suggestion of best model.
+#'@examples
+#'con <- DenguedbConnect()
+#'par(mfrow=c(2,1))
+#'res<-updateDelayModel(cities=c(330240, 330045), period=c("2013-01-01","2016-01-01"), plotar=TRUE, ufs = "Rio de Janeiro", datasource=con)
+#'res<-updateDelayModel(ufs="Rio de Janeiro", period=c("2013-01-01","2016-01-01"), datasource=con)
+#'res<-updateDelayModel(ufs="Rio de Janeiro", period=c("2013-01-01","2016-01-01"), regional=TRUE, datasource=con)
+
+updateDelayModel <- function(cities, ufs, period, datasource, plotar=FALSE, write, verbose=FALSE, regional=FALSE){
+     
+     if (!(class(datasource) == "PostgreSQLConnection")) stop("please provide a sql connection")
+     
+      # all cities of the requested states       
+     nufs <- length(ufs)
+     dd <- getCidades(uf = ufs[1],datasource = datasource)
+     if(nufs>1) for (i in 2:nufs) dd <- rbind(dd, getCidades(uf = ufs[i], datasource=datasource))
+     
+     #set of cities, if requested
+     if(!missing(cities)) {
+           ncities = length(cities)
+           if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
+           
+           # check if all cities are within the defined states
+           if(!all(cities %in% dd$municipio_geocodigo)) stop("Check your specification. Mismatch btw citiesand states")
+    
+           dd <- subset(dd, dd$municipio_geocodigo %in% cities)
+     }
+     
+     dd$casos <- NA
+     dd$meanlog <- NA
+     dd$sdlog <- NA
+     
+     for (i in 1:dim(dd)[1]){
+             mod <- fitDelayModel(cities=dd$municipio_geocodigo[i], plotar=plotar, verbose=verbose, datasource=datasource)
+             if (!is.null(mod)){
+                   dd$meanlog[i] <- mod$icoef[1]
+                   dd$sdlog[i] <- mod$icoef[2]
+                   dd$casos[i] <- summary(mod)$n
+             }
+             if (plotar==TRUE) legend("topright",legend = dd$nome[i],bty="n",cex=0.7)
+     }
+     
+     if(regional == TRUE){
+           dd$meanlogR <- NA
+           dd$sdlogR <- NA
+           
+           listaregs <- unique(dd$nome_regional)
+           for(j in listaregs){
+                 modreg <- fitDelayModel(cities=dd$municipio_geocodigo[dd$nome_regional == j], plotar=plotar, verbose=verbose, datasource=datasource)
+                 dd$meanlogR[dd$nome_regional == j] <- modreg$icoef[1]
+                 dd$sdlogR[dd$nome_regional == j] <- modreg$icoef[2]
+           }
+      
+           
+     }
+dd
+}
+
+

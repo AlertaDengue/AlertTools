@@ -291,7 +291,7 @@ getRegionais <- function(uf, database){
 #'@param datasource name of the database
 #'@return vector with names of the cities.
 #'@examples
-#'getCidades(regional = "Metropolitana I", uf="Rio de Janeiro")
+#'getCidades(regional = "Metropolitana I", uf="Rio de Janeiro",datasource=con)
 
 getCidades <- function(regional, uf, datasource){
       
