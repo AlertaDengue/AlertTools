@@ -20,6 +20,6 @@ vector with names of the cities.
 consult database to get list of cities
 }
 \examples{
-getCidades(regional = "Metropolitana I", uf="Rio de Janeiro")
+getCidades(regional = "Metropolitana I", uf="Rio de Janeiro",datasource=con)
 }
 

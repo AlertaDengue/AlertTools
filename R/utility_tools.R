@@ -317,4 +317,63 @@ getCidades <- function(regional, uf, datasource){
 }
 
 
+# write.parameters ------------------------------------
+#'@description  Write the alert parameters for each city into the database, to be used in the update.alert. 
+#'Currently, the parameters are:codigo_estacao_wu, limiar_pre_epidemico, limiar_pos_epidemico, 
+#'codigo_estacao_wu_sec.  
+#'@title Alert city-specific parameterization. 
+#'@param params vector of params to be written. Default: params = c("codigo_estacao_wu", 
+#'"limiar_preseason", "limiar_posseason","limiar_epidemico, "estacao_wu_sec"). 
+#'@param tab data.frame with the values for each city. It must have a column named "municipio_geocodigo". 
+#'@return nothing.
+#'@examples
+#'newpars = c("limiar_preseason", "limiar_posseason","estacao_wu_sec")
+#'res = write.parameters(newpars,tab)
 
+write.parameters<-function(params, tab){
+      
+      out = readline("Essa funcao ira mudar o funcionamento do alerta e requer senha do banco de dados:")
+      
+      conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin",
+                       password=out, dbname="dengue")
+      
+      vars = names(tab)
+      nrows = dim(tab)[1]
+      
+      # check if tab columns are correct
+      stopifnot("municipio_geocodigo"%in%vars)
+      for(i in params) stopifnot(i%in%vars)
+      
+      if(nchar(tab$municipio_geocodigo[1]) == 6) {for (i in 1:nrows) 
+            tab$municipio_geocodigo[i] <- sevendigitgeocode(tab$municipio_geocodigo[i])}
+      
+      # string com vetor de nomes das variaveis
+      varnames <- paste("(", params[1], sep="")
+      for (j in params[-1]) varnames <- paste(varnames, j, sep=",")
+      varnames <- paste(varnames, ")", sep="")
+      
+      # identificando as variaveis string 
+      p1 <- ifelse(any(params == "codigo_estacao_wu"), which(params == "codigo_estacao_wu"), NA)
+      p2 <- ifelse(any(params == "estacao_wu_sec"), which(params == "estacao_wu_sec"), NA)
+      stringvars = as.vector(na.exclude(c(p1,p2)))           
+      
+      for (li in 1:nrows){
+            linha = ""
+            cid = tab$municipio_geocodigo[li]
+            for (i in 1:length(params)) {
+                  if (i %in% stringvars & !is.na(as.character(tab[li,params[i]]))) 
+                        value = paste(params[i],"='", as.character(tab[li,params[i]]), "'", sep="")
+                        
+                  else value = paste(params[i],"=", as.character(tab[li,params[i]]), sep="")
+                  
+                  linha = ifelse (i>1, paste(linha, value, sep=","), paste(linha, value, sep=""))
+            }
+            linha = gsub("NA","NULL",linha)
+            
+            update_sql = paste("UPDATE \"Dengue_global\".regional_saude SET ", linha, 
+                               " WHERE municipio_geocodigo = ",cid,sep="")      
+            
+            try(dbGetQuery(conn, update_sql))
+      }
+      dbReadTable(conn, c("Dengue_global","regional_saude"))
+}
