@@ -151,7 +151,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'pars.RJ <- NULL
 #'pars.RJ[["Metropolitana I"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
 #'Running the model:
-#'res <- update.alerta(city = 330240, pars = pars.RJ[["Metropolitana I"]], crit = criteria, datasource = con, sefinal=201552)
+#'res <- update.alerta(city = 330250, pars = pars.RJ[["Metropolitana I"]], crit = criteria, datasource = con, sefinal=201552)
 #'res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
 
 #'tail(res$data)
@@ -161,7 +161,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
       # update of a single city
       if(!missing (city)) { 
             if(nchar(city) == 6) city <- sevendigitgeocode(city) 
-            sql = paste("SELECT geocodigo, codigo_estacao_wu
+            sql = paste("SELECT geocodigo, codigo_estacao_wu, estacao_wu_sec
                         FROM \"Dengue_global\".\"Municipio\" 
                         INNER JOIN \"Dengue_global\".regional_saude
                         ON municipio_geocodigo = geocodigo
@@ -177,7 +177,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             if (ns > 1) for (i in 2:ns) sql1 = paste(sql1, regionais[i], sep = "','")
             sql1 <- paste(sql1, "'", sep = "")
             
-            sql = paste("SELECT geocodigo, nome, populacao, uf, codigo_estacao_wu, nome_regional
+            sql = paste("SELECT geocodigo, nome, populacao, uf, codigo_estacao_wu, estacao_wu_sec, nome_regional
                         FROM \"Dengue_global\".\"Municipio\" 
                         INNER JOIN \"Dengue_global\".regional_saude
                         ON municipio_geocodigo = geocodigo
@@ -201,18 +201,42 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
       print(dd$geocodigo)      
       
       message("obtendo dados de clima ...")
-      estacoes <- unique(dd$codigo_estacao_wu)
+      estacoes <- unique(c(dd$estacao_wu_sec, dd$codigo_estacao_wu))
       cli <- list()
       for (k in 1:length(estacoes)) cli[[k]] = getWU(stations = estacoes[k],var="temp_min"
                                                    ,datasource = datasource) 
       names(cli) <-estacoes
       
+      
       alertas <- list()
       for (i in 1:nlugares){ # para cada cidade ...
 
             geocidade = dd$geocodigo[i]
-            estacao = dd$codigo_estacao_wu[i]
-            print(paste("(Cidade ",i,"de",nlugares,")","Rodando alerta para ", geocidade, "usando estacao", estacao))
+            lastdatewu = NA
+            
+            # escolhendo uma das estacoes:
+            estacao_sec = dd$estacao_wu_sec[i]
+            dadoscli_sec <- cli[[estacao_sec]]
+            na_sec = sum(is.na(dadoscli_sec$temp_min))/dim(dadoscli_sec)[1] # prop dados faltantes
+            if (na_sec < 1)lastdate_sec <- dadoscli_sec$SE[max(which(is.na(dadoscli_sec$temp_min)==FALSE))]    
+            
+            estacao_pri = dd$codigo_estacao_wu[i]
+            dadoscli_pri <- cli[[estacao_pri]]
+            na_pri = sum(is.na(dadoscli_pri$temp_min))/dim(dadoscli_pri)[1] # prop dados faltantes
+            if (na_pri < 1)lastdate_pri <- dadoscli_pri$SE[max(which(is.na(dadoscli_pri$temp_min)==FALSE))]    
+            
+            
+            if(na_sec==1) {
+                  estacao = estacao_pri; lastdatewu = lastdate_pri
+                  if(na_pri==1) message("WARNING: Rodando alerta para ", geocidade, "usando estacao sem dados")
+            } 
+            if(na_sec!=1 & na_pri!=1){
+                  lastdatewu = ifelse(lastdate_sec>=lastdate_pri , lastdate_sec, lastdate_pri)
+                  estacao = ifelse(lastdate_sec>=lastdate_pri, estacao_sec, estacao_pri)
+            }
+            
+            
+            print(paste("(Cidade ",i,"de",nlugares,")","Rodando alerta para ", geocidade, "usando estacao", estacao,"(ultima leitura:", lastdatewu,")"))
             
             dC0 = getCases(city = geocidade, datasource=datasource) # consulta dados do sinan
             dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) # consulta dados do tweet

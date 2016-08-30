@@ -130,14 +130,15 @@ seqSE <- function(from, to){
 #'@param tab table in the database. Either (sinan, clima_wu, tweet ou historico). 
 #'@param city city geocode, if empty, whole dataset is considered. Not implemented yet.
 #'@param station wu station.
+#'@param datasource 
 #'@return most recent date 
 #'@examples
-#'lastDBdate(tab="tweet")
-#'lastDBdate(tab="tweet", city=330240)
-#'lastDBdate(tab="sinan", city=330240)
-#'lastDBdate(tab="clima_wu", station="SBAF")  
+#'lastDBdate(tab="tweet",datasource=con)
+#'lastDBdate(tab="tweet", city=330240,datasource=con)
+#'lastDBdate(tab="sinan", city=330240,datasource=con)
+#'lastDBdate(tab="clima_wu", station="SBAF",datasource=con)  
 
-lastDBdate <- function(tab, city = NULL, station = NULL){
+lastDBdate <- function(tab, city = NULL, station = NULL, datasource){
       if (tab == "sinan"){
             if (is.null(city)) {
                   sql <- "SELECT dt_notific from \"Municipio\".\"Notificacao\""
@@ -146,7 +147,7 @@ lastDBdate <- function(tab, city = NULL, station = NULL){
                         if(nchar(city) == 6) city <- sevendigitgeocode(city)
                         sql <- paste("SELECT dt_notific from \"Municipio\".\"Notificacao\" WHERE municipio_geocodigo = ", city)
                         }
-            dd <- dbGetQuery(con,sql)
+            dd <- dbGetQuery(datasource,sql)
             date <- max(dd$dt_notific)
       }
       
@@ -158,7 +159,7 @@ lastDBdate <- function(tab, city = NULL, station = NULL){
                   if(nchar(city) == 6) city <- sevendigitgeocode(city)
                   sql <- paste("SELECT data_dia from \"Municipio\".\"Tweet\" WHERE \"Municipio_geocodigo\" = ", city)
                   }
-            dd <- dbGetQuery(con,sql)
+            dd <- dbGetQuery(datasource,sql)
             date <- max(dd$data_dia)
       }
       
@@ -173,8 +174,9 @@ lastDBdate <- function(tab, city = NULL, station = NULL){
                   sql1 <- paste("'", station, "'",sep = "")
                   sql <- paste("SELECT * from \"Municipio\".\"Clima_wu\" WHERE \"Estacao_wu_estacao_id\" = ",sql1)
             }
-            dd <- dbGetQuery(con,sql)
-            date <- max(dd$data_dia)
+            dd <- dbGetQuery(datasource,sql)
+            datacomdados <- which(is.na(dd$temp.min)==FALSE) 
+            date <- dd$data_dia[max(datacomdados)]
       }
       
       if (tab == "historico"){
@@ -184,7 +186,7 @@ lastDBdate <- function(tab, city = NULL, station = NULL){
             } else {
                   sql <- paste("SELECT \"data_iniSE\" from \"Municipio\".\"Historico_alerta\" WHERE municipio_geocodigo = ", city)
             }
-            dd <- dbGetQuery(con,sql)
+            dd <- dbGetQuery(datasource,sql)
             date <- max(dd$data_iniSE)
       }
       date
@@ -377,3 +379,10 @@ write.parameters<-function(params, tab){
       }
       dbReadTable(conn, c("Dengue_global","regional_saude"))
 }
+
+
+
+
+#'lastDBdate(tab="tweet", city=330240)
+#'lastDBdate(tab="sinan", city=330240)
+#'lastDBdate(tab="clima_wu", station="SBAF")  
