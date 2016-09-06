@@ -307,7 +307,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
 #'@return list with an alert object for each APS.
 #'@examples
 #'params <- list(pdig = c(2.5016,1.1013), tcrit=22, inccrit=100, preseas = 14.15, posseas = 18)
-#'criter <- criteria = list(
+#'criter <- list(
 #'crity = c("temp_min > tcrit | (temp_min < tcrit & inc > preseas)", 3, 0),
 #'crito = c("p1 > 0.9 & inc > preseas", 2, 2),
 #'critr = c("inc > inccrit", 1, 2)
@@ -326,11 +326,11 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, verbose = TRUE){
       
       if (verbose){
             message("As ultimas datas no banco são:")
-            print(paste("Ultimos registros de dengue:",lastDBdate("sinan", city=330455)))
-            print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=330455)))
-            print(paste("Ultimos registros de temp em SBRJ:",lastDBdate("clima_wu", station = "SBRJ")))
-            print(paste("Ultimos registros de temp em SBJR:",lastDBdate("clima_wu", station = "SBJR")))
-            print(paste("Ultimos registros de temp em SBGL:",lastDBdate("clima_wu", station = "SBGL")))
+            print(paste("Ultimos registros de dengue:",lastDBdate("sinan", city=330455,datasource=datasource)))
+            print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=330455,datasource=datasource)))
+            #print(paste("Ultimos registros de temp em SBRJ:",lastDBdate("clima_wu", station = "SBRJ",datasource=datasource)))
+            #print(paste("Ultimos registros de temp em SBJR:",lastDBdate("clima_wu", station = "SBJR",datasource=datasource)))
+            #print(paste("Ultimos registros de temp em SBGL:",lastDBdate("clima_wu", station = "SBGL",datasource=datasource)))
             
             out = readline("deseja continuar (y/n)?")
             if(out == "n") stop("alerta interrompido pelo usuario")
