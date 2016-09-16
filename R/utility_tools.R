@@ -322,7 +322,7 @@ getCidades <- function(regional, uf, datasource){
 # write.parameters ------------------------------------
 #'@description  Write the alert parameters for each city into the database, to be used in the update.alert. 
 #'Currently, the parameters are:codigo_estacao_wu, limiar_pre_epidemico, limiar_pos_epidemico, 
-#'codigo_estacao_wu_sec.  
+#'codigo_estacao_wu_sec.  City must be already in the regionais table.
 #'@title Alert city-specific parameterization. 
 #'@param params vector of params to be written. Default: params = c("codigo_estacao_wu", 
 #'"limiar_preseason", "limiar_posseason","limiar_epidemico, "estacao_wu_sec"). 
@@ -348,7 +348,7 @@ write.parameters<-function(params, tab){
       
       if(nchar(tab$municipio_geocodigo[1]) == 6) {for (i in 1:nrows) 
             tab$municipio_geocodigo[i] <- sevendigitgeocode(tab$municipio_geocodigo[i])}
-      
+
       # string com vetor de nomes das variaveis
       varnames <- paste("(", params[1], sep="")
       for (j in params[-1]) varnames <- paste(varnames, j, sep=",")
@@ -362,6 +362,16 @@ write.parameters<-function(params, tab){
       for (li in 1:nrows){
             linha = ""
             cid = tab$municipio_geocodigo[li]
+            
+            # check if city is new
+            update_sql = paste("SELECT * from \"Dengue_global\".regional_saude SET  
+                               WHERE municipio_geocodigo = ",cid,sep="")      
+            cityline = try(dbGetQuery(conn, update_sql))
+            if (nrow(cityline)==0) {# city not implemented
+                  out <- readline(paste("geocode", cid, "not implemented in Infodengue. Do you like to insert this city? (y/n)") )
+                  if (out == "n") next
+            }
+            
             for (i in 1:length(params)) {
                   if (i %in% stringvars & !is.na(as.character(tab[li,params[i]]))) 
                         value = paste(params[i],"='", as.character(tab[li,params[i]]), "'", sep="")
@@ -381,6 +391,50 @@ write.parameters<-function(params, tab){
 }
 
 
+# insertCityinAlerta ------------------------------------
+#'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 
+#'the delay model and write.parameters
+#'@title Initial setup of a new city in the alerta system.
+#'@param city geocode of the city. Mandatory 
+#'@param id_regional numerical id of the 'Regional da saude'
+#'@param regional name of the 'Regional da saude'
+#'@param estacao_wu_sec main weather station
+#'@return to be defined
+#'@examples
+#'insertCityinAlerta(city=3200300, id_regional=0, regional = "ES-MN-AlfredoChaves")
+
+insertCityinAlerta<-function(city,id_regional,regional){
+      
+      out = readline("Digite a senha do banco de dados:")
+      
+      conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin",
+                        password=out, dbname="dengue")
+      
+      # check if city is really new
+      if(nchar(city) == 6) city <- sevendigitgeocode(city)   
+      consult_sql = paste("SELECT * from \"Dengue_global\".regional_saude SET  
+                               WHERE municipio_geocodigo = ",city,sep="")      
+      cityline = try(dbGetQuery(conn, consult_sql))
+      
+      if (nrow(cityline)!=0) {
+            message("city already implemented.")
+      }
+      else{
+            el1 = as.character(city)
+            el2 = as.character(id_regional)
+            el3 = paste("'",regional,"'",sep="")
+            linha = paste(el1,el2,el3,sep=",")
+            sqlinsert = paste("insert into \"Dengue_global\".\"regional_saude\" (municipio_geocodigo, id_regional, 
+                      nome_regional) values(", linha ,")")
+            try(dbGetQuery(conn, sqlinsert))   
+            cityline = try(dbGetQuery(conn, consult_sql))
+      }
+      cityline
+}
+      
+      
+      
+      
 
 
 #'lastDBdate(tab="tweet", city=330240)

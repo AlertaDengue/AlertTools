@@ -133,9 +133,12 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'@description Yellow is raised when environmental conditions required for
 #'positive mosquito population growth are detected, green otherwise.Orange 
 #'indicates evidence of sustained transmission, red indicates evidence of 
-#'an epidemic scenario.  
+#'an epidemic scenario. For most places weather stations are provided in the database and choice
+#'is authomatic according to data quality. But it can also be provided manually (not implemented).
 #'@param city city's geocode (6 or 7 digits).
 #'@param region full name of 'regional' or state (same name present in the database).
+#'@param temp_station code of the meteorological station for temperature. 
+#'If not provided, use default from database. To be implemented.  
 #'@param pars list of parameters for the alerta, defined in config.R
 #'@param crit criteria for the alert colors, defined in config.R
 #'@param writedb TRUE if it should write into the database, default is FALSE.
@@ -161,6 +164,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
       # update of a single city
       if(!missing (city)) { 
             if(nchar(city) == 6) city <- sevendigitgeocode(city) 
+            
             sql = paste("SELECT geocodigo, codigo_estacao_wu, estacao_wu_sec
                         FROM \"Dengue_global\".\"Municipio\" 
                         INNER JOIN \"Dengue_global\".regional_saude
