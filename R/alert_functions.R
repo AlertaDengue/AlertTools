@@ -218,27 +218,25 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             geocidade = dd$geocodigo[i]
             lastdatewu = NA
             
-            # escolhendo uma das estacoes:
-            estacao_sec = dd$estacao_wu_sec[i]
-            dadoscli_sec <- cli[[estacao_sec]]
+            # escolhendo a melhor estacao meteorologica:
+            estacao_sec = dd$estacao_wu_sec[i] # nome da estacao prioritaria
+            dadoscli_sec <- cli[[estacao_sec]] # temperatura
             na_sec = sum(is.na(dadoscli_sec$temp_min))/dim(dadoscli_sec)[1] # prop dados faltantes
-            if (na_sec < 1)lastdate_sec <- dadoscli_sec$SE[max(which(is.na(dadoscli_sec$temp_min)==FALSE))]    
+            if (na_sec < 1)lastdate_sec <- dadoscli_sec$SE[max(which(is.na(dadoscli_sec$temp_min)==FALSE))]  # ultima data  
             
-            estacao_pri = dd$codigo_estacao_wu[i]
-            dadoscli_pri <- cli[[estacao_pri]]
+            estacao_pri = dd$codigo_estacao_wu[i] # nome da estacao substituta
+            dadoscli_pri <- cli[[estacao_pri]] # temp na estacao substituta
             na_pri = sum(is.na(dadoscli_pri$temp_min))/dim(dadoscli_pri)[1] # prop dados faltantes
-            if (na_pri < 1)lastdate_pri <- dadoscli_pri$SE[max(which(is.na(dadoscli_pri$temp_min)==FALSE))]    
+            if (na_pri < 1)lastdate_pri <- dadoscli_pri$SE[max(which(is.na(dadoscli_pri$temp_min)==FALSE))]  # ultima data  
             
-            
-            if(na_sec==1) {
-                  estacao = estacao_pri; lastdatewu = lastdate_pri
-                  if(na_pri==1) message("WARNING: Rodando alerta para ", geocidade, "usando estacao sem dados")
-            } 
+            estacao = estacao_sec
+            if(na_sec==1 & na_pri==1) message("WARNING: As duas estacoes met. da ", geocidade, "não tem dados de temperatura")
+            if(na_sec==1 & na_pri!=1) {estacao = estacao_pri; lastdatewu = lastdate_pri}
+            if(na_sec!=1 & na_pri==1) {estacao = estacao_sec; lastdatewu = lastdate_sec}      
             if(na_sec!=1 & na_pri!=1){
                   lastdatewu = ifelse(lastdate_sec>=lastdate_pri , lastdate_sec, lastdate_pri)
                   estacao = ifelse(lastdate_sec>=lastdate_pri, estacao_sec, estacao_pri)
             }
-            
             
             print(paste("(Cidade ",i,"de",nlugares,")","Rodando alerta para ", geocidade, "usando estacao", estacao,"(ultima leitura:", lastdatewu,")"))
             

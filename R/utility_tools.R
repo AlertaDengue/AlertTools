@@ -368,8 +368,8 @@ write.parameters<-function(params, tab){
                                WHERE municipio_geocodigo = ",cid,sep="")      
             cityline = try(dbGetQuery(conn, update_sql))
             if (nrow(cityline)==0) {# city not implemented
-                  out <- readline(paste("geocode", cid, "not implemented in Infodengue. Do you like to insert this city? (y/n)") )
-                  if (out == "n") next
+                  message(paste("geocode", cid, "not implemented in Infodengue. Use insertCityinAlerta()") )
+                  next
             }
             
             for (i in 1:length(params)) {
@@ -417,7 +417,7 @@ insertCityinAlerta<-function(city,id_regional,regional){
       cityline = try(dbGetQuery(conn, consult_sql))
       
       if (nrow(cityline)!=0) {
-            message("city already implemented.")
+            message("city already implemented. Nothing done.")
       }
       else{
             el1 = as.character(city)
