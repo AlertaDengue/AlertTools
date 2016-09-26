@@ -154,7 +154,8 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'pars.RJ <- NULL
 #'pars.RJ[["Metropolitana I"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
 #'Running the model:
-#'res <- update.alerta(city = 330250, pars = pars.RJ[["Metropolitana I"]], crit = criteria, datasource = con, sefinal=201552)
+#'res <- update.alerta(city = 4111605, pars = pars.RJ[["Metropolitana I"]], crit = criteria, 
+#'datasource = con, sefinal=201639)
 #'res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
 
 #'tail(res$data)
@@ -207,8 +208,12 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
       message("obtendo dados de clima ...")
       estacoes <- unique(c(dd$estacao_wu_sec, dd$codigo_estacao_wu))
       cli <- list()
-      for (k in 1:length(estacoes)) cli[[k]] = getWU(stations = estacoes[k],var="temp_min"
-                                                   ,datasource = datasource) 
+      for (k in 1:length(estacoes)) {
+            cliwu <- getWU(stations = estacoes[k],var="temp_min"
+                           ,datasource = datasource)
+            if (!missing(sefinal)) cliwu =  subset(cliwu,SE<=sefinal)
+            cli[[k]] <- cliwu
+      }
       names(cli) <-estacoes
       
       
@@ -221,6 +226,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             # escolhendo a melhor estacao meteorologica:
             estacao_sec = dd$estacao_wu_sec[i] # nome da estacao prioritaria
             dadoscli_sec <- cli[[estacao_sec]] # temperatura
+            
             na_sec = sum(is.na(dadoscli_sec$temp_min))/dim(dadoscli_sec)[1] # prop dados faltantes
             if (na_sec < 1)lastdate_sec <- dadoscli_sec$SE[max(which(is.na(dadoscli_sec$temp_min)==FALSE))]  # ultima data  
             
@@ -244,8 +250,13 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) # consulta dados do tweet
             dW = cli[[estacao]]
             
+            # cortando os dados para a janela temporal solicitada
+            if (!missing(sefinal)){
+            dC0 <-subset(dC0, SE<=sefinal)
+            dT <- subset(dT, SE<=sefinal)
+            }
+            
             d <- mergedata(cases = dC0, climate = dW, tweet = dT)  # junta os dados
-            if (!missing(sefinal)) d <- subset(d,SE<=sefinal)
             d$temp_min <- nafill(d$temp_min, rule="linear")  # interpolacao clima
             #d$casos <- nafill(d$casos, "zero") # preenche de zeros o final da serie NOVO
             

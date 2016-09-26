@@ -77,10 +77,10 @@ episem <- function(x, format="%Y-%m-%d") {
 
 
 # SE2date ---------------------------------------------------------------------
-#'@description Return to which epidemiological week belongs a given day (only >=2010)
+#'@description Return the first day of the Epidemiological Week
 #'@title Return the first day of the Epidemiological Week
 #'@param SE string vector with dates to be converted, format 201420
-#'@return data.frame with SE and first day. Only works for years >= 2010.
+#'@return data.frame with SE and first day.
 #'@examples
 #'SE2date(201512)
 #'SE2date(se = c(201401:201409))
