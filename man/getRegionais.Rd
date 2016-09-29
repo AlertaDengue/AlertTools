@@ -4,7 +4,7 @@
 \alias{getRegionais}
 \title{get list of regionais.}
 \usage{
-getRegionais(uf, database)
+getRegionais(uf, datasource = con)
 }
 \arguments{
 \item{uf}{full name of the state.}

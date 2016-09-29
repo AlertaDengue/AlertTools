@@ -18,10 +18,10 @@ nothing.
 \description{
 Write the alert parameters for each city into the database, to be used in the update.alert. 
 Currently, the parameters are:codigo_estacao_wu, limiar_pre_epidemico, limiar_pos_epidemico, 
-codigo_estacao_wu_sec.
+codigo_estacao_wu_sec.  City must be already in the regionais table.
 }
 \examples{
 newpars = c("limiar_preseason", "limiar_posseason","estacao_wu_sec")
-write.parameters(newpars,tab)
+res = write.parameters(newpars,tab)
 }
 

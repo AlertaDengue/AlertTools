@@ -19,6 +19,9 @@
 \item{writedb}{TRUE if it should write into the database, default is FALSE.}
 
 \item{sefinal}{if given, it stops at that week}
+
+\item{temp_station}{code of the meteorological station for temperature. 
+If not provided, use default from database. To be implemented.}
 }
 \value{
 data.frame with the week condition and the number of weeks within the 
@@ -28,7 +31,8 @@ last lag weeks with conditions = TRUE.
 Yellow is raised when environmental conditions required for
 positive mosquito population growth are detected, green otherwise.Orange 
 indicates evidence of sustained transmission, red indicates evidence of 
-an epidemic scenario.
+an epidemic scenario. For most places weather stations are provided in the database and choice
+is authomatic according to data quality. But it can also be provided manually (not implemented).
 }
 \examples{
 # Parameters for the model
@@ -39,7 +43,8 @@ gtdist="normal"; meangt=3; sdgt = 1.2
 pars.RJ <- NULL
 pars.RJ[["Metropolitana I"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
 Running the model:
-res <- update.alerta(city = 330240, pars = pars.RJ[["Metropolitana I"]], crit = criteria, datasource = con, sefinal=201552)
+res <- update.alerta(city = 4111605, pars = pars.RJ[["Metropolitana I"]], crit = criteria, 
+datasource = con, sefinal=201639)
 res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
 tail(res$data)
 }

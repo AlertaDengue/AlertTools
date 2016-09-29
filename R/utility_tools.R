@@ -272,7 +272,7 @@ nafill <- function(v, rule, maxgap = 4){
 #'@examples
 #'getRegionais(uf="Rio de Janeiro")
 
-getRegionais <- function(uf, database){
+getRegionais <- function(uf, datasource=con){
       
       sqlquery = paste("SELECT nome_regional, uf 
                   FROM \"Dengue_global\".\"Municipio\" 
@@ -295,7 +295,7 @@ getRegionais <- function(uf, database){
 #'@examples
 #'getCidades(regional = "Metropolitana I", uf="Rio de Janeiro",datasource=con)
 
-getCidades <- function(regional, uf, datasource){
+getCidades <- function(regional, uf, datasource=con){
       
       if(missing(uf)) stop("getCidades requer nome da uf por extenso")
       if(!missing(regional)){
@@ -388,6 +388,7 @@ write.parameters<-function(params, tab){
             try(dbGetQuery(conn, update_sql))
       }
       dbReadTable(conn, c("Dengue_global","regional_saude"))
+      dbDisconnect(conn)
 }
 
 
@@ -429,6 +430,7 @@ insertCityinAlerta<-function(city,id_regional,regional){
             try(dbGetQuery(conn, sqlinsert))   
             cityline = try(dbGetQuery(conn, consult_sql))
       }
+      dbDisconnect(conn)
       cityline
 }
       

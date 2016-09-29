@@ -4,7 +4,7 @@
 \alias{getCidades}
 \title{get list of cities.}
 \usage{
-getCidades(regional, uf, datasource)
+getCidades(regional, uf, datasource = con)
 }
 \arguments{
 \item{regional}{full name of the regional.}

@@ -10,10 +10,10 @@ SE2date(se)
 \item{SE}{string vector with dates to be converted, format 201420}
 }
 \value{
-data.frame with SE and first day. Only works for years >= 2010.
+data.frame with SE and first day.
 }
 \description{
-Return to which epidemiological week belongs a given day (only >=2010)
+Return the first day of the Epidemiological Week
 }
 \examples{
 SE2date(201512)
