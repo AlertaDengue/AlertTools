@@ -71,7 +71,7 @@ adjustIncidence<-function(obj, pdig = plnorm((1:20)*7, 2.5016, 1.1013)){
 #'# Parameters are
 #'list(meanlog=res$icoef[1], sdlog=exp(res$icoef[2]))
 
-fitDelayModel<-function(cities, period, plotar = TRUE, datasource, verbose=TRUE){
+fitDelayModel<-function(cities, period, plotar = TRUE, datasource=con, verbose=TRUE){
       
       ncities = length(cities)
       if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
