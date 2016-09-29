@@ -96,11 +96,20 @@ fitDelayModel<-function(cities, period, plotar = TRUE, datasource, verbose=TRUE)
             # seleciona periodo
             if (!missing(period)) dd<-subset(dd, (dd$dt_notific > as.Date(period[1]) & (dd$dt_notific > as.Date(period[2]))))
             
+            # calcula o tempo de atraso
             dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_notific)
+            
             nrow.before <- dim(dd)[1] 
-            # check if there is na
-            if(sum(is.na(dd$diasdigit))>0) dd <-dd[-which(is.na(dd$diasdigit)==TRUE),]
-            dd <-dd[-which(dd$diasdigit>180 | dd$diasdigit == 0),] # remove records with more than 6 mo delay
+            # check if there is na 
+            nas <- sum(is.na(dd$diasdigit))
+            if(nas>0) dd <-dd[-which(is.na(dd$diasdigit)==TRUE),]
+            
+            # check if there are negative times!!
+            negs <- sum(dd$diasdigit<0)
+            if(negs>0) dd <-dd[-which(dd$diasdigit<0),]
+            
+            # further remove records with more than 6 mo delay
+            dd <-dd[-which(dd$diasdigit>180 | dd$diasdigit == 0),] # 
             nrow.after <- dim(dd)[1]
             loss <- nrow.before - nrow.after
             
