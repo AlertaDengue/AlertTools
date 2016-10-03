@@ -332,9 +332,9 @@ getCidades <- function(regional, uf, datasource=con){
 #'newpars = c("limiar_preseason", "limiar_posseason","estacao_wu_sec")
 #'res = write.parameters(newpars,tab)
 
-write.parameters<-function(params, tab){
+write.parameters<-function(params, tab, senha){
       
-      out = readline("Essa funcao ira mudar o funcionamento do alerta e requer senha do banco de dados:")
+      out = senha#readline("Essa funcao ira mudar o funcionamento do alerta e requer senha do banco de dados:")
       
       conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin",
                        password=out, dbname="dengue")
@@ -404,9 +404,9 @@ write.parameters<-function(params, tab){
 #'@examples
 #'insertCityinAlerta(city=3200300, id_regional=0, regional = "ES-MN-AlfredoChaves")
 
-insertCityinAlerta<-function(city,id_regional,regional){
+insertCityinAlerta<-function(city,id_regional,regional,senha){
       
-      out = readline("Digite a senha do banco de dados:")
+      out = senha #readline("Digite a senha do banco de dados:")
       
       conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin",
                         password=out, dbname="dengue")
