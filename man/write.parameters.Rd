@@ -4,7 +4,7 @@
 \alias{write.parameters}
 \title{Alert city-specific parameterization.}
 \usage{
-write.parameters(params, tab)
+write.parameters(params, tab, senha)
 }
 \arguments{
 \item{params}{vector of params to be written. Default: params = c("codigo_estacao_wu", 
