@@ -730,11 +730,7 @@ write.alertaRio<-function(obj, write = "no", version = Sys.Date()){
                   }
             }
             
-            refresh_sql = "REFRESH MATERIALIZED VIEW uf_total_view AS SELECT uf, \"data_iniSE\" AS data,
-            sum(casos) casos_s, sum(casos_est) casos_est_s FROM
-            \"Municipio\".\"Historico_alerta\" INNER JOIN \"Dengue_global\".\"Municipio\" 
-            on \"Historico_alerta\".municipio_geocodigo=\"Municipio\".geocodigo  
-            GROUP BY \"data_iniSE\", uf ORDER BY uf, \"data_iniSE\" ASC;"
+            refresh_sql = "REFRESH MATERIALIZED VIEW uf_total_view;"
             try(dbGetQuery(con, refresh_sql))
             
             dados <- rbind(dados,d)
