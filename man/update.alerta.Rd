@@ -5,7 +5,7 @@
 \title{Define conditions to issue a 4 level alert Green-Yellow-Orange-Red for any city or region.}
 \usage{
 \method{update}{alerta}(city, region, state, pars, crit, writedb = FALSE,
-  datasource, sefinal)
+  datasource, sefinal, adjustdelay = T)
 }
 \arguments{
 \item{city}{city's geocode (6 or 7 digits).}
@@ -19,6 +19,8 @@
 \item{writedb}{TRUE if it should write into the database, default is FALSE.}
 
 \item{sefinal}{if given, it stops at that week}
+
+\item{adjustdelay}{Default is TRUE, if F, there is no delay adjustment and estimated = observed.}
 
 \item{temp_station}{code of the meteorological station for temperature. 
 If not provided, use default from database. To be implemented.}

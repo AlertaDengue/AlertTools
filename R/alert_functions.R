@@ -141,6 +141,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'If not provided, use default from database. To be implemented.  
 #'@param pars list of parameters for the alerta, defined in config.R
 #'@param crit criteria for the alert colors, defined in config.R
+#'@param adjustdelay Default is TRUE, if F, there is no delay adjustment and estimated = observed.
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param sefinal if given, it stops at that week
 #'@return data.frame with the week condition and the number of weeks within the 
@@ -160,7 +161,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 
 #'tail(res$data)
 
-update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, datasource, sefinal){
+update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, datasource, sefinal,adjustdelay=T){
       
       # update of a single city
       if(!missing (city)) { 
@@ -280,7 +281,12 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             d$nome[is.na(d$nome)==TRUE] <- na.omit(unique(d$nome))[1]
             d$pop[is.na(d$pop)==TRUE] <- na.omit(unique(d$pop))[1]
             
-            pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
+            # se tiver ajuste de atraso pelo metodo tradicional, usar plnorm, senao pdig = 1 
+            pdig <- rep(1, 20*7)[2:20]
+            if(adjustdelay==TRUE){
+                  pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
+            } 
+            
             dC2 <- adjustIncidence(d, pdig = pdig) # ajusta a incidencia
             dC3 <- Rt(dC2, count = "tcasesmed", gtdist=gtdist, meangt=meangt, sdgt = sdgt) # calcula Rt
             
