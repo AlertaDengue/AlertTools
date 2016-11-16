@@ -12,6 +12,8 @@
 
 \item{region}{full name of 'regional' or state (same name present in the database).}
 
+\item{state}{full name of state (same name present in the database). Required if there are more than one region with the same name.}
+
 \item{pars}{list of parameters for the alerta, defined in config.R}
 
 \item{crit}{criteria for the alert colors, defined in config.R}

@@ -137,6 +137,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'is authomatic according to data quality. But it can also be provided manually (not implemented).
 #'@param city city's geocode (6 or 7 digits).
 #'@param region full name of 'regional' or state (same name present in the database).
+#'@param state full name of state (same name present in the database). Required if there are more than one region with the same name.
 #'@param temp_station code of the meteorological station for temperature. 
 #'If not provided, use default from database. To be implemented.  
 #'@param pars list of parameters for the alerta, defined in config.R
@@ -195,7 +196,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             if(length(unique(dd$uf)) > 1){
                   if (missing(state)) stop(paste("Existe mais de uma regional com esse nome. 
                                           Especifique o estado (por extenso):", unique(dd$uf)))
-                  dd <- subset(dd, uf == estate)
+                  dd <- subset(dd, uf == state)
             }
             
       }
