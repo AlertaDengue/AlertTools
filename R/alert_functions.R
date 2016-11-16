@@ -193,7 +193,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
                                           Verifique se escreveu certo (por extenso)"))
             
             if(length(unique(dd$uf)) > 1){
-                  if (missing(estado)) stop(paste("Existe mais de uma regional com esse nome. 
+                  if (missing(state)) stop(paste("Existe mais de uma regional com esse nome. 
                                           Especifique o estado (por extenso):", unique(dd$uf)))
                   dd <- subset(dd, uf == estate)
             }
