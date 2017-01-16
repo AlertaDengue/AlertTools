@@ -101,9 +101,10 @@ SE2date <- function(se){
 #'@title Sequence of epidemiological weeks
 #'@param from first week in format 201401
 #'@param to first week in format 201401
-#'@return data.frame with the epidemiological weeks and corresponding extreme days. 
+#'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works until dez 2017.
 #'@examples
 #'seqSE(201502, 201510)
+
 
 seqSE <- function(from, to){
 #      load("R/sysdata.rda")
@@ -117,7 +118,7 @@ seqSE <- function(from, to){
       
       if (to > SE$SE[N]){
             to <- SE$SE[N]
-            warning(paste("last SE set to", to))
+            warning(paste("This function only works from 2010 to 2017. Last SE set to", to))
       }
       
       SE[which(SE$SE==from):which(SE$SE==to),]
