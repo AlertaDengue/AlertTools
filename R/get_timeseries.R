@@ -119,15 +119,16 @@ getTweet <- function(city, lastday = Sys.Date(), datasource) {
 #'@title Get Case Data and aggregate per week and area
 #'@param city city's geocode.
 #'@param finalday last day. Default is the last available.
-#'@param disease default is "dengue".
-#'@param datasource "db" if using the project database or "data/sinan.rda" if using local test data. 
+#'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A920"
+#'@param datasource PostgreSQLConnection to project database . 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
-#'dC0 = getCases(city = c(330455), lastday ="2014-03-10", datasource = "data/sinan.rda") 
-#'dC0 = getCases(city = 4100301, datasource = con) 
+#'dC0 = getCases(city = 330455, lastday ="2014-03-10", datasource = con) # dengue
+#'dC0 = getCases(city = 3302205, datasource = con) # dengue, until last day available
+#'dC0 = getCases(city = 330455, cid10= "A920", datasource = con) # chik 
 #'head(dC0)
 
-getCases <- function(city, lastday = Sys.Date(), disease = "dengue", datasource) {
+getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       
       if(nchar(city) == 6) city <- sevendigitgeocode(city)   
       
@@ -138,10 +139,12 @@ getCases <- function(city, lastday = Sys.Date(), disease = "dengue", datasource)
             dd$SEM_NOT <- as.numeric(as.character(dd$SEM_NOT))
       } else if (class(datasource) == "PostgreSQLConnection"){
             sql1 <- paste("'", lastday, "'", sep = "")
-            sql <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= ",sql1, " AND municipio_geocodigo =", city)
+            sql <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= ",sql1, " AND municipio_geocodigo = ", city, 
+                         " AND cid10_codigo = \'", cid10,"\'", sep="")
+            
             dd <- dbGetQuery(datasource,sql)
             if (dim(dd)[1]==0) {
-                  message(paste("cidade",city,"nunca teve casos. Está correto?..."))
+                  message(paste("getCases did not find cid10" , cid10, "for city", city))
             } else {
                   dd$SEM_NOT <- data2SE(dd$dt_notific, format = "%Y-%m-%d")
             }
@@ -172,19 +175,14 @@ getCases <- function(city, lastday = Sys.Date(), disease = "dengue", datasource)
       st$localidade <- 0
       st$cidade <- city
             
-      nome = NA
-      pop = NA
-      if (class(datasource) == "PostgreSQLConnection"){
-            # pegando nome da cidade e populacao
-            sql2 <- paste("SELECT nome,populacao from \"Dengue_global\".\"Municipio\" WHERE geocodigo =", city) 
-            varglobais <- dbGetQuery(datasource,sql2)
-            nome <- varglobais$nome
-            pop <- varglobais$populacao      
-      }
-      st$nome <- nome 
-      st$pop <- pop
+      # pegando nome da cidade e populacao
+      sql2 <- paste("SELECT * from \"Dengue_global\".\"Municipio\" WHERE geocodigo =", city) 
+      varglobais <- dbGetQuery(datasource,sql2)
+      st$nome <- varglobais$nome 
+      st$pop <- varglobais$populacao
 
-        
+      if(any(is.na(st$pop)))message("getCases function failed to import pop data for city", city)
+      
       st  
 }
 
