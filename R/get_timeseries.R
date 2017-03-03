@@ -192,23 +192,29 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
 #'@title Get cases from an APS in Rio de Janeiro and aggregate them into weekly time series. 
 #'@param APSid 0(APS1), 1 (APS2.1), 2 (APS2.2), 3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4),
 #', 7(APS5.1), 8(APS5.2), 9(APS5.3)  
+#'@param cid10 cid 10 disease code. A90 = dengue (default) , A920 = chikungunia
+#'@param lastday end date of the time series
 #'@return data.frame with the data aggregated per health district and week
 #'@examples
 #'dC = getCasesinRio(APSid = 9, datasource = con) # Rio de Janeiro
 #'tail(dC)
+#'dC1 = getCasesinRio(APSid = 9, cid10 = "A920", datasource = con) # Rio de Janeiro
+#'tail(dC1)
 
-getCasesinRio <- function(APSid, lastday = Sys.Date(), disease = "dengue",
+getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
                           datasource) {
       
       sqldate <- paste("'", lastday, "'", sep = "")
+      sqlcid <- paste("'", cid10, "'", sep = "")
       
       sqlquery = paste("SELECT n.dt_notific, n.ano_notif, se_notif, l.id, l.nome
       FROM  \"Municipio\".\"Notificacao\" AS n 
       INNER JOIN \"Municipio\".\"Bairro\" AS b 
       ON n.bairro_nome = b.nome 
       INNER JOIN \"Municipio\".\"Localidade\" AS l 
-      ON b.\"Localidade_id\" = l.id
-      WHERE n.municipio_geocodigo = 3304557 AND l.id = ",APSid, "AND dt_digita <= ",sqldate)
+      ON b.\"Localidade_id\" = l.id 
+      WHERE n.municipio_geocodigo = 3304557 AND l.id = ",APSid, "AND dt_digita <= ",sqldate, 
+                       "AND n.cid10_codigo = ", sqlcid)
       
       d <- dbGetQuery(datasource,sqlquery)
       d$SEM_NOT <- d$ano_notif*100+d$se_notif 
@@ -226,7 +232,8 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), disease = "dengue",
       pop = NA
       sql2 <- paste("SELECT nome,id,populacao from \"Municipio\".\"Localidade\" WHERE id =", APSid) 
       varglobais <- dbGetQuery(datasource,sql2)
-      st$pop <- varglobais$populacao      
+      st$pop <- varglobais$populacao     
+      st$cid10 <- cid10
       st$localidade <- varglobais$nome
       st$localidadeid <- varglobais$id
       st  

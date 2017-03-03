@@ -323,6 +323,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
 #'@param naps subset of vector 0:9 corresponding to the id of the APS. Default is all of them.
 #'@param datasource it is the name of the sql connection.
 #'@param se last epidemiological week (format = 201401) 
+#'@param cid10 default is A90 (dengue). Chik = A920
 #'@param verbose FALSE
 #'@return list with an alert object for each APS.
 #'@examples
@@ -336,7 +337,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
 #'names(alerio2)
 
 
-alertaRio <- function(naps = 0:9, pars, crit, datasource, se, verbose = TRUE){
+alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", verbose = TRUE){
       
       message("obtendo dados de clima e tweets ...")
       tw = getTweet(city = 3304557, datasource = datasource) 
@@ -348,9 +349,6 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, verbose = TRUE){
             message("As ultimas datas no banco são:")
             print(paste("Ultimos registros de dengue:",lastDBdate("sinan", city=330455,datasource=datasource)))
             print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=330455,datasource=datasource)))
-            #print(paste("Ultimos registros de temp em SBRJ:",lastDBdate("clima_wu", station = "SBRJ",datasource=datasource)))
-            #print(paste("Ultimos registros de temp em SBJR:",lastDBdate("clima_wu", station = "SBJR",datasource=datasource)))
-            #print(paste("Ultimos registros de temp em SBGL:",lastDBdate("clima_wu", station = "SBGL",datasource=datasource)))
             
             out = readline("deseja continuar (y/n)?")
             if(out == "n") stop("alerta interrompido pelo usuario")
@@ -359,13 +357,14 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, verbose = TRUE){
       APS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
                , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")[(naps + 1)]
       
-      p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
+      if(cid10=="A90") p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
+      if(cid10=="A920") p <- plnorm(seq(7,20,by=7), pars$pdigChik[1], pars$pdigChik[2])
       
       res <- vector("list", length(APS))
       names(res) <- APS
       for (i in 1:length(APS)){
             message(paste("rodando", APS[i],"..."))
-            cas = getCasesinRio(APSid = naps[i], datasource=datasource)
+            cas = getCasesinRio(APSid = naps[i], cid10 = cid10, datasource=datasource)
             d <- merge(cas, cli.SBRJ, by.x = "SE", by.y = "SE")
             d <- merge(d, tw, by.x = "SE", by.y = "SE")
             
