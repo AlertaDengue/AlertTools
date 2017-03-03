@@ -67,6 +67,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
 #'source of this data is the Observatorio da Dengue (UFMG).
 #'@title Get Tweeter Data
 #'@param city city's geocode.
+#'@param cid10 default is A90 (dengue). If not dengue, returns NA
 #'@param finalday last day. Default is the last available.
 #'@param datasource server or "data/tw.rda" if using test dataset. 
 #' Use the connection to the Postgresql server if using project data. See also DenguedbConnect
@@ -76,19 +77,17 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
 #'res = getTweet(city = 330455, lastday = "2014-03-01", datasource = con)
 #'tail(res)
 
-getTweet <- function(city, lastday = Sys.Date(), datasource) {
+getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       
       if(nchar(city) == 6) city <- sevendigitgeocode(city)   
-      if (class(datasource) == "character") {
-            load(datasource)
-            
-      } else if (class(datasource) == "PostgreSQLConnection"){
+      
+      if (cid10 == "A90"){ # get tweets on dengue
             c1 <- paste("select data_dia, numero from \"Municipio\".\"Tweet\" where 
                 \"Municipio_geocodigo\" = ", city)
             tw <- dbGetQuery(datasource,c1)
             if (dim(tw)[1]>0) 
                   names(tw) <- c("data_dia","tweet")
-      }
+      } else {stop("there is no tweet for cid10 in the database")}
       
       if (sum(tw$tweet)==0) message(paste("cidade",city,"nunca tweetou sobre dengue"))
       

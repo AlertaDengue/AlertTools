@@ -327,20 +327,20 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
 #'@param verbose FALSE
 #'@return list with an alert object for each APS.
 #'@examples
-#'params <- list(pdig = c(2.5016,1.1013), tcrit=22, inccrit=100, preseas = 14.15, posseas = 18)
+#'params <- list(pdigChik = c(2.5016,1.1013), tcrit=22, inccrit=100, preseas = 14.15, posseas = 18)
 #'criter <- list(
 #'crity = c("temp_min > tcrit | (temp_min < tcrit & inc > preseas)", 3, 0),
 #'crito = c("p1 > 0.9 & inc > preseas", 2, 2),
 #'critr = c("inc > inccrit", 1, 2)
 #')
-#'alerio2 <- alertaRio(naps = c(0,1), pars=params, crit = criter, datasource=con, se=201604)
+#'alerio2 <- alertaRio(naps = c(0,1), pars=params, cid = "A920", crit = criter, datasource=con, se=201704)
 #'names(alerio2)
 
 
 alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", verbose = TRUE){
       
       message("obtendo dados de clima e tweets ...")
-      tw = getTweet(city = 3304557, datasource = datasource) 
+      if(cid10 == "A90") tw = getTweet(city = 3304557, cid10="A90", datasource = datasource) 
       cli.SBRJ = getWU(stations = 'SBRJ', datasource=datasource)
       cli.SBJR = getWU(stations = 'SBJR', datasource=datasource)
       cli.SBGL = getWU(stations = 'SBGL', datasource=datasource)
@@ -348,7 +348,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
       if (verbose){
             message("As ultimas datas no banco são:")
             print(paste("Ultimos registros de dengue:",lastDBdate("sinan", city=330455,datasource=datasource)))
-            print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=330455,datasource=datasource)))
+            #print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=330455,datasource=datasource)))
             
             out = readline("deseja continuar (y/n)?")
             if(out == "n") stop("alerta interrompido pelo usuario")
@@ -357,6 +357,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
       APS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
                , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")[(naps + 1)]
       
+      # parametros do modelo de ajuste de atraso 
       if(cid10=="A90") p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
       if(cid10=="A920") p <- plnorm(seq(7,20,by=7), pars$pdigChik[1], pars$pdigChik[2])
       
@@ -366,8 +367,11 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
             message(paste("rodando", APS[i],"..."))
             cas = getCasesinRio(APSid = naps[i], cid10 = cid10, datasource=datasource)
             d <- merge(cas, cli.SBRJ, by.x = "SE", by.y = "SE")
-            d <- merge(d, tw, by.x = "SE", by.y = "SE")
             
+            # dados de tweet so existem para dengue
+            if (cid10=="A90") d <- merge(d, tw, by.x = "SE", by.y = "SE")
+            else d$tweet <- NA
+                  
             casfit<-adjustIncidence(obj=d, pdig = p)
             casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)   
             
@@ -680,6 +684,11 @@ write.alertaRio<-function(obj, write = "no", version = Sys.Date()){
       
       n <- length(obj)
       dados <- data.frame()
+      cid <- obj[[1]]$data$cid10[1]
+      
+      # nome da tabela no banco de dados e do respectivo constraint 
+      if (cid == "A90") {tabela <- "alerta_mrj"; sqlconstr = "unique_aps_se"}
+      if (cid == "A920") {tabela <- "alerta_mrj_chik"; sqlconstr = "unique_chik_aps_se"}
       
       for (i in 1:n){
             data <- obj[[i]]$data
@@ -728,8 +737,12 @@ write.alertaRio<-function(obj, write = "no", version = Sys.Date()){
                         }
                         linha = gsub("NA","NULL",linha)
                         linha = gsub("NaN","NULL",linha)
-                        insert_sql2 = paste("INSERT INTO \"Municipio\".\"alerta_mrj\" " ,varnames, 
-                                            " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT unique_aps_se DO
+                        #insert_sql2 = paste("INSERT INTO \"Municipio\".alerta_mrj " ,varnames, 
+                        #                    " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT unique_aps_se DO
+                        #       UPDATE SET ",updates, sep="")
+                        
+                        insert_sql2 = paste("INSERT INTO \"Municipio\".", tabela, " ", varnames, 
+                                            " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT ", sqlconstr, " DO
                                UPDATE SET ",updates, sep="")
                         
                         try(dbGetQuery(con, insert_sql2))
@@ -738,7 +751,7 @@ write.alertaRio<-function(obj, write = "no", version = Sys.Date()){
             
             refresh_sql = "REFRESH MATERIALIZED VIEW uf_total_view;"
             try(dbGetQuery(con, refresh_sql))
-            
+            message(paste("dados escritos na tabela", tabela))
             dados <- rbind(dados,d)
       }
       dados
