@@ -86,7 +86,7 @@ fitDelayModel<-function(cities, period, plotar = TRUE, cid10 = "A90", datasource
             
             if(plotar == TRUE){
                   par(mar=c(4,3,1,1))
-                  plot(km,xlim=c(0,60),xlab="", ylab="",xlab="days")
+                  plot(km,xlim=c(0,60),ylab="",xlab="days")
                   meanlog=mlognorm$icoef[1]; sdlog=exp(mlognorm$icoef[2])
                   lines(0:60,(1-plnorm(0:60,meanlog,sdlog)), lwd=3,col=3)
                   
