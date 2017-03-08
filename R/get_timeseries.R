@@ -132,11 +132,12 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       if(nchar(city) == 6) city <- sevendigitgeocode(city)   
       
       # reading the data
-      if (class(datasource) == "character") {
+      if (class(datasource) == "character") { # historical reasons
             load(datasource)
             dd <- subset(sinan, DT_DIGITA <= lastday)
             dd$SEM_NOT <- as.numeric(as.character(dd$SEM_NOT))
-      } else if (class(datasource) == "PostgreSQLConnection"){
+            
+      } else if (class(datasource) == "PostgreSQLConnection"){ # current entry
             sql1 <- paste("'", lastday, "'", sep = "")
             sql <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= ",sql1, " AND municipio_geocodigo = ", city, 
                          " AND cid10_codigo = \'", cid10,"\'", sep="")
@@ -145,7 +146,7 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
             if (dim(dd)[1]==0) {
                   message(paste("getCases did not find cid10" , cid10, "for city", city))
             } else {
-                  dd$SEM_NOT <- data2SE(dd$dt_notific, format = "%Y-%m-%d")
+                  dd$SEM_NOT <- dd$ano_notif * 100 + dd$se_notif
             }
             
       } else { # one or more dbf files
