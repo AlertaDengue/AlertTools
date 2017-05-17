@@ -9,9 +9,11 @@ fouralert(obj, pars, crit, pop, miss = "last")
 \arguments{
 \item{obj}{dataset from the mergedata function.}
 
-\item{pars}{list with criteria for each color. See example.}
+\item{pars}{list of parameters for the alerta, defined in config.R}
 
-\item{missing}{how missing data is treated. "last" if last value is repeated. 
+\item{crit}{criteria for the alert colors, defined in configglobal.R}
+
+\item{miss}{how missing data is treated. "last" if last value is repeated. 
 It is currently the only option.}
 }
 \value{
@@ -25,17 +27,24 @@ indicates evidence of sustained transmission, red indicates evidence of
 an epidemic scenario.
 }
 \examples{
-tw = getTweet(city = c(330455), datasource = con) 
-cli = getWU(stations = 'SBRJ', datasource=con)
-cas = getCases(city = c(330455), datasource=con)
+# Getting the data (requires a con connection)
+tw = getTweet(city = c(3300258), datasource = con) 
+cli = getWU(stations = 'SBCB', datasource=con)
+cas = getCases(city = c(3300258), datasource=con)
+# Organizing the data
 casfit<-adjustIncidence(obj=cas)
 casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
 d<- mergedata(cases = casr, tweet = tw, climate = cli)
-crit <- list(pdig = c(2.5016,1.1013), tcrit=22, inccrit=100, preseas = 14.15, posseas = 18,
-              crity = c("temp_min > tcrit | (temp_min < tcrit & inc > preseas)", 3, 0),
-              crito = c("p1 > 0.9 & inc > preseas", 2, 2),
-              critr = c("inc > inccrit", 1, 2))
-ale <- fouralert(d, pars = crit, pop = 1000000)
+d$temp_min <- nafill(d$temp_min, rule = "arima") 
+# Parameters of the alert model (usually set up in the globalconfig and config files)
+criteria = list(crity = c("temp_min > tcrit", 3, 1),
+crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
+critr = c("inc > inccrit", 2, 2))
+gtdist="normal"; meangt=3; sdgt = 1.2
+pars.RJ <- NULL
+pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
+# Running the alert
+ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteria, pop = 1000000)
 # For a more useful output
 res <- write.alerta(ale)
 tail(res)

@@ -4,11 +4,15 @@
 \alias{getCasesinRio}
 \title{Get cases from an APS in Rio de Janeiro and aggregate them into weekly time series.}
 \usage{
-getCasesinRio(APSid, lastday = Sys.Date(), disease = "dengue", datasource)
+getCasesinRio(APSid, lastday = Sys.Date(), cid10 = "A90", datasource)
 }
 \arguments{
 \item{APSid}{0(APS1), 1 (APS2.1), 2 (APS2.2), 3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4),
 , 7(APS5.1), 8(APS5.2), 9(APS5.3)}
+
+\item{lastday}{end date of the time series}
+
+\item{cid10}{cid 10 disease code. A90 = dengue (default) , A920 = chikungunia}
 }
 \value{
 data.frame with the data aggregated per health district and week
@@ -19,5 +23,7 @@ Get time series of cases per APS in Rio de Janeiro (special case)
 \examples{
 dC = getCasesinRio(APSid = 9, datasource = con) # Rio de Janeiro
 tail(dC)
+dC1 = getCasesinRio(APSid = 9, cid10 = "A920", datasource = con) # Rio de Janeiro
+tail(dC1)
 }
 

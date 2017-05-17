@@ -4,10 +4,12 @@
 \alias{getTweet}
 \title{Get Tweeter Data}
 \usage{
-getTweet(city, lastday = Sys.Date(), datasource)
+getTweet(city, lastday = Sys.Date(), cid10 = "A90", datasource)
 }
 \arguments{
 \item{city}{city's geocode.}
+
+\item{cid10}{default is A90 (dengue). If not dengue, returns NA}
 
 \item{datasource}{server or "data/tw.rda" if using test dataset. 
 Use the connection to the Postgresql server if using project data. See also DenguedbConnect

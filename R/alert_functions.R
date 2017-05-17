@@ -11,23 +11,31 @@
 #'indicates evidence of sustained transmission, red indicates evidence of 
 #'an epidemic scenario.  
 #'@param obj dataset from the mergedata function.
-#'@param pars list with criteria for each color. See example.  
-#'@param missing how missing data is treated. "last" if last value is repeated. 
+#'@param pars list of parameters for the alerta, defined in config.R
+#'@param crit criteria for the alert colors, defined in configglobal.R
+#'@param miss how missing data is treated. "last" if last value is repeated. 
 #'It is currently the only option.
 #'@return data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE.
 #'@examples
-#'tw = getTweet(city = c(330455), datasource = con) 
-#'cli = getWU(stations = 'SBRJ', datasource=con)
-#'cas = getCases(city = c(330455), datasource=con)
+#' # Getting the data (requires a con connection)
+#'tw = getTweet(city = c(3300258), datasource = con) 
+#'cli = getWU(stations = 'SBCB', datasource=con)
+#'cas = getCases(city = c(3300258), datasource=con)
+#' # Organizing the data
 #'casfit<-adjustIncidence(obj=cas)
 #'casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
 #'d<- mergedata(cases = casr, tweet = tw, climate = cli)
-#'crit <- list(pdig = c(2.5016,1.1013), tcrit=22, inccrit=100, preseas = 14.15, posseas = 18,
-#'               crity = c("temp_min > tcrit | (temp_min < tcrit & inc > preseas)", 3, 0),
-#'               crito = c("p1 > 0.9 & inc > preseas", 2, 2),
-#'               critr = c("inc > inccrit", 1, 2))
-#'ale <- fouralert(d, pars = crit, pop = 1000000)
+#'d$temp_min <- nafill(d$temp_min, rule = "arima") 
+#' # Parameters of the alert model (usually set up in the globalconfig and config files)
+#'criteria = list(crity = c("temp_min > tcrit", 3, 1),
+#'crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
+#'critr = c("inc > inccrit", 2, 2))
+#'gtdist="normal"; meangt=3; sdgt = 1.2
+#'pars.RJ <- NULL
+#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
+#' # Running the alert
+#'ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteria, pop = 1000000)
 #' # For a more useful output
 #'res <- write.alerta(ale)
 #'tail(res)
@@ -36,7 +44,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
       le <- dim(obj)[1]
       
       vars = names(pars)
-
+      # reading the criteria 
       cyellow = crit[[1]]; corange = crit[[2]]; cred = crit[[3]]
       for (k in vars) {
             if (k != "pdig"){ 
@@ -141,7 +149,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'@param temp_station code of the meteorological station for temperature. 
 #'If not provided, use default from database. To be implemented.  
 #'@param pars list of parameters for the alerta, defined in config.R
-#'@param crit criteria for the alert colors, defined in config.R
+#'@param crit criteria for the alert colors, defined in configglobal.R
 #'@param adjustdelay Default is TRUE, if F, there is no delay adjustment and estimated = observed.
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param sefinal if given, it stops at that week
@@ -154,10 +162,9 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'critr = c("inc > inccrit", 2, 2))
 #'gtdist="normal"; meangt=3; sdgt = 1.2
 #'pars.RJ <- NULL
-#'pars.RJ[["Metropolitana I"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
+#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
 #'Running the model:
-#'res <- update.alerta(city = 3302205, pars = pars.RJ[["Metropolitana I"]], crit = criteria, 
-#'datasource = con)
+#'res <- update.alerta(city = 330025, pars = pars.RJ[["Norte"]], crit = criteria, datasource = con)
 #'res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
 
 #'tail(res$data)
@@ -259,7 +266,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             }
             
             d <- mergedata(cases = dC0, climate = dW, tweet = dT)  # junta os dados
-            d$temp_min <- nafill(d$temp_min, rule="linear")  # interpolacao clima
+            d$temp_min <- nafill(d$temp_min, rule="arima")  # interpolacao e extrapolação do clima
             #d$casos <- nafill(d$casos, "zero") # preenche de zeros o final da serie NOVO
             
             # parsi e' pars de uma unica cidade. 
@@ -276,7 +283,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
 #                   stop("Verifique o config dessa cidade. Está faltando parametros em pars para rodar o alerta")} 
 #             
             
-            d <- subset(d,SE<=sefinal)
+            if (!missing(sefinal)) d <- subset(d,SE<=sefinal)
             # preenchendo potenciais missings
             d$cidade[is.na(d$cidade)==TRUE] <- geocidade
             d$nome[is.na(d$nome)==TRUE] <- na.omit(unique(d$nome))[1]

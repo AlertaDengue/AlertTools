@@ -15,7 +15,8 @@ Imports:
     zoo,
     maptools,
     knitr,
-    survival
+    survival,
+    forecast
 Suggests:
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

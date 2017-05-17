@@ -9,10 +9,12 @@ nafill(v, rule, maxgap = 4)
 \arguments{
 \item{v}{vector with missing elements.}
 
-\item{rule}{rule for filling the missing cells. "zero" just fills them with 0; "linearinterp"
-interpolate using tzoo::na.approx. In this case, the tails are not filled.}
+\item{rule}{rule for filling the missing cells. "zero" just fills them with 0; "linear"
+interpolate using tzoo::na.approx. In this case, the tails are not filled. If "arima", then it interpolates using
+linear and extrapolates using arima (calling AlertTools::temp.predict)}
 
-\item{maxgap}{maximum number of consecutive NAs to fill. Longer gaps will be left i=unchanged}
+\item{maxgap}{maximum number of consecutive NAs to fill. Longer gaps will be left i=unchanged. Only works for rule = "zero"
+or "linear"}
 }
 \value{
 vector with replaced NA.
@@ -21,8 +23,12 @@ vector with replaced NA.
 collection of imputation procedures
 }
 \examples{
+# Interpolation:
 v <- c(1,2,3,NA,5,6,NA,NA,9,10,NA,NA)
 nafill(v, rule = "zero")
 nafill(v, rule = "linear")
+# Inter using linear and Extrapolation using arima
+head(cliSBCB)
+nafill(cliSBCB[,3], rule= "arima")
 }
 

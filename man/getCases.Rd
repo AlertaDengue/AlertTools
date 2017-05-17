@@ -4,14 +4,14 @@
 \alias{getCases}
 \title{Get Case Data and aggregate per week and area}
 \usage{
-getCases(city, lastday = Sys.Date(), disease = "dengue", datasource)
+getCases(city, lastday = Sys.Date(), cid10 = "A90", datasource)
 }
 \arguments{
 \item{city}{city's geocode.}
 
-\item{disease}{default is "dengue".}
+\item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A920"}
 
-\item{datasource}{"db" if using the project database or "data/sinan.rda" if using local test data.}
+\item{datasource}{PostgreSQLConnection to project database .}
 
 \item{finalday}{last day. Default is the last available.}
 }
@@ -22,8 +22,9 @@ data.frame with the data aggregated per week according to disease onset date.
 Create weekly time series from case data from server. The source is the SINAN.
 }
 \examples{
-dC0 = getCases(city = c(330455), lastday ="2014-03-10", datasource = "data/sinan.rda") 
-dC0 = getCases(city = 4100301, datasource = con) 
+dC0 = getCases(city = 330455, lastday ="2014-03-10", datasource = con) # dengue
+dC0 = getCases(city = 3302205, datasource = con) # dengue, until last day available
+dC0 = getCases(city = 330455, cid10= "A920", datasource = con) # chik 
 head(dC0)
 }
 

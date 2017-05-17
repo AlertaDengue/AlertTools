@@ -246,24 +246,76 @@ sevendigitgeocode <- function(dig){
 #'@description  collection of imputation procedures 
 #'@title methods to substitute NAs.Use the function na.approx from package zoo. 
 #'@param v vector with missing elements.
-#'@param rule rule for filling the missing cells. "zero" just fills them with 0; "linearinterp"
-#' interpolate using tzoo::na.approx. In this case, the tails are not filled. 
-#'@param maxgap maximum number of consecutive NAs to fill. Longer gaps will be left i=unchanged
+#'@param rule rule for filling the missing cells. "zero" just fills them with 0; "linear"
+#' interpolate using tzoo::na.approx. In this case, the tails are not filled. If "arima", then it interpolates using
+#' linear and extrapolates using arima (calling AlertTools::temp.predict) 
+#'@param maxgap maximum number of consecutive NAs to fill. Longer gaps will be left i=unchanged. Only works for rule = "zero"
+#' or "linear"
 #'@return vector with replaced NA.
 #'@examples
+#'# Interpolation:
 #'v <- c(1,2,3,NA,5,6,NA,NA,9,10,NA,NA)
 #'nafill(v, rule = "zero")
 #'nafill(v, rule = "linear")
+#'# Inter using linear and Extrapolation using arima
+#'head(cliSBCB)
+#'nafill(cliSBCB[,3], rule= "arima")
 
 nafill <- function(v, rule, maxgap = 4){
+      Nna = sum(is.na(v))
+      message(paste("number of weeks with missing data is ", Nna))
       if(sum(is.na(v))!=0) {
             miss <- which(is.na(v))
             if (rule == "zero"){v[miss]<-0}
             if (rule == "linear") {v <- zoo::na.approx(v, method = "linear", maxgap = maxgap, na.rm=FALSE)}
+            if (rule == "arima") v <- temp.predict(v)
       }
       v
 }
+
+# temp.predict ------------------------------------
+#'@description  function for extrapolating temperature using arima  
+#'@title Fit arima to fill in missing data at the end of temperature time series. 
+#'@param v vector with temperature data.
+#'@return vector with replaced NA.
+#'@examples
+#'tail(cliSBCB)
+#'temp.predict(v=cliSBCB[,3], plotar = T)
+
+temp.predict <- function(v, plotar = FALSE){
+      Nv=length(v) # tamanho total da serie
+      datarange <- range(which(!is.na(v)))
       
+      x <- zoo::na.approx(v)
+      
+      # Para saber os coeficientes da parte ARIMA através de critérios de seleção automática:
+      c.a<-auto.arima(x,max.p=5,max.q=5,max.P=5,max.Q=5)$arma
+      # Modelo considerando a sazonalidade, e a parte ARIMA sugerida anteriormente:
+      modelo.sarima<-arima(na.approx(cli[,3]),order=c.a[c(1,6,2)],seasonal=list(order=c(c.a[3],1,c.a[4]),period=52))
+      
+      # tamanho do tail de na:
+      Nna = Nv - datarange[2]
+      
+      message(paste("temperature predicted", Nna, "steps ahead"  ))
+      predito<-predict(modelo.sarima,n.ahead=Nna)$pred
+      
+      if (plotar == T){
+            fitado<-fitted(modelo.sarima)
+            # Plot para ver o desempenho do modelo in/outsample
+            plot(c(fitado,predito),col="orange",type="l",ylab="")
+            lines(x,type="l")
+            legend("bottomleft",c("Observado","Estimado"),col=c("black","orange"),lty=1)
+      }
+      
+      # juntando dados com predito
+      v[(datarange[2]+1):Nv] <-predito
+      v[datarange[1]:datarange[2]] <- x
+      
+      v
+}
+
+
+
 # getRegionais ------------------------------------
 #'@description  consult database to get list of regionais 
 #'@title get list of regionais. 
