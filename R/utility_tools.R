@@ -279,7 +279,7 @@ nafill <- function(v, rule, maxgap = 4){
 #'@param v vector with temperature data.
 #'@return vector with replaced NA.
 #'@examples
-#'tail(cliSBCB)
+#'head(cliSBCB)
 #'temp.predict(v=cliSBCB[,3], plotar = T)
 
 temp.predict <- function(v, plotar = FALSE){
@@ -291,7 +291,7 @@ temp.predict <- function(v, plotar = FALSE){
       # Para saber os coeficientes da parte ARIMA através de critérios de seleção automática:
       c.a<-auto.arima(x,max.p=5,max.q=5,max.P=5,max.Q=5)$arma
       # Modelo considerando a sazonalidade, e a parte ARIMA sugerida anteriormente:
-      modelo.sarima<-arima(na.approx(cli[,3]),order=c.a[c(1,6,2)],seasonal=list(order=c(c.a[3],1,c.a[4]),period=52))
+      modelo.sarima<-arima(na.approx(v),order=c.a[c(1,6,2)],seasonal=list(order=c(c.a[3],1,c.a[4]),period=52))
       
       # tamanho do tail de na:
       Nna = Nv - datarange[2]
