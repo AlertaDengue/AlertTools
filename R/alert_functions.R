@@ -266,7 +266,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             }
             
             d <- mergedata(cases = dC0, climate = dW, tweet = dT)  # junta os dados
-            d$temp_min <- nafill(d$temp_min, rule="arima")  # interpolacao e extrapolação do clima
+            if (is.na(tail(d$temp_min)[1])) d$temp_min <- nafill(d$temp_min, rule="arima")  # interpolacao e extrapolação do clima
             #d$casos <- nafill(d$casos, "zero") # preenche de zeros o final da serie NOVO
             
             # parsi e' pars de uma unica cidade. 

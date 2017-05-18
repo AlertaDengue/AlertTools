@@ -280,35 +280,37 @@ nafill <- function(v, rule, maxgap = 4){
 #'@return vector with replaced NA.
 #'@examples
 #'head(cliSBCB)
-#'temp.predict(v=cliSBCB[,3], plotar = T)
+#'temp.predict(v=cli[,3], plotar = T)
 
 temp.predict <- function(v, plotar = FALSE){
       Nv=length(v) # tamanho total da serie
       datarange <- range(which(!is.na(v)))
-      
-      x <- zoo::na.approx(v)
-      
-      # Para saber os coeficientes da parte ARIMA através de critérios de seleção automática:
-      c.a<-auto.arima(x,max.p=5,max.q=5,max.P=5,max.Q=5)$arma
-      # Modelo considerando a sazonalidade, e a parte ARIMA sugerida anteriormente:
-      modelo.sarima<-arima(na.approx(v),order=c.a[c(1,6,2)],seasonal=list(order=c(c.a[3],1,c.a[4]),period=52))
-      
       # tamanho do tail de na:
       Nna = Nv - datarange[2]
       
-      message(paste("temperature predicted", Nna, "steps ahead"  ))
-      predito<-predict(modelo.sarima,n.ahead=Nna)$pred
+      x <- zoo::na.approx(v)
       
-      if (plotar == T){
-            fitado<-fitted(modelo.sarima)
-            # Plot para ver o desempenho do modelo in/outsample
-            plot(c(fitado,predito),col="orange",type="l",ylab="")
-            lines(x,type="l")
-            legend("bottomleft",c("Observado","Estimado"),col=c("black","orange"),lty=1)
+      if(Nna > 0){
+            
+            # Para saber os coeficientes da parte ARIMA através de critérios de seleção automática:
+            c.a<-auto.arima(x,max.p=5,max.q=5,max.P=5,max.Q=5)$arma
+            # Modelo considerando a sazonalidade, e a parte ARIMA sugerida anteriormente:
+            modelo.sarima<-arima(na.approx(v),order=c.a[c(1,6,2)],seasonal=list(order=c(c.a[3],1,c.a[4]),period=52))
+            
+            message(paste("temperature predicted", Nna, "steps ahead"  ))
+            predito<-predict(modelo.sarima,n.ahead=Nna)$pred
+            
+            if (plotar == T){
+                  fitado<-fitted(modelo.sarima)
+                  # Plot para ver o desempenho do modelo in/outsample
+                  plot(c(fitado,predito),col="orange",type="l",ylab="")
+                  lines(x,type="l")
+                  legend("bottomleft",c("Observado","Estimado"),col=c("black","orange"),lty=1)
+            }
+            
+            # juntando dados com predito
+            v[(datarange[2]+1):Nv] <-predito
       }
-      
-      # juntando dados com predito
-      v[(datarange[2]+1):Nv] <-predito
       v[datarange[1]:datarange[2]] <- x
       
       v
