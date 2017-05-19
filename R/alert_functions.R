@@ -164,7 +164,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'pars.RJ <- NULL
 #'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
 #'# Running the model:
-#'res <- update.alerta(city = 330025, pars = pars.RJ[["Norte"]], crit = criteria, datasource = con)
+#'res <- update.alerta(city = 3201001, pars = pars.RJ[["Norte"]], crit = criteria, datasource = con)
 #'res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
 
 #'tail(res$data)
@@ -266,10 +266,8 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             }
             
             d <- mergedata(cases = dC0, climate = dW, tweet = dT)  # junta os dados
-            if (is.na(tail(d$temp_min)[1])) d$temp_min <- nafill(d$temp_min, rule="arima")  # interpolacao e extrapolação do clima
-            #d$casos <- nafill(d$casos, "zero") # preenche de zeros o final da serie NOVO
-            
-            # parsi e' pars de uma unica cidade. 
+            if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))  # interpolacao e extrapolação do clima
+                        # parsi e' pars de uma unica cidade. 
             # E'preciso extrair no caso de region 
             if (nlugares > 1) {
                   d$nome_regional <- dd$nome_regional[dd$geocodigo==geocidade]
