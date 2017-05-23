@@ -2,23 +2,24 @@
 % Please edit documentation in R/utility_tools.R
 \name{write.parameters}
 \alias{write.parameters}
-\title{Alert city-specific parameterization.}
+\title{City's parameterization.}
 \usage{
 write.parameters(params, tab, senha)
 }
 \arguments{
-\item{params}{vector of params to be written. Default: params = c("codigo_estacao_wu", 
-"limiar_preseason", "limiar_posseason","limiar_epidemico, "estacao_wu_sec").}
+\item{params}{vector of the names of the params to be inserted in the table. Default: params = c("codigo_estacao_wu", 
+"limiar_preseason", "limiar_posseason","limiar_epidemico, "estacao_wu_sec"). It can be a subset of the default.}
 
-\item{tab}{data.frame with the values for each city. It must have a column named "municipio_geocodigo".}
+\item{tab}{data.frame with the values for each city. It must have a column named "municipio_geocodigo",
+plus other columns named as in newpars.}
 }
 \value{
 nothing.
 }
 \description{
 Write the alert parameters for each city into the database, to be used in the update.alert. 
-Currently, the parameters are:codigo_estacao_wu, limiar_pre_epidemico, limiar_pos_epidemico, 
-codigo_estacao_wu_sec.  City must be already in the regionais table.
+Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_posseason",
+"limiar_epidemico, "estacao_wu_sec".  City must be already in the regionais table.
 }
 \examples{
 newpars = c("limiar_preseason", "limiar_posseason","estacao_wu_sec")

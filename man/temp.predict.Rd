@@ -16,7 +16,7 @@ vector with replaced NA.
 function for extrapolating temperature using arima
 }
 \examples{
-tail(cliSBCB)
-temp.predict(v=cliSBCB[,3], plotar = T)
+head(cliSBCB)
+temp.predict(v=cli[,3], plotar = T)
 }
 
