@@ -49,17 +49,13 @@ info.dengue.apply.mem <- function(mun_list=mun_list, start_year=0, end_year=as.i
   require(data.table, quietly=TRUE, warn.conflicts=FALSE)
   
   # Read population table
-      read.population <- function(){
-            sqlquery = paste("SELECT  geocodigo as municipio_geocodigo, populacao
+  sqlquery = paste("SELECT  geocodigo as municipio_geocodigo, populacao
   FROM  \"Dengue_global\".\"Municipio\" AS m 
   INNER JOIN \"Dengue_global\".regional_saude as f
   ON m.geocodigo = f.municipio_geocodigo")
             
-            df.pop <- dbGetQuery(con, sqlquery)
-            return(df.pop)
-      }
-      
-  df.pop <- read.population()
+  df.pop <- dbGetQuery(con, sqlquery)
+  
   # Process data in chuncks for 300 municipalities at a time:
   if (is.null(mun_list)){
     mun_list <- unique(df.pop$municipio_geocodigo)
