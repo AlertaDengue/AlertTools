@@ -40,20 +40,13 @@
 #' Write to database instead of returning object:
 #' info.dengue.apply.mem(con=con, passwd=password, start_year=0, mun_list=mun_list, output='db')
 
-info.dengue.apply.mem <- function(start_year=0, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
+info.dengue.apply.mem <- function(mun_list=mun_list, start_year=0, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
                                   write='no', con=NULL, passwd=NULL, i.n.max=0,
                                   limiar.preseason=0.90, limiar.epidemico=0.95, ...){
   
-  source('./mem-marcelo/read.population.R')
-  source('./mem-marcelo/read.cases.R')
-  source('./mem-marcelo/episem.R')
-  source('./mem-marcelo/lastepiweek.R')
-  source('./mem-marcelo/dengue-mem.R')
   require(mem, quietly=TRUE, warn.conflicts=FALSE)
   require(plyr, quietly=TRUE, warn.conflicts=FALSE)
   require(data.table, quietly=TRUE, warn.conflicts=FALSE)
-  #require(AlertTools, quietly=TRUE, warn.conflicts=FALSE)
-  require(RPostgreSQL, quietly=TRUE, warn.conflicts=FALSE)
   
   # Read population table
       read.population <- function(){

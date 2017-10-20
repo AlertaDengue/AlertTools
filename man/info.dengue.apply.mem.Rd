@@ -5,12 +5,14 @@
 \title{Function to apply MEM algorithm to generate pre-epidemic, post-epidemic, and high activity thresholds
 to municipalities covered by InfoDengue project}
 \usage{
-info.dengue.apply.mem(start_year = 0,
+info.dengue.apply.mem(mun_list = mun_list, start_year = 0,
   end_year = as.integer(format(Sys.Date(), "\%Y")) - 1, write = "no",
   con = NULL, passwd = NULL, i.n.max = 0, limiar.preseason = 0.9,
   limiar.epidemico = 0.95, ...)
 }
 \arguments{
+\item{mun_list}{Vector of municipalities geocode. Default: NULL (i.e., all municipalites)}
+
 \item{start_year}{Historical data starting year to consider. Default: 0 (i.e., as old as possible)}
 
 \item{end_year}{Historical data final year to consider. Default: previous year from Sys.Date()}
@@ -34,8 +36,6 @@ This value is passed to i.level.threshold parameter in \code{memmodel}, from MEM
 This value is passed to i.level.intensity parameter in \code{memmodel}, from MEM package.}
 
 \item{...}{Optional arguments passed to \code{memmodel}, from MEM package.}
-
-\item{mun_list}{Vector of municipalities geocode. Default: NULL (i.e., all municipalites)}
 }
 \value{
 Function \code{info.dengue.apply.mem} will return a data.table object with results by municipality:
