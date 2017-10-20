@@ -27,4 +27,3 @@ lastDBdate(tab="tweet", city=330240,datasource=con)
 lastDBdate(tab="sinan", city=330240,datasource=con)
 lastDBdate(tab="clima_wu", station="SBAF",datasource=con)  
 }
-

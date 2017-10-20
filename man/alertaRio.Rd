@@ -39,4 +39,3 @@ critr = c("inc > inccrit", 1, 2)
 alerio2 <- alertaRio(naps = c(0,1), pars=params, cid = "A920", crit = criter, datasource=con, se=201704)
 names(alerio2)
 }
-

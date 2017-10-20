@@ -50,4 +50,3 @@ ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteria, pop = 1000000)
 res <- write.alerta(ale)
 tail(res)
 }
-

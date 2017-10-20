@@ -17,4 +17,3 @@ con <- DenguedbConnect()
 dbListTables(con) 
 dbDisconnect(con)
 }
-

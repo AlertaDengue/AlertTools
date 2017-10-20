@@ -26,4 +26,3 @@ Create weekly time series from meteorological station data in server
 res = getWU(station = 'SBRJ', vars="temp_min", finalday = "2014-10-10", datasource= con)
 tail(res)
 }
-

@@ -20,4 +20,3 @@ consult database to get list of regionais
 \examples{
 getRegionais(uf="Rio de Janeiro")
 }
-

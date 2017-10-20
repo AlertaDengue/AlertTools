@@ -33,4 +33,3 @@ lines(rt$lwr,lty=3)
 lines(rt$upr,lty=3)
 abline(h = 1, col = 2)
 }
-

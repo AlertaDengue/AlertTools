@@ -33,4 +33,3 @@ alerta <- fouralert(d, cy = crity, co = crito, cr = critr, pop=1000000)
 res <- write.alerta(alerta, write="no")
 tail(res)
 }
-

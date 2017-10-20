@@ -20,4 +20,3 @@ Creates a sequence of epidemiological weeks and respective end and final days
 \examples{
 seqSE(201502, 201510)
 }
-

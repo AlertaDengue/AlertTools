@@ -19,4 +19,3 @@ function for extrapolating temperature using arima
 head(cliSBCB)
 temp.predict(v=cli[,3], plotar = T)
 }
-

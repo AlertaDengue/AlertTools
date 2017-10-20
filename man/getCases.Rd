@@ -27,4 +27,3 @@ dC0 = getCases(city = 3302205, datasource = con) # dengue, until last day availa
 dC0 = getCases(city = 330455, cid10= "A920", datasource = con) # chik 
 head(dC0)
 }
-

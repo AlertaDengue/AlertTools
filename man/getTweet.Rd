@@ -28,4 +28,3 @@ source of this data is the Observatorio da Dengue (UFMG).
 res = getTweet(city = 330455, lastday = "2014-03-01", datasource = con)
 tail(res)
 }
-

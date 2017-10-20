@@ -23,4 +23,3 @@ Function to plot the output of
 \examples{
  # See fouralert function
 }
-

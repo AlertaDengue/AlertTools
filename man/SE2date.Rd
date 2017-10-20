@@ -19,4 +19,3 @@ Return the first day of the Epidemiological Week
 SE2date(201512)
 SE2date(se = c(201401:201409))
 }
-

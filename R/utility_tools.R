@@ -23,7 +23,8 @@ data2SE <- function(days, format = "%d/%m/%Y"){
 }
 
 # episem ---------------------------------------------------------------------
-#'@description Find to which epidemiological week belongs a given day (Oswaldo's function)
+#'@description Find to which epidemiological week belongs a given day 
+#'@author Oswaldo Cruz
 #'@title Define Epidemiological Week
 #'@param date date to be converted (class Date)
 #'@param separa symbol between year and week
@@ -75,6 +76,27 @@ episem <- function(x, format="%Y-%m-%d") {
       epiyear*100+epiweek
 }
 
+
+
+#' lastepiweek -----------------------------------
+#' @description Calculate number of year's last epidemiological week using Brazilian standard.
+#' @name lastepiweek
+#' @author Marcelo F Gomes
+#' @param ano Year
+#' @keywords internal
+#' 
+lastepiweek <- function(ano){
+      
+      # Calcula o valor da última semana do ano
+      
+      diafim <- as.Date(paste(ano,'12','31',sep='-')) #Ultimo dia do ano
+      diasem <- as.numeric(format(diafim,"%w"))       #dia semana do ultimo dia
+      
+      ewd <- ifelse (diasem < 3, diafim - diasem - 1, diafim + 6 - diasem) # Obtém a data do último sábado
+      ewd <- as.Date(ewd,origin = '1970-01-01') # ultima semana epi do ano
+      
+      return(episem(ewd,retorna='W'))
+}
 
 # SE2date ---------------------------------------------------------------------
 #'@description Return the first day of the Epidemiological Week
@@ -498,3 +520,4 @@ insertCityinAlerta<-function(city,id_regional,regional,senha){
 #'lastDBdate(tab="tweet", city=330240)
 #'lastDBdate(tab="sinan", city=330240)
 #'lastDBdate(tab="clima_wu", station="SBAF")  
+

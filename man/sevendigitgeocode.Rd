@@ -16,4 +16,3 @@ to convert 6 digits to 7 digits geocodes.
 \examples{
 sevendigitgeocode(330455)
 }
-

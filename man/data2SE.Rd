@@ -21,4 +21,3 @@ Find to which epidemiological week belongs a given day (only >=2010)
 data2SE("01-02-2010",format="\%d-\%m-\%Y")
 data2SE(c("03-04-2013","07-01-2014"),format="\%d-\%m-\%Y")
 }
-

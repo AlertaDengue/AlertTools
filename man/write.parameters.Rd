@@ -25,4 +25,3 @@ Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_p
 newpars = c("limiar_preseason", "limiar_posseason","estacao_wu_sec")
 res = write.parameters(newpars,tab)
 }
-

@@ -26,4 +26,3 @@ tail(dC)
 dC1 = getCasesinRio(APSid = 9, cid10 = "A920", datasource = con) # Rio de Janeiro
 tail(dC1)
 }
-

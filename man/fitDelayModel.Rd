@@ -48,5 +48,10 @@ res1<-fitDelayModel(cities=330240, datasource=con)
 res<-fitDelayModel(cities=330240, period=c("2013-01-01","2016-01-01"), datasource=con)
 # Parameters are
 list(meanlog=res$icoef[1], sdlog=exp(res$icoef[2]))
+con <- DenguedbConnect()
+res1<-fitDelayModel(cities=330240, datasource=con)
+res<-fitDelayModel(cities=330240, period=c("2013-01-01","2016-01-01"), datasource=con)
+res1<-fitDelayModel(cities=3304557, cid10="A920",datasource=con)
+# Parameters are
+list(meanlog=res$icoef[1], sdlog=exp(res$icoef[2]))
 }
-

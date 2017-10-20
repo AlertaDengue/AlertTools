@@ -34,4 +34,3 @@ alerta <- twoalert(d, cy = crity)
 head(alerta$indices)
 plot.alerta(alerta, var="temp_min")
 }
-

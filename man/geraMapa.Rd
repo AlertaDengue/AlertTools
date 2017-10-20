@@ -42,4 +42,3 @@ reg1 <- update.alerta(region="Noroeste", pars = pars.RJ, datasource = con, sefin
 geraMapa(reg1, data=201613, shapefile="../report/RJ/shape/33MUE250GC_SIR.shp",
 se = 201613, varid="CD_GEOCMU", titulo="Regionais Norte e Nordeste \\n", legpos="topright")
 }
-

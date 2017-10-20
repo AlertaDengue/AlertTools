@@ -46,4 +46,3 @@ lines(rtnorm$lwr,lty = 3, col = 4)
 lines(rtnorm$upr,lty = 3, col = 4)
 legend(30,3,c("original","delta","normal"),lty=1, col = c(1,3,4), cex = 0.7)
 }
-

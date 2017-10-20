@@ -187,6 +187,87 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
 }
 
 
+
+# read.cases --------------------------------------------------------------
+#' @title Function to extract case count for covered municipalities
+#' @description Function \code{read.cases} extract notification data from database and aggregate by epiweek. Used by mem.
+#' @name read.cases
+#' @keywords internal
+#' @author Marcelo F C Gomes
+
+read.cases <- function(start_year, end_year, con, mun_list=NULL){
+      sqlquery = paste0("SELECT dt_notific, se_notif, ano_notif, c.municipio_geocodigo
+                        FROM  \"Municipio\".\"Notificacao\" as c
+                        INNER JOIN \"Dengue_global\".regional_saude as f
+                        ON c.municipio_geocodigo = f.municipio_geocodigo\n")
+      if (is.null(mun_list)){
+            sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
+                               " AND ano_notif <= ", end_year, ")")    
+      } else {
+            mun_list_txt <- paste0(mun_list, collapse=',')
+            sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
+                               " AND ano_notif <= ", end_year,
+                               " AND c.municipio_geocodigo IN (", mun_list_txt,"));" )
+      }
+      
+      # In the database we have each single notification. So we'll have to aggregate later on
+      # We'll use an object name "weekly" from the start since we'll overwrite it with the aggregate later.
+      df.cases.weekly <- dbGetQuery(con, sqlquery, stringsAsFactors=FALSE)
+      
+      # Auxiliary function to correctly generate SE in the format YYYYWW from columns
+      # notification week (WW) and current year. Since dates in the begining(end) of an year
+      # can belong to epidemiological weeks from the previous(year), we must check the week and month
+      # of the notification. If the epiweek (w) is 52 or 53 and the month is 01 (Jan), then it is still
+      # from an epiweek of the previous year. Example: a case from 2016-01-01 is of epiweek 2001553.
+      # If, on the other hand, epiweek is 1 and the month is 12 (Dec), then the epiweek is already
+      # of the next year. Example: 2014-12-31 is of epiweek 201501.
+      f.se <- function(w, m, y){
+            if (w > 51 & m=='01'){
+                  y <- y-1
+            } else if (w == 1 & m == '12'){
+                  y <- y+1
+            }
+            return(as.integer(y*100 + w))
+      }
+      
+      df.cases.weekly$SE <- mapply(function(w, m, y) f.se(w,m,y) , df.cases.weekly$se_notif,
+                                   format(df.cases.weekly$dt_notific, '%m'), df.cases.weekly$ano_notif)
+      
+      # Aggregate by municipio_geocodigo and SE.
+      # Using table is faster than using aggregateby.notified.cases.R function
+      df.cases.weekly <- data.frame(table(df.cases.weekly[, c('municipio_geocodigo', 'SE')]), stringsAsFactors = FALSE)
+      names(df.cases.weekly) <- c('municipio_geocodigo', 'SE', 'casos')
+      
+      # Fill all epiweeks:
+      df.epiweeks <- data.frame(municipio_geocodigo=integer(), SE=integer())
+      # List of locations:
+      mun_list <- unique(df.cases.weekly$municipio_geocodigo)
+      df.cases.weekly$SE <- as.integer((levels(df.cases.weekly$SE))[df.cases.weekly$SE])
+      effec_start_year <- min(round(df.cases.weekly$SE/100))
+      years.list <- c(effec_start_year:end_year)
+      for (mun in mun_list){
+            
+            for (y in years.list){
+                  epiweeks <- c()
+                  lweek <- as.integer(lastepiweek(y))
+                  for (w in c(1:lweek)){
+                        epiweeks <- c(epiweeks, as.integer(paste0(y, sprintf('%02d', w))))
+                  }
+                  df.epiweeks <- rbind(df.epiweeks, data.frame(list(municipio_geocodigo=mun, SE=epiweeks)))
+            }
+            
+      }
+      
+      df.cases.weekly <- merge(df.epiweeks, df.cases.weekly, by=c('municipio_geocodigo', 'SE'), all.x=T)
+      df.cases.weekly[is.na(df.cases.weekly)] <- 0
+      df.cases.weekly$municipio_geocodigo <- as.integer((levels(df.cases.weekly$municipio_geocodigo))[df.cases.weekly$municipio_geocodigo])
+      
+      return(df.cases.weekly)
+}
+
+
+
+
 # getCasesinRio --------------------------------------------------------------
 #'@description Get time series of cases per APS in Rio de Janeiro (special case) 
 #'@title Get cases from an APS in Rio de Janeiro and aggregate them into weekly time series. 

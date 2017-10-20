@@ -31,4 +31,3 @@ Function to plot a map of the alert
 \examples{
 map.Rio(alerio)
 }
-

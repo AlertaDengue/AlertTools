@@ -23,4 +23,3 @@ alerio2 <- alertaRio(naps = c(1,2), datasource=con)
 res <- write.alertaRio(alerio2, write="db")
 tail(res)
 }
-

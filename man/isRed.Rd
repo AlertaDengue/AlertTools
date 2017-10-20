@@ -34,4 +34,3 @@ plot(x, red$inc, type="l", xlab= "weeks", ylab = "incidence")
 abline(h = 30, col =2)
 points(x[red$rweek==1], red$inc[red$rweek==1], col="red", pch=16)
 }
-

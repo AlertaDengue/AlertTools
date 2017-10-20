@@ -36,4 +36,3 @@ lines(tail(resfit$tcasesmin,n=30),col=2,lty=3)
 lines(tail(resfit$tcasesmax,n=30),col=2,lty=3)
 legend(12,20,c("notified cases","+ to be notified cases"),lty=1, col=c(1,2),cex=0.7)
 }
-

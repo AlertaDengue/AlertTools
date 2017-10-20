@@ -31,4 +31,3 @@ nafill(v, rule = "linear")
 head(cliSBCB)
 nafill(cliSBCB[,3], rule= "arima")
 }
-

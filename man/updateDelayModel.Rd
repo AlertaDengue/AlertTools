@@ -36,4 +36,3 @@ res<-updateDelayModel(cities=c(330240, 330045), period=c("2013-01-01","2016-01-0
 res<-updateDelayModel(ufs="Rio de Janeiro", period=c("2013-01-01","2016-01-01"), datasource=con)
 res<-updateDelayModel(ufs="Rio de Janeiro", period=c("2013-01-01","2016-01-01"), regional=TRUE, datasource=con)
 }
-

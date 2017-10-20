@@ -34,4 +34,3 @@ lines(x, ora$lwr, lty = 3)
 abline(h = 1, col =2)
 points(x[ora$oweek==1], ora$Rt[ora$oweek==1], col="orange", pch=16)
 }
-

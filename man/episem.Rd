@@ -15,9 +15,11 @@ episem(x, format = "\%Y-\%m-\%d")
 epidemiological week
 }
 \description{
-Find to which epidemiological week belongs a given day (Oswaldo's function)
+Find to which epidemiological week belongs a given day
 }
 \examples{
 episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"))
 }
-
+\author{
+Oswaldo Cruz
+}
