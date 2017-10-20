@@ -41,7 +41,7 @@
 #' info.dengue.apply.mem(con=con, passwd=password, start_year=0, mun_list=mun_list, output='db')
 
 info.dengue.apply.mem <- function(mun_list=mun_list, start_year=0, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
-                                  write='no', con=NULL, passwd=NULL, i.n.max=0,
+                                  write='no', con, passwd=NULL, i.n.max=0,
                                   limiar.preseason=0.90, limiar.epidemico=0.95, ...){
   
   require(mem, quietly=TRUE, warn.conflicts=FALSE)
@@ -71,7 +71,7 @@ info.dengue.apply.mem <- function(mun_list=mun_list, start_year=0, end_year=as.i
   # Run by chuncks:
   for (mun_chunck in mun_list){
     # Read historical cases table
-    df.inc <- read.cases(start_year, end_year, mun_list=mun_chunck)
+    df.inc <- read.cases(start_year, end_year, mun_list=mun_chunck,con=con)
     effec_start_year <- min(round(df.inc$SE/100))
     # Build incidence
     df.inc <- merge.data.frame(df.inc, df.pop, by='municipio_geocodigo')

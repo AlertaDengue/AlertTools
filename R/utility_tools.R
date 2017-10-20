@@ -32,7 +32,7 @@ data2SE <- function(days, format = "%d/%m/%Y"){
 #'@examples
 #'episem(x= as.Date("2015-01-01", format="%Y-%m-%d"))
 
-episem <- function(x, format="%Y-%m-%d") {
+episem <- function(x, format="%Y-%m-%d",retorna='') {
       # semana epi 1 de 2000 02/01/2000
       if (class(x)!= "Date") {
             x <- as.Date(x, format = format)

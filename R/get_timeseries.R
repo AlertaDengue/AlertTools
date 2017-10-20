@@ -212,7 +212,7 @@ read.cases <- function(start_year, end_year, con, mun_list=NULL){
       
       # In the database we have each single notification. So we'll have to aggregate later on
       # We'll use an object name "weekly" from the start since we'll overwrite it with the aggregate later.
-      df.cases.weekly <- dbGetQuery(con, sqlquery, stringsAsFactors=FALSE)
+      df.cases.weekly <- dbGetQuery(con=con, sqlquery, stringsAsFactors=FALSE)
       
       # Auxiliary function to correctly generate SE in the format YYYYWW from columns
       # notification week (WW) and current year. Since dates in the begining(end) of an year
