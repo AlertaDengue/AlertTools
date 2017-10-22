@@ -10,11 +10,11 @@ using MEM package https://cran.r-project.org/web/packages/mem/
 
 require(mem)
 require(plyr)
-require(logging)
+#require(logging)
 
 # Initialize logger
-basicConfig()
-addHandler(writeToFile, file="./dengue-mem.log", level='INFO')
+#basicConfig()
+#addHandler(writeToFile, file="./dengue-mem.log", level='INFO')
 bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
   "
   Function to bind season incidences from df1 onto df2, placing each season in a new colum
@@ -24,7 +24,7 @@ bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
   "
   
   if (missing(df1) | missing(df2) | missing(baseyear)){
-    logerror('missing argument on function call', logger='dengue-mem.bindseason')
+    #logerror('missing argument on function call', logger='dengue-mem.bindseason')
     return(NULL)
   }
 
@@ -37,7 +37,7 @@ bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
   newinc <- suff
   df3 <- rename(df3, c('SE'=newse, 'inc'=newinc))
   
-  loginfo('Function executed and exited with status 0', logger='dengue-mem.bindseason')
+  #loginfo('Function executed and exited with status 0', logger='dengue-mem.bindseason')
   return(df3)
 }
 
@@ -70,8 +70,9 @@ bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
 
 applymem <- function(df.data, l.seasons, ...){
   if (missing(df.data)){
-    logerror('missing argument on function call', logger='dengue-mem.applymem')
-    return(NULL)
+    #logerror('missing argument on function call', logger='dengue-mem.applymem')
+    message('missing argument on function call: applymem')
+        return(NULL)
   }
   
   # List of municipio_geocodigos
@@ -162,7 +163,7 @@ applymem <- function(df.data, l.seasons, ...){
     }
     
   }
-  loginfo('Function executed and exited with status 0!', logger='dengue-mem.applymem')
+  #loginfo('Function executed and exited with status 0!', logger='dengue-mem.applymem')
   return(list("epimemthresholds"=epithresholds, "dfthresholds"=dfthresholds))
 }
 
