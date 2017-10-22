@@ -54,7 +54,7 @@ info.dengue.apply.mem <- function(mun_list=mun_list, start_year=0, end_year=as.i
   INNER JOIN \"Dengue_global\".regional_saude as f
   ON m.geocodigo = f.municipio_geocodigo")
             
-  df.pop <- dbGetQuery(con, sqlquery)
+  df.pop <- dbGetQuery(conn=con, sqlquery)
   
   # Process data in chuncks for 300 municipalities at a time:
   if (is.null(mun_list)){

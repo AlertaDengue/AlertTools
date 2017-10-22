@@ -6,8 +6,8 @@
 to municipalities covered by InfoDengue project}
 \usage{
 info.dengue.apply.mem(mun_list = mun_list, start_year = 0,
-  end_year = as.integer(format(Sys.Date(), "\%Y")) - 1, write = "no",
-  con = NULL, passwd = NULL, i.n.max = 0, limiar.preseason = 0.9,
+  end_year = as.integer(format(Sys.Date(), "\%Y")) - 1, write = "no", con,
+  passwd = NULL, i.n.max = 0, limiar.preseason = 0.9,
   limiar.epidemico = 0.95, ...)
 }
 \arguments{

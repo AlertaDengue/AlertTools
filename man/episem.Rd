@@ -4,7 +4,7 @@
 \alias{episem}
 \title{Define Epidemiological Week}
 \usage{
-episem(x, format = "\%Y-\%m-\%d")
+episem(x, format = "\%Y-\%m-\%d", retorna = "")
 }
 \arguments{
 \item{date}{date to be converted (class Date)}
