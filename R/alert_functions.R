@@ -378,7 +378,8 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
             # dados de tweet so existem para dengue
             if (cid10=="A90") d <- merge(d, tw, by.x = "SE", by.y = "SE")
             else d$tweet <- NA
-                  
+            # interpolacao e extrapolação do clima
+            if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))       
             casfit<-adjustIncidence(obj=d, pdig = p)
             casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)   
             
