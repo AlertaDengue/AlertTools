@@ -305,3 +305,116 @@ dd
 }
 
 
+###########################################
+## Leo's delay model
+
+# getdelaydata ------------------------------------------------------------------
+#'@description Gets delay data for one or more cities. Internal function used in the delay fitting using inla. 
+#'@title Get delay data for analysis
+#'@param d dataset with case data containing at least three variables: the initial and final dates and a variable
+#' identifying the epidemiological week (SEM_NOT).
+#'@param tini variable indicating the initial date
+#'@param tfim variable indicating the end date
+#'@param SE variable indicating the epidemiological week
+#'@param date.format date format. Default is "%d-%m-%Y"
+#'@param truncdays Default is 183 days
+#'@param plotar Default is TRUE
+#'@return list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
+#'are internal objects used for plotting.
+#'@author Claudia Codeco
+#'@examples
+#'dados <- getdelaydata(cities=c(3302205, 3304557), datasource=con)  # Not run without connection
+
+getdelaydata <- function(cities, years, cid10 = "A90", datasource){
+      
+      ncities = length(cities)
+      if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
+      
+      if (class(datasource) == "PostgreSQLConnection"){
+            
+            sql1 = paste("'", cities[1], sep = "")
+            if (ncities > 1) for (i in 2:ncities) sql1 = paste(sql1, cities[i], sep = "','")
+            sql1 <- paste(sql1, "'", sep = "")
+            cid10command <- paste("'", cid10,"'", sep="")    
+            
+            sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
+                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo = ", cid10command)
+            dd <- dbGetQuery(datasource,sqlselect)
+            
+      }
+      dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
+      dd[,-dd$se_notif]      
+      dd
+}
+
+
+# delaycalc ---------------------------------------------------------------------
+#'@description The second function to be used in the delay fitting process using inla. Calculates the number of cases reported
+#'per week with a given delay. Also removes data with notification delay greater than truncdays. Produces a 
+#'nive plot.  
+#'@title Organize delay data for analysis and produce a nice plot.
+#'@param d dataset with case data containing at least three variables: the initial and final dates and a variable
+#' identifying the epidemiological week (SEM_NOT). Only one city at a time.
+#'@param tini variable indicating the initial date
+#'@param tfim variable indicating the end date
+#'@param SE variable indicating the epidemiological week
+#'@param date.format date format. Default is "%d-%m-%Y"
+#'@param truncdays Default is 183 days
+#'@param plotar Default is TRUE
+#'@return list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
+#'are internal objects used for plotting.
+#'@author Leo Bastos
+#'@examples
+#'dados <- getdelaydata(cities=3302205, datasource=con)
+#'res = delaycalc(dados)  
+#'head(res$d)  # data
+#'head(res$delay.tbl)  # running matrix
+
+delaycalc <- function(d, tini = "dt_notific", tfim = "dt_digita", SE = "SE_notif", date.format = "%Y-%m-%d", 
+                      truncdays = 183, verbose = TRUE){
+      
+      # Checking if there is more than one city
+      ncities <- length(unique(d$municipio_geocodigo))
+      if(ncities != 1)stop("delaycalc error: delay function can only be applied to one city at a time.") 
+      
+      dd <- d[,c(tini,tfim,SE)]
+      names(dd)<-c("tini","tfim","SE")
+      
+      # getting the time data  (# acrescentar testes de existencia e de formato)
+      tini = as.Date(as.character(d[,tini]),format=date.format )
+      tfim = as.Date(as.character(d[,tfim]),format=date.format )
+      rm(d)
+      
+      # Calculating delay time
+      dd$DelayDays <- difftime(tfim, tini, units = "days")
+      
+      # Number of notifications greater than 6 months (>= 182 days)
+      if (verbose==TRUE){
+      
+            message(paste("number of notifications with delay greater than",truncdays,"days =",
+                    sum(dd$DelayDays >= truncdays, na.rm = T),"in",length(dd$DelayDays),". They will be excluded.")) 
+      }
+      
+      dd <- na.exclude(dd[dd$DelayDays < truncdays, ])
+      
+      # Delay in weeks
+      dd$DelayWeeks <- floor( dd$DelayDays / 7 )
+      
+      aux <- tapply(dd$DelayWeeks >= 0 , INDEX = dd$SE, FUN = sum, na.rm = T)
+      delay.tbl <- data.frame(Notifications = aux[order(rownames(aux))])
+      
+      for(k in 0:26){  
+            aux <- tapply(dd$DelayWeeks == k, INDEX = dd$SE, FUN = sum, na.rm = T)
+            delay.tbl[paste("d",k, sep="")] <- aux[order(rownames(aux))]
+      }
+      
+      delay.week <- paste("d",0:26, sep="")
+      cores <- heat.colors(n = 27, alpha = 0.8)
+      
+      yyy <- t(as.matrix(delay.tbl[delay.week] ))
+      
+      
+      list(d = dd, delay.tbl = delay.tbl, delay.week = delay.week)
+}
+
+
