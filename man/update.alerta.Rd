@@ -4,8 +4,8 @@
 \alias{update.alerta}
 \title{Define conditions to issue a 4 level alert Green-Yellow-Orange-Red for any city or region.}
 \usage{
-\method{update}{alerta}(city, region, state, pars, crit, writedb = FALSE,
-  datasource, sefinal, adjustdelay = T)
+update.alerta(city, region, state, pars, crit, writedb = FALSE, datasource,
+  sefinal, adjustdelay = T)
 }
 \arguments{
 \item{city}{city's geocode (6 or 7 digits).}

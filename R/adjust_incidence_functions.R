@@ -418,3 +418,206 @@ delaycalc <- function(d, tini = "dt_notific", tfim = "dt_digita", SE = "SE_notif
 }
 
 
+
+# fitDelay.inla ---------------------------------------------------------------------
+#'@description Fit model  Y ~ 1 + f(Time, model = "rw1") + f(Delay, model = "rw1") to object created by delaycalc.
+#'@title Fit INLA model to notification delay.
+#'@param obj object with observed delays, produced by delaycalc().
+#'@param Tactual today's date used for estimation. 
+#'@param Dmax maximum delay allowed (in weeks).
+#'@return list containing the fitted model (out), the data, arguments and some objects to be used
+#'by other auxiliary functions. 
+#'@examples
+#'res = delaycalc(dados)
+#'outp<-fitDelay.inla(res)
+
+
+fitDelay.inla <- function(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar = FALSE){
+      
+      require(INLA)
+      message("fitting..")
+      # creating a continuous sequence of weeks within the study period (#aqui da para otimizar)
+      d <- obj$d
+      d$ano <- floor(d$SE/100) # years in the dataset
+      allweeks = expand.grid(ano=min(d$ano):max(d$ano), semanas = 1:52)
+      allweeks = allweeks[order(allweeks$ano),]
+      allweeks$se <- allweeks$ano*100+allweeks$semanas  # all weeks
+      
+      aux <- tapply(d$DelayWeeks >= 0 , INDEX = d$SE, FUN = sum, na.rm = T)
+      
+      #delay.tbl <- data.frame(Notifications = aux[order(rownames(aux))])
+      delay.tbl <- obj$delay.tbl
+      
+      #delay.week <- paste("d",0:26, sep="")
+      delay.week <- obj$delay.week
+      
+      for(k in 0:26){  
+            aux <- tapply(d$DelayWeeks == k, INDEX = d$SE, FUN = sum, na.rm = T)
+            delay.tbl[paste("d",k, sep="")] <- aux[order(rownames(aux))]
+      }
+      delay.data <- delay.tbl[delay.week]
+      
+      # tempo maximo do banco
+      Tmax <- nrow(delay.data)
+      
+      delay.data.obs <- delay.data[1:Tactual,(0:Dmax)+1]
+      
+      # Time index of the unknown counts (Dmax+1,...,Tactual) 
+      index.time <- (Tactual-Dmax+1):Tactual
+      
+      delay.data.obs.trian <- delay.data.obs
+      
+      # Creating the run-off triangle data frame
+      delay.data.obs.trian[outer(1:Tactual, 0:Dmax, FUN = "+") > Tactual] <- NA
+      
+      # This function creates a data frame from the run-off triangle matrix to be used in INLA
+      make.df.trian <- function(M){
+            Time <- nrow(M)
+            Delay <- ncol(M)
+            aux.df <- data.frame(Y = as.vector(as.matrix(M)), 
+                                 Time = rep(x = 1:Time, times = Delay),
+                                 Delay = rep(x = 1:Delay, each=Time)
+            )
+            aux.df
+      }
+      
+      # Creating a data frame for INLA
+      delay.inla.trian <- make.df.trian(delay.data.obs.trian)
+      
+      # Find the missing values
+      index.missing <- which(is.na(delay.inla.trian$Y))      
+      
+      model <- Y ~ 1 + f(Time, model = "rw1") + f(Delay, model = "rw1")
+      
+      output <- inla(model, family = "nbinomial", data = delay.inla.trian,
+                     control.predictor = list(link = 1, compute = T),
+                     control.compute = list( config = T, waic=TRUE, dic=TRUE))
+      
+      c(WAIC = output$waic$waic, DIC = output$dic$dic)
+      
+      message("sampling...")
+      
+      delay.samples.list <- inla.posterior.sample(n = 10, output)
+      
+      
+      # Sampling the missing triangule from inla output in vector format
+      aaa <- lapply(X = delay.samples.list, FUN = function(x, idx = index.missing) rnbinom(n = idx, mu = exp(x$latent[idx]), size = x$hyperpar[1])
+      ) 
+      
+      
+      # Creating a vectorized version of the triangle matrix
+      delay.vec.trian <- inla.matrix2vector(as.matrix(delay.data.obs.trian[index.time,]))
+      
+      # Transforming back from the vector form to the matrix form
+      bbb <- lapply(aaa, FUN = function(xxx, data = delay.vec.trian){
+            data[which(is.na(data))] <- xxx
+            inla.vector2matrix(data, ncol = Dmax+1) } )
+      
+      
+      # Samples of {N_t : t=Tactual-Dmax+1,...Tactual}
+      ccc <- sapply(bbb, FUN = function(x) rowSums(x) )
+      
+      
+      Nt.true <- rowSums(delay.data.obs[index.time,])
+      Nt.obs <- rowSums(delay.data.obs.trian[index.time,], na.rm=T)
+      # Nt.forecast <- rowSums(matrix(output$summary.fitted.values$mean, ncol=Dmax+1)[index.time,])
+      
+      if (plotar == TRUE){
+            par(mfrow=c(1,1))
+            plot(index.time, Nt.true, ylim=range(Nt.true, Nt.obs), ylab="", xlab="",pch=16)
+            points(index.time, Nt.obs, pch=3)
+            #lines(index.time, Nt.forecast, col=2)
+            lines(index.time, rowMeans(ccc), col=2)
+            lines(index.time, apply(ccc,1,quantile,probs = 0.025), col=2, lty=2)
+            lines(index.time, apply(ccc,1,quantile,probs = 0.975), col=2, lty=2)
+            legend("topleft", c("Observed counts", "Real counts", "Posterior prediction",
+                                "95% CI limits"), pch=c(3,16,NA,NA), lty=c(NA,NA,1,2), col=c(1,1,2,2))
+            
+      }
+            
+      
+      list(out=output,post=ccc,Tactual=Tactual, Dmax=Dmax,delay.data.obs=delay.data.obs,
+           delay.data.obs.trian=delay.data.obs.trian,Tmax=Tmax)
+}
+
+
+# plot.inla.re ---------------------------------------------------------------------
+#'@description Plot the random effects of the delay model fitted using fitDelay.inla()
+#'@title plot delay and time random effects
+#'@param outputRE random effect components of the object created by the fitDelay.inla function
+#'@return graphs 
+#'@examples
+#'res = delaycalc(dados)
+#'outp<-fitDelay.inla(res)
+#'par(mfrow=c(2,1),mar=c(4,4,2,2))
+#'plot.inla.re(outp$out$summary.random$Time, xlab="semana epidemiologica")
+#'plot.inla.re(outp$out$summary.random$Delay, xlab="semana de atraso")
+
+
+plot.inla.re = function(outputRE, xlab){
+      plot( outputRE$mean, type = "n", ylim = range(outputRE[,c(4,6)]), ylab="", xlab=xlab )
+      polygon(x = c(outputRE$ID, rev(outputRE$ID)),
+              y = c(outputRE$'0.025quant', rev(outputRE$'0.975quant')),
+              border = "black", col = "gray")
+      lines(outputRE$mean, lty=1, lwd=2)
+      lines(x = range(outputRE$ID), y = rep(0,2), lty=2)
+      return(NULL)  
+}
+
+
+# prob.inc ---------------------------------------------------------------------
+#'@description predicted incidence using fitDelay.inla(). 
+#'@title posterior distribution of the incidence 
+#'@param obj created by the fitDelay.inla function
+#'@return table with mean, median, 2.5% and 97.5% incidence.
+#'@author Leo Bastos
+#'@examples
+#'res = delaycalc(dados)
+#'outp<-fitDelay.inla(res)
+#'delay <- prob.inc(outp)
+
+prob.inc<-function(obj, plotar=T){
+      
+      ccc <- obj$post
+      Dmax <- obj$Dmax
+      delay.data.obs <-obj$delay.data.obs
+      Tactual <-obj$Tactual
+      delay.data.obs.trian <- obj$delay.data.obs.trian
+      delay.data.obs <- obj$delay.data.obs
+      
+      # quantiles
+      post.sum = function(x,probs = c(0.5, 0.025,0.975)) c(mean = mean(x), quantile(x,probs))
+      
+      apply(ccc,1,FUN = post.sum)[,Dmax]
+      post.sum(ccc[Dmax,])
+      
+      post.prob = function(x, prob = c(100, 200)) c(Ps100 = mean(x < prob[1]), Pg200 = mean(x > prob[2]) ) 
+      
+      apply(ccc,1,FUN = post.prob, prob=c(500,1000))[,Dmax]
+      
+      teste <- apply(ccc, MARGIN = 1, post.sum)
+      
+      if(plotar == TRUE){
+            par(mfrow=c(1,1))
+            max.y <- max(teste[4,])  
+            plot(rowSums(delay.data.obs[1:Tactual ,] ), xlab  =  "", 
+                 ylab = "Casos", type = "n", axes=F, xlim = c(Tactual-24,Tactual), 
+                 ylim = c(0,max.y) )
+            polygon(x = c((Tactual-Dmax+1):Tactual,Tactual:(Tactual-Dmax+1)),
+                    y = c(teste[3,], rev(teste[4,])),
+                    border = 3, col = "lightgray", lty=3)
+            lines((Tactual-Dmax+1):Tactual, teste[1,], col=3, lty=3, lwd=2)
+            #lines(rowSums(delay.data.obs.trian[1:Tactual,], na.rm=T), col=2, lwd=2, lty=2)
+            lines(rowSums(delay.data.obs[1:Tactual,], na.rm=T), col=1, lwd=2)
+            axis(2)
+            xlabels <- rownames(outp$delay.data.obs)[Tactual-24:Tactual]
+            axis(1, at=seq(Tactual-24,Tactual,length.out = 6), 
+                 labels = xlabels[seq(1,24,length.out = 6)])
+            legend("topleft", c("Notificados", "Estimados"),
+                   lty=1:2, lwd=2, col=c(1,3))
+            
+      }
+      
+      teste
+}
+
