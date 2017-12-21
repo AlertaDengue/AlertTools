@@ -339,20 +339,15 @@ dd
 
 # getdelaydata ------------------------------------------------------------------
 #'@description Gets delay data for one or more cities. Internal function used in the delay fitting using inla. 
-#'@title Get delay data for analysis
-#'@param d dataset with case data containing at least three variables: the initial and final dates and a variable
-#' identifying the epidemiological week (SEM_NOT).
-#'@param tini variable indicating the initial date
-#'@param tfim variable indicating the end date
-#'@param SE variable indicating the epidemiological week
-#'@param date.format date format. Default is "%d-%m-%Y"
-#'@param truncdays Default is 183 days
-#'@param plotar Default is TRUE
-#'@return list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
-#'are internal objects used for plotting.
+#'@title Get delay data for one or more cities for delay analysis
+#'@param cities vector with geocodes
+#'@param cid10 disease code, Default is dengue. "A92.0" for chik, "A92.8" for zika
+#'@param years vector with set of years for analysis. Default (NULL) is to get all years of data available.
+#'@param datasource valid connection to database
+#'@return list with d = data.frame with data.
 #'@author Claudia Codeco
 #'@examples
-#'dados <- getdelaydata(cities=3302205, years=c(2014, 2015), datasource=con)  # Not run without connection
+#'dados <- getdelaydata(cities=3304557, years=c(2016, 2017), cid10="A92", datasource=con)  # Not run without connection
 
 getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
       
@@ -361,31 +356,40 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
       
       if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
       
+      #dealing with synonimous cid
+      if (cid10 == "A90") cid <- c("A90", "A91") # dengue, dengue hemorragica
+      if (cid10 == "A92.0") cid <- c("A92", "A920","A92.0") # chik
+      if (cid10 == "A92.8") cid <- c("A92.8") #zika
+      
       if (class(datasource) == "PostgreSQLConnection"){
             
             sql1 = paste("'", cities[1], sep = "")
             if (ncities > 1) for (i in 2:ncities) sql1 = paste(sql1, cities[i], sep = "','")
             sql1 <- paste(sql1, "'", sep = "")
-            cid10command <- paste("'", cid10,"'", sep="")    
             
+            lcid <- length(cid)
+            cid10command <- paste("'", cid[1], sep="")
+            if (lcid > 1) for (i in 2:lcid) cid10command = paste(cid10command, cid[i], sep = "','")
+            cid10command <- paste(cid10command, "'", sep = "")
             
             if (nyears == 0){# means that all years will be included in the analysis
                   sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
-                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo = ", cid10command)
+                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo IN(", cid10command,")")
             } else { # filter some years
                   sql2 = paste("'", years[1], sep = "")
                   if(nyears > 1) for (i in 2:nyears) sql2 = paste(sql2, years[i], sep = "','")
                   sql2 <- paste(sql2, "'", sep = "")
                   
                   sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
-                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo = ", cid10command, "AND ano_notif IN (",sql2,")")      
+                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo IN(", cid10command, ") AND ano_notif IN (",sql2,")")      
             }
             
             dd <- dbGetQuery(datasource,sqlselect)
             
       } else {stop("getdelaydata: requires a valid PostgreSQLConnection")}
       dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
-      dd[,-dd$se_notif]      
+      dd$cid10 <- cid10
+      #dd[,-dd$se_notif]      
       dd
 }
 

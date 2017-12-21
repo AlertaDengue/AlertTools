@@ -118,7 +118,7 @@ getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
 #'@title Get Case Data and aggregate per week and area
 #'@param city city's geocode.
 #'@param finalday last day. Default is the last available.
-#'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A920"
+#'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8", 
 #'@param datasource PostgreSQLConnection to project database . 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
@@ -131,6 +131,11 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       
       if(nchar(city) == 6) city <- sevendigitgeocode(city)   
       
+      #dealing with synonimous cid
+      if (cid10 == "A90") cid <- c("A90", "A91") # dengue, dengue hemorragica
+      if (cid10 == "A92.0") cid <- c("A92", "A920","A92.0") # chik
+      if (cid10 == "A92.8") cid <- c("A92.8") #zika
+      
       # reading the data
       if (class(datasource) == "character") { # historical reasons
             load(datasource)
@@ -139,8 +144,15 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
             
       } else if (class(datasource) == "PostgreSQLConnection"){ # current entry
             sql1 <- paste("'", lastday, "'", sep = "")
+            
+            # dealing with multiple cids
+            lcid <- length(cid)
+            cid10command <- paste("'", cid[1], sep="")
+            if (lcid > 1) for (i in 2:lcid) cid10command = paste(cid10command, cid[i], sep = "','")
+            cid10command <- paste(cid10command, "'", sep = "")
+            
             sql <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= ",sql1, " AND municipio_geocodigo = ", city, 
-                         " AND cid10_codigo = \'", cid10,"\'", sep="")
+                         " AND cid10_codigo IN(", cid10command,")", sep="")
             
             dd <- dbGetQuery(datasource,sql)
             if (dim(dd)[1]==0) {

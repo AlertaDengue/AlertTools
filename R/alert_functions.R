@@ -152,6 +152,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'If not provided, use default from database. To be implemented.  
 #'@param pars list of parameters for the alerta, defined in config.R
 #'@param crit criteria for the alert colors, defined in configglobal.R
+#'@param cid10 default is A90 (dengue). Chik = A920, Zika = A92.8
 #'@param adjustdelay Default is TRUE, if F, there is no delay adjustment and estimated = observed.
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param sefinal if given, it stops at that week
@@ -171,10 +172,10 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 
 #'tail(res$data)
 
-update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, datasource, sefinal,adjustdelay=T){
+update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writedb = FALSE, datasource, sefinal,adjustdelay=T){
       
-      # update of a single city
-      if(!missing (city)) { 
+      # Getting metadata from table regional_saude
+      if(!missing (city)) { # if updating a single city
             if(nchar(city) == 6) city <- sevendigitgeocode(city) 
             
             sql = paste("SELECT geocodigo, codigo_estacao_wu, estacao_wu_sec
@@ -186,7 +187,7 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             
       }
       
-      if (!missing(region)){ # uma ou mais regionais
+      if (!missing(region)){ # if one or more regionais
             regionais = region
             sql1 = paste("'", regionais[1], sep = "")
             ns = length(regionais)
@@ -257,8 +258,10 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             
             print(paste("(Cidade ",i,"de",nlugares,")","Rodando alerta para ", geocidade, "usando estacao", estacao,"(ultima leitura:", lastdatewu,")"))
             
-            dC0 = getCases(city = geocidade, datasource=datasource) # consulta dados do sinan
-            dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) # consulta dados do tweet
+            # consulta dados do sinan
+            dC0 = getCases(city = geocidade, cid10 = cid10, datasource=datasource) 
+            
+            if(cid10 == "A90") dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) # consulta dados do tweet apenas se for dengue
             dW = cli[[estacao]]
             
             # cortando os dados para a janela temporal solicitada
@@ -292,8 +295,12 @@ update.alerta <- function(city, region, state, pars, crit, writedb = FALSE, data
             # se tiver ajuste de atraso pelo metodo tradicional, usar plnorm, senao pdig = 1 
             pdig <- rep(1, 20*7)[2:20]
             if(adjustdelay==TRUE){
-                  pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
+                  if(cid10=="A90") pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
+                  if(cid10=="A920") p <- plnorm(seq(7,20,by=7), pars$pdigChik[1], pars$pdigChik[2])
             } 
+            
+             p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
+           
             
             dC2 <- adjustIncidence(d, pdig = pdig) # ajusta a incidencia
             dC3 <- Rt(dC2, count = "tcasesmed", gtdist=gtdist, meangt=meangt, sdgt = sdgt) # calcula Rt
