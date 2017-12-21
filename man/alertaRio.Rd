@@ -16,7 +16,7 @@ alertaRio(naps = 0:9, pars, crit, datasource, se, cid10 = "A90",
 
 \item{se}{last epidemiological week (format = 201401)}
 
-\item{cid10}{default is A90 (dengue). Chik = A920}
+\item{cid10}{default is A90 (dengue). Chik = A920.}
 
 \item{verbose}{FALSE}
 }

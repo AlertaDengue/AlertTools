@@ -18,7 +18,7 @@
 
 \item{crit}{criteria for the alert colors, defined in configglobal.R}
 
-\item{cid10}{default is A90 (dengue). Chik = A920, Zika = A92.8}
+\item{cid10}{default is A90 (dengue). Chik = A92.0, Zika = A92.8}
 
 \item{writedb}{TRUE if it should write into the database, default is FALSE.}
 
