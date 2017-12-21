@@ -346,7 +346,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
 #'@param naps subset of vector 0:9 corresponding to the id of the APS. Default is all of them.
 #'@param datasource it is the name of the sql connection.
 #'@param se last epidemiological week (format = 201401) 
-#'@param cid10 default is A90 (dengue). Chik = A920
+#'@param cid10 default is A90 (dengue). Chik = A920.
 #'@param verbose FALSE
 #'@return list with an alert object for each APS.
 #'@examples
