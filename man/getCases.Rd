@@ -9,7 +9,7 @@ getCases(city, lastday = Sys.Date(), cid10 = "A90", datasource)
 \arguments{
 \item{city}{city's geocode.}
 
-\item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A920"}
+\item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8",}
 
 \item{datasource}{PostgreSQLConnection to project database .}
 

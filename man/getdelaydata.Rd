@@ -2,35 +2,27 @@
 % Please edit documentation in R/adjust_incidence_functions.R
 \name{getdelaydata}
 \alias{getdelaydata}
-\title{Get delay data for analysis}
+\title{Get delay data for one or more cities for delay analysis}
 \usage{
-getdelaydata(cities, years, cid10 = "A90", datasource)
+getdelaydata(cities, years = NULL, cid10 = "A90", datasource)
 }
 \arguments{
-\item{d}{dataset with case data containing at least three variables: the initial and final dates and a variable
-identifying the epidemiological week (SEM_NOT).}
+\item{cities}{vector with geocodes}
 
-\item{tini}{variable indicating the initial date}
+\item{years}{vector with set of years for analysis. Default (NULL) is to get all years of data available.}
 
-\item{tfim}{variable indicating the end date}
+\item{cid10}{disease code, Default is dengue. "A92.0" for chik, "A92.8" for zika}
 
-\item{SE}{variable indicating the epidemiological week}
-
-\item{date.format}{date format. Default is "%d-%m-%Y"}
-
-\item{truncdays}{Default is 183 days}
-
-\item{plotar}{Default is TRUE}
+\item{datasource}{valid connection to database}
 }
 \value{
-list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
-are internal objects used for plotting.
+list with d = data.frame with data.
 }
 \description{
 Gets delay data for one or more cities. Internal function used in the delay fitting using inla.
 }
 \examples{
-dados <- getdelaydata(cities=c(3302205, 3304557), datasource=con)  # Not run without connection
+dados <- getdelaydata(cities=3304557, years=c(2016, 2017), cid10="A92", datasource=con)  # Not run without connection
 }
 \author{
 Claudia Codeco

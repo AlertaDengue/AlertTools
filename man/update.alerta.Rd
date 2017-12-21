@@ -4,8 +4,8 @@
 \alias{update.alerta}
 \title{Define conditions to issue a 4 level alert Green-Yellow-Orange-Red for any city or region.}
 \usage{
-update.alerta(city, region, state, pars, crit, writedb = FALSE, datasource,
-  sefinal, adjustdelay = T)
+\method{update}{alerta}(city, region, state, pars, crit, cid10 = "A90",
+  writedb = FALSE, datasource, sefinal, adjustdelay = T)
 }
 \arguments{
 \item{city}{city's geocode (6 or 7 digits).}
@@ -17,6 +17,8 @@ update.alerta(city, region, state, pars, crit, writedb = FALSE, datasource,
 \item{pars}{list of parameters for the alerta, defined in config.R}
 
 \item{crit}{criteria for the alert colors, defined in configglobal.R}
+
+\item{cid10}{default is A90 (dengue). Chik = A920, Zika = A92.8}
 
 \item{writedb}{TRUE if it should write into the database, default is FALSE.}
 

@@ -152,7 +152,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'If not provided, use default from database. To be implemented.  
 #'@param pars list of parameters for the alerta, defined in config.R
 #'@param crit criteria for the alert colors, defined in configglobal.R
-#'@param cid10 default is A90 (dengue). Chik = A920, Zika = A92.8
+#'@param cid10 default is A90 (dengue). Chik = A92.0, Zika = A92.8
 #'@param adjustdelay Default is TRUE, if F, there is no delay adjustment and estimated = observed.
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param sefinal if given, it stops at that week
@@ -261,17 +261,25 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             # consulta dados do sinan
             dC0 = getCases(city = geocidade, cid10 = cid10, datasource=datasource) 
             
-            if(cid10 == "A90") dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) # consulta dados do tweet apenas se for dengue
+            # consulta dados do tweet apenas se for dengue 
+            if(cid10 == "A90") dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) 
             dW = cli[[estacao]]
             
             # cortando os dados para a janela temporal solicitada
             if (!missing(sefinal)){
             dC0 <-subset(dC0, SE<=sefinal)
-            dT <- subset(dT, SE<=sefinal)
+            if(cid10 == "A90") dT <- subset(dT, SE<=sefinal)
             }
             
-            d <- mergedata(cases = dC0, climate = dW, tweet = dT)  # junta os dados
-            if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))  # interpolacao e extrapolação do clima
+            # junta os dados
+            if(cid10 == "A90") {d <- mergedata(cases = dC0, climate = dW, tweet = dT)}
+            else{
+                  d <- mergedata(cases = dC0, climate = dW)
+                  d$tweet <- NA
+            }
+            
+            # interpolacao e extrapolação do clima
+            if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))  
                         # parsi e' pars de uma unica cidade. 
             # E'preciso extrair no caso de region 
             if (nlugares > 1) {
@@ -293,6 +301,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             d$pop[is.na(d$pop)==TRUE] <- na.omit(unique(d$pop))[1]
             
             # se tiver ajuste de atraso pelo metodo tradicional, usar plnorm, senao pdig = 1 
+            
             pdig <- rep(1, 20*7)[2:20]
             if(adjustdelay==TRUE){
                   if(cid10=="A90") pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]

@@ -16,6 +16,7 @@ table with mean, median, 2.5% and 97.5% incidence.
 predicted incidence using fitDelay.inla().
 }
 \examples{
+dados <- getdelaydata(cities=3302205, datasource=con)
 res = delaycalc(dados)
 outp<-fitDelay.inla(res)
 delay <- prob.inc(outp)

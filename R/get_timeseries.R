@@ -132,8 +132,8 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       if(nchar(city) == 6) city <- sevendigitgeocode(city)   
       
       #dealing with synonimous cid
-      if (cid10 == "A90") cid <- c("A90", "A91") # dengue, dengue hemorragica
-      if (cid10 == "A92.0") cid <- c("A92", "A920","A92.0") # chik
+      if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
+      if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"}  # chik
       if (cid10 == "A92.8") cid <- c("A92.8") #zika
       
       # reading the data

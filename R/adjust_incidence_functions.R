@@ -357,8 +357,8 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
       if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
       
       #dealing with synonimous cid
-      if (cid10 == "A90") cid <- c("A90", "A91") # dengue, dengue hemorragica
-      if (cid10 == "A92.0") cid <- c("A92", "A920","A92.0") # chik
+      if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
+      if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"} # chik
       if (cid10 == "A92.8") cid <- c("A92.8") #zika
       
       if (class(datasource) == "PostgreSQLConnection"){

@@ -4,16 +4,23 @@
 \alias{adjustIncidence}
 \title{Adjust incidence data correcting for the notification delay.}
 \usage{
-adjustIncidence(obj, pdig = plnorm((1:20) * 7, 2.5016, 1.1013))
+adjustIncidence(obj, method = "fixedprob", pdig = plnorm((1:20) * 7, 2.5016,
+  1.1013), Dmax = 12, nyears = 3, datasource = NA)
 }
 \arguments{
 \item{obj}{data.frame with crude weekly cases (not adjusted). This data.frame comes from the getCases
 function (if withdivision = FALSE), of getCases followed by casesinlocality (if dataframe is available
 per bairro)}
 
-\item{pdig}{vector of probability of been typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
+\item{method}{"fixedprob" for fixed delay prob per week; "bayesian" for the dynamic model}
+
+\item{pdig}{for the "fixedprob" method. It is a vector of probability of been typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
 The length of the vector corresponds to the maximum delay. After day, it is assumed that p = 1. The default
 was obtained from Rio de Janeiro.}
+
+\item{Dmax}{for the "bayesian" method. Maximum number of weeks that is modeled}
+
+\item{nyears}{for the "bayesian" method. Number of years of data used for fitting the model}
 }
 \value{
 data.frame with pdig (proportion reported), median and 95percent confidence interval for the 
@@ -26,13 +33,12 @@ It requires knowing the probability of notification per week passed. This functi
 notification process, there is, no influence of covariates or any temporal inhomogeneity.
 }
 \examples{
-res = getCases(city = c(330455), withdivision = FALSE) # Rio de Janeiro
+# fixedprob
+res = getCases(city = 330240, datasource=con) 
 head(res)
 resfit<-adjustIncidence(obj=res)
 tail(resfit)
-plot(tail(resfit$casos,n=30),type="l",ylab="cases",xlab="weeks")
-lines(tail(resfit$tcasesmed,n=30),col=2)
-lines(tail(resfit$tcasesmin,n=30),col=2,lty=3)
-lines(tail(resfit$tcasesmax,n=30),col=2,lty=3)
-legend(12,20,c("notified cases","+ to be notified cases"),lty=1, col=c(1,2),cex=0.7)
+# bayesian
+resfit<-adjustIncidence(obj=res,method="bayesian",datasource=con)
+tail(resfit)
 }
