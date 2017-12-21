@@ -13,44 +13,73 @@
 #'@param obj data.frame with crude weekly cases (not adjusted). This data.frame comes from the getCases
 #' function (if withdivision = FALSE), of getCases followed by casesinlocality (if dataframe is available
 #' per bairro)  
-#'@param pdig vector of probability of been typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
+#'@param method "fixedprob" for fixed delay prob per week; "bayesian" for the dynamic model 
+#'@param pdig for the "fixedprob" method. It is a vector of probability of been typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
 #'The length of the vector corresponds to the maximum delay. After day, it is assumed that p = 1. The default
 #'was obtained from Rio de Janeiro. 
+#'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
+#'@param nyears for the "bayesian" method. Number of years of data used for fitting the model  
 #'@return data.frame with pdig (proportion reported), median and 95percent confidence interval for the 
 #'predicted cases-to-be-notified)
 #'@examples
-#'res = getCases(city = c(330455), withdivision = FALSE) # Rio de Janeiro
+#'# fixedprob
+#'res = getCases(city = 330240, datasource=con) 
 #'head(res)
 #'resfit<-adjustIncidence(obj=res)
 #'tail(resfit)
-#'plot(tail(resfit$casos,n=30),type="l",ylab="cases",xlab="weeks")
-#'lines(tail(resfit$tcasesmed,n=30),col=2)
-#'lines(tail(resfit$tcasesmin,n=30),col=2,lty=3)
-#'lines(tail(resfit$tcasesmax,n=30),col=2,lty=3)
-#'legend(12,20,c("notified cases","+ to be notified cases"),lty=1, col=c(1,2),cex=0.7)
+#' # bayesian
+#'resfit<-adjustIncidence(obj=res,method="bayesian",datasource=con)
+#'tail(resfit)
 
-adjustIncidence<-function(obj, pdig = plnorm((1:20)*7, 2.5016, 1.1013)){
+adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), Dmax=12, nyears = 3, datasource=NA){
+      
+  # checking if only one city in obj
+  ncities <- length(unique(obj$cidade)) 
+  if (ncities > 1) stop("Function adjustIncidence: only runs for a city at a time")
   le = length(obj$casos) 
   lse = length(obj$SE) 
   
-  # creating the proportion vector
-  lp <- length(pdig)
-  
-  if(le > lp) {obj$pdig <- c(rep(1, times = (le - lp)), rev(pdig))
-  } else if (le == lp) {obj$pdig <- rev(pdig)
-  } else obj$pdig <- rev(pdig)[1:le]
-  
-  lambda <- (obj$casos/obj$pdig) - obj$casos   
-  corr <- function(lamb,n=500) sort(rpois(n,lambda=lamb))[c(02,50,97)] # calcula 95% IC e mediana estimada da parte estocastica 
-  
+  obj$pdig <- NA
   obj$tcasesICmin <- NA
   obj$tcasesmed <- NA
   obj$tcasesICmax <- NA
   
-  for(i in 1:length(obj$casos)) obj[i,c("tcasesICmin","tcasesmed","tcasesICmax")] <- corr(lamb = lambda[i]) + obj$casos[i]
   
+  if (method == "fixedprob"){
+        # creating the proportion vector
+        lp <- length(pdig)
+        
+        if(le > lp) {obj$pdig <- c(rep(1, times = (le - lp)), rev(pdig))
+        } else if (le == lp) {obj$pdig <- rev(pdig)
+        } else obj$pdig <- rev(pdig)[1:le]
+        
+        lambda <- (obj$casos/obj$pdig) - obj$casos   
+        corr <- function(lamb,n=500) sort(rpois(n,lambda=lamb))[c(02,50,97)] # calcula 95% IC e mediana estimada da parte estocastica 
+        
+        for(i in 1:length(obj$casos)) obj[i,c("tcasesICmin","tcasesmed","tcasesICmax")] <- corr(lamb = lambda[i]) + obj$casos[i]
+  }
+  
+ if (method == "bayesian"){
+       thisyear <- floor(obj$SE[lse]/100)
+       # Leo's functions
+       dados <- getdelaydata(cities=unique(obj$cidade), years = (thisyear-nyears):thisyear, cid10 = obj$CID10[1], datasource=con)
+       lastdate <- max(dados$SE_notif)
+       
+       res <- delaycalc(dados)
+       outp <- fitDelay.inla(res, Dmax = Dmax)
+       delay <- prob.inc(outp, plotar = FALSE)
+       
+       # adding to the alert data obj
+       nweeks <- dim(delay)[2]
+       obj$tcasesICmin <- obj$casos; obj$tcasesICmax <- obj$casos; obj$tcasesmed <- obj$casos
+       obj$tcasesICmin[(le-nweeks+1):le]<-delay[3,]
+       obj$tcasesmed[(le-nweeks+1):le]<-delay[1,]
+       obj$tcasesICmax[(le-nweeks+1):le]<-delay[4,]
+ }   
+ 
   obj
 }
+
 
 
 
@@ -323,11 +352,13 @@ dd
 #'are internal objects used for plotting.
 #'@author Claudia Codeco
 #'@examples
-#'dados <- getdelaydata(cities=c(3302205, 3304557), datasource=con)  # Not run without connection
+#'dados <- getdelaydata(cities=3302205, years=c(2014, 2015), datasource=con)  # Not run without connection
 
-getdelaydata <- function(cities, years, cid10 = "A90", datasource){
+getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
       
       ncities = length(cities)
+      nyears = length(years)
+      
       if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
       
       if (class(datasource) == "PostgreSQLConnection"){
@@ -337,11 +368,22 @@ getdelaydata <- function(cities, years, cid10 = "A90", datasource){
             sql1 <- paste(sql1, "'", sep = "")
             cid10command <- paste("'", cid10,"'", sep="")    
             
-            sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
+            
+            if (nyears == 0){# means that all years will be included in the analysis
+                  sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
                                municipio_geocodigo IN(", sql1, ") AND cid10_codigo = ", cid10command)
+            } else { # filter some years
+                  sql2 = paste("'", years[1], sep = "")
+                  if(nyears > 1) for (i in 2:nyears) sql2 = paste(sql2, years[i], sep = "','")
+                  sql2 <- paste(sql2, "'", sep = "")
+                  
+                  sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
+                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo = ", cid10command, "AND ano_notif IN (",sql2,")")      
+            }
+            
             dd <- dbGetQuery(datasource,sqlselect)
             
-      }
+      } else {stop("getdelaydata: requires a valid PostgreSQLConnection")}
       dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
       dd[,-dd$se_notif]      
       dd
@@ -572,6 +614,7 @@ plot.inla.re = function(outputRE, xlab){
 #'@return table with mean, median, 2.5% and 97.5% incidence.
 #'@author Leo Bastos
 #'@examples
+#'dados <- getdelaydata(cities=3302205, datasource=con)
 #'res = delaycalc(dados)
 #'outp<-fitDelay.inla(res)
 #'delay <- prob.inc(outp)

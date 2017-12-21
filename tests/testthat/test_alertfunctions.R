@@ -18,7 +18,7 @@ dW01 = getWU(stations = 'SBRJ',datasource= con)
 d0<- mergedata(cases = dC11,tweet = dT01, climate = dW01)
 
 test_that("output of merging is a non empty data.frame.", {
-      expect_more_than(dim(d0)[1], 0)
+      expect_gt(dim(d0)[1], 0)
 })
 
 test_that("output has the minimum set of columns.", {

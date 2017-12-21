@@ -67,10 +67,10 @@ d2<- mergedata(cases = dC1, climate = dW01)
 d3<- mergedata(cases = dC1, tweet = dT01)
 
 test_that("output of merging is a non empty data.frame.", {
-  expect_more_than(dim(d0)[1], 0)
-  expect_more_than(dim(d1)[1], 0)
-  expect_more_than(dim(d2)[1], 0)
-  expect_more_than(dim(d3)[1], 0)
+  expect_gt(dim(d0)[1], 0)
+  expect_gt(dim(d1)[1], 0)
+  expect_gt(dim(d2)[1], 0)
+  expect_gt(dim(d3)[1], 0)
 })
 
 test_that("output has the minimum set of columns.", {

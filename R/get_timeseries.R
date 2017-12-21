@@ -180,7 +180,7 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       varglobais <- dbGetQuery(datasource,sql2)
       st$nome <- varglobais$nome 
       st$pop <- varglobais$populacao
-
+      st$CID10 <- cid10
       if(any(is.na(st$pop)))message("getCases function failed to import pop data for city", city)
       
       st  
