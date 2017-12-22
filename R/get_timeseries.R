@@ -13,8 +13,8 @@
 #' to open the database connection. 
 #'@return data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
 #'@examples
-#'res = getWU(station = 'SBRJ', vars="temp_min", finalday = "2014-10-10", datasource= con)
-#'res = getWU(station = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
+#'res = getWU(stations = 'SBRJ', vars="temp_min", datasource= con)
+#'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
 #'tail(res)
 
 getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource) {
@@ -39,12 +39,11 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
             # sql query for the date
             sql2 = paste("'", finalday, "'", sep = "")
             # sql query for the variables
-            sql3 = paste("'", vars[1], sep = "")
+            sql3 = paste("data_dia, \"Estacao_wu_estacao_id\",", vars[1], sep = "")
             nv = length(vars)
-            if (nv > 1) for (i in 2:nv) sql3 = paste(sql3, vars[i], sep = "','")
-            sql3 <- paste(sql3, "'", sep = "")   
-            
-            sql <- paste("SELECT", vars, "from \"Municipio\".\"Clima_wu\" WHERE 
+            if (nv > 1) for (i in 2:nv) sql3 = paste(sql3, vars[i], sep = ",")
+          
+            sql <- paste("SELECT", sql3, "from \"Municipio\".\"Clima_wu\" WHERE 
                         \"Estacao_wu_estacao_id\"
                         IN  (", sql1, ") AND data_dia <= ",sql2)
             d <- dbGetQuery(datasource,sql)
@@ -53,7 +52,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
       names(d)[which(names(d)== "Estacao_wu_estacao_id")]<-"estacao"
       
       # Atribuir SE e agregar por semana-----------------------------------------
-      d$SE <- data2SE(d$data, format = "%Y-%m-%d")
+      d$SE <- data2SE(d$data_dia, format = "%Y-%m-%d")
       
       sem <- seqSE(from = min(d$SE), to = max(d$SE))$SE
       df <- expand.grid(SE=sem, estacao = unique(d$estacao))
@@ -351,9 +350,9 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
 #' station of interest.
 #'@return data.frame with all data available 
 #'@examples
-#'cas = getCases(city = c(330455), withdivision = FALSE, datasource = "data/sinan.rda") 
-#'tw = getTweet(city = c(330455), datasource = "data/tw.rda")
-#'clima = getWU(stations = 'SBRJ', var="temp_min", datasource="data/WUdata.rda")
+#'cas = getCases(city = 330240, datasource = con) 
+#'tw = getTweet(city = 330240, datasource = con)
+#'clima = getWU(stations = 'SBRJ', var=c("temp_min","umid_min"), datasource=con)
 #'head(mergedata(cases = cas, tweet = tw, climate = clima))
 #'head(mergedata(tweet = tw, climate = clima))
 #'head(mergedata(cases = cas, climate = clima))

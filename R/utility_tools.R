@@ -40,7 +40,7 @@ episem <- function(x, format="%Y-%m-%d",retorna='') {
             x <- as.Date(x, format = format)
             #warning("Precisa ser do tipo Date - Convertendo de texto")
       }
-      if (class(x) == "Date" & is.na(x) == T) {
+      if (is.na(x) == T) {
             message("episem: Date not valid, returning NA")
             return(NA) 
       }
@@ -130,7 +130,7 @@ SE2date <- function(se){
 #'@param to first week in format 201401
 #'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works until dez 2017.
 #'@examples
-#'seqSE(201502, 201510)
+#'seqSE(201502, 201710)
 
 
 seqSE <- function(from, to){
