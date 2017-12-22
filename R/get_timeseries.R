@@ -3,16 +3,18 @@
 #TEMPORAIS A PARTIR DOS DADOS BRUTOS CLAUDIA CODECO - 2015
 
 # GetWU --------------------------------------------------------
-#'@description Create weekly time series from meteorological station data in server
+#'@description Create weekly time series from meteorological station data in server taking the mean of the daily values.
 #'@title Get Climate Data
 #'@param stations station code (4 digits).
-#'@param vars climate variables (default var="all": all variables available )
+#'@param vars vector with meteorological variables. Available variables: "temp_min" (default), 
+#'"temp_max","temp_med","data_dia","umid_min","umid_med","umid_max","pressao_min","pressao_med","pressao_max"
 #'@param finalday last day. Default is the last available. Format = Y-m-d. 
 #'@param datasource Use "data/WUdata.rda" to use test dataset. Use the connection to the Postgresql server if using project data. See also DenguedbConnect
 #' to open the database connection. 
 #'@return data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
 #'@examples
 #'res = getWU(station = 'SBRJ', vars="temp_min", finalday = "2014-10-10", datasource= con)
+#'res = getWU(station = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
 #'tail(res)
 
 getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource) {
@@ -36,8 +38,13 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
             sql1 <- paste(sql1, "'", sep = "")
             # sql query for the date
             sql2 = paste("'", finalday, "'", sep = "")
+            # sql query for the variables
+            sql3 = paste("'", vars[1], sep = "")
+            nv = length(vars)
+            if (nv > 1) for (i in 2:nv) sql3 = paste(sql3, vars[i], sep = "','")
+            sql3 <- paste(sql3, "'", sep = "")   
             
-            sql <- paste("SELECT * from \"Municipio\".\"Clima_wu\" WHERE 
+            sql <- paste("SELECT", vars, "from \"Municipio\".\"Clima_wu\" WHERE 
                         \"Estacao_wu_estacao_id\"
                         IN  (", sql1, ") AND data_dia <= ",sql2)
             d <- dbGetQuery(datasource,sql)

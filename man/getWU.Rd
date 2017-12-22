@@ -9,7 +9,8 @@ getWU(stations, vars = "temp_min", finalday = Sys.Date(), datasource)
 \arguments{
 \item{stations}{station code (4 digits).}
 
-\item{vars}{climate variables (default var="all": all variables available )}
+\item{vars}{vector with meteorological variables. Available variables: "temp_min" (default), 
+"temp_max","temp_med","data_dia","umid_min","umid_med","umid_max","pressao_min","pressao_med","pressao_max"}
 
 \item{finalday}{last day. Default is the last available. Format = Y-m-d.}
 
@@ -20,9 +21,10 @@ to open the database connection.}
 data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
 }
 \description{
-Create weekly time series from meteorological station data in server
+Create weekly time series from meteorological station data in server taking the mean of the daily values.
 }
 \examples{
 res = getWU(station = 'SBRJ', vars="temp_min", finalday = "2014-10-10", datasource= con)
+res = getWU(station = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
 tail(res)
 }

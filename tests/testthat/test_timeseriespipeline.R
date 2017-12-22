@@ -52,18 +52,22 @@ test_that("output of getTweet has the required columns.", {
 # ----------------------
 # Testing getWU function
 # ----------------------
-dW01 = getWU(stations = 'SBAF', datasource=con)
+dW01 = getWU(stations = 'SBAF', datasource=con) #default var is temp_min
 
 test_that("output of getWU has the required columns.", {
-  expect_true(all(c("SE", "estacao") %in% names(dW01)))
+  expect_true(all(c("SE", "estacao","temp_min") %in% names(dW01)))
 })
 
+dW02 = getWU(stations = 'SBAF', vars=c("temp_min","temp_max"), datasource=con)
+test_that("output of getWU has the required columns.", {
+      expect_true(all(c("SE", "estacao","temp_min","temp_max") %in% names(dW02)))
+})
 
 # ---------------------
 # Testing mergedata 
-d0<- mergedata(cases = dC1,tweet = dT01, climate = dW01)
-d1<- mergedata(tweet = dT01, climate = dW01)
-d2<- mergedata(cases = dC1, climate = dW01)
+d0<- mergedata(cases = dC1,tweet = dT01, climate = dW02)
+d1<- mergedata(tweet = dT01, climate = dW02)
+d2<- mergedata(cases = dC1, climate = dW02)
 d3<- mergedata(cases = dC1, tweet = dT01)
 
 test_that("output of merging is a non empty data.frame.", {

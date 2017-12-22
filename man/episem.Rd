@@ -19,6 +19,7 @@ Find to which epidemiological week belongs a given day
 }
 \examples{
 episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"))
+episem(x= as.Date("2015-01-50", format="\%Y-\%m-\%d"))
 }
 \author{
 Oswaldo Cruz
