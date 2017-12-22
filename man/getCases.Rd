@@ -24,6 +24,6 @@ Create weekly time series from case data from server. The source is the SINAN.
 \examples{
 dC0 = getCases(city = 330455, lastday ="2014-03-10", datasource = con) # dengue
 dC0 = getCases(city = 3302205, datasource = con) # dengue, until last day available
-dC0 = getCases(city = 330455, cid10= "A920", datasource = con) # chik 
+dC0 = getCases(city = 2304400, cid10= "A923", datasource = con) # zika 
 head(dC0)
 }

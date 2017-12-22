@@ -654,6 +654,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       if(write == "db"){
             # se tiver ja algum registro com mesmo geocodigo e SE, esse sera substituido pelo atualizado.
             print(paste("saving alerta table for ",cid10))
+            
             varnames <- "(\"SE\", \"data_iniSE\", casos_est, casos_est_min, casos_est_max, casos,
             municipio_geocodigo,p_rt1,p_inc100k,\"Localidade_id\",nivel,versao_modelo,id)"
             
@@ -664,7 +665,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
             if(cid10=="A90") tabela <-  "Historico_alerta"
             if(cid10=="A92.0") tabela <-  "Historico_alerta_chik"
             if(cid10=="A92.8") tabela <-  "Historico_alerta_zika"
-            if(!(cid10 %in% c("A90", "A92.0", "A92.8")) stop(paste("não sei onde salvar histórico para o agravo", cid10))
+            if(!(cid10 %in% c("A90", "A92.0", "A92.8"))) stop(paste("não sei onde salvar histórico para o agravo", cid10))
            
                 updates <- paste(sepvarnames[1],"=excluded.",sepvarnames[1],sep="")
             for(i in 2:13) updates <- paste(updates, paste(sepvarnames[i],"=excluded.",

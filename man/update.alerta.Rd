@@ -49,7 +49,7 @@ gtdist="normal"; meangt=3; sdgt = 1.2
 pars.RJ <- NULL
 pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
 # Running the model:
-res <- update.alerta(city = 3205309, pars = pars.ES[["Central"]], crit = criteria, datasource = con)
+res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteria, datasource = con)
 res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
 tail(res$data)
 }
