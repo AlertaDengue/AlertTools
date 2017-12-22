@@ -686,7 +686,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
                   
                   
                   insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" " ,varnames, 
-                                     " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT",constr.unico,"  
+                                     " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT ",constr.unico,"  
                                      DO UPDATE SET ",updates, sep="")
                   
                   try(dbGetQuery(con, insert_sql))      
