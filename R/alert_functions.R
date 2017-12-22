@@ -662,9 +662,10 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
                              "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
                              "nivel","versao_modelo","id")
             
-            if(cid10=="A90") tabela <-  "Historico_alerta"
-            if(cid10=="A92.0") tabela <-  "Historico_alerta_chik"
-            if(cid10=="A92.8") tabela <-  "Historico_alerta_zika"
+            # nomes das tabelas para salvar os historicos:
+            if(cid10=="A90") {tabela <-  "Historico_alerta"; constr.unico = "alertas_unicos"}
+            if(cid10=="A92.0") {tabela <-  "Historico_alerta_chik"; constr.unico = "alertas_unicos_chik"}
+            if(cid10=="A92.8") {tabela <-  "Historico_alerta_zika"; constr.unico = "alertas_unicos_zika"}
             if(!(cid10 %in% c("A90", "A92.0", "A92.8"))) stop(paste("não sei onde salvar histórico para o agravo", cid10))
            
                 updates <- paste(sepvarnames[1],"=excluded.",sepvarnames[1],sep="")
@@ -685,7 +686,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
                   
                   
                   insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" " ,varnames, 
-                                     " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT alertas_unicos 
+                                     " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT",constr.unico,"  
                                      DO UPDATE SET ",updates, sep="")
                   
                   try(dbGetQuery(con, insert_sql))      

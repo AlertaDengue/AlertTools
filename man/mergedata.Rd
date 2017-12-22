@@ -22,9 +22,9 @@ data.frame with all data available
 Merge cases, tweets and climate data for the alert
 }
 \examples{
-cas = getCases(city = c(330455), withdivision = FALSE, datasource = "data/sinan.rda") 
-tw = getTweet(city = c(330455), datasource = "data/tw.rda")
-clima = getWU(stations = 'SBRJ', var="temp_min", datasource="data/WUdata.rda")
+cas = getCases(city = 330240, datasource = con) 
+tw = getTweet(city = 330240, datasource = con)
+clima = getWU(stations = 'SBRJ', var=c("temp_min","umid_min"), datasource=con)
 head(mergedata(cases = cas, tweet = tw, climate = clima))
 head(mergedata(tweet = tw, climate = clima))
 head(mergedata(cases = cas, climate = clima))

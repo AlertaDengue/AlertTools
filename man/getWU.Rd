@@ -24,7 +24,7 @@ data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin ume
 Create weekly time series from meteorological station data in server taking the mean of the daily values.
 }
 \examples{
-res = getWU(station = 'SBRJ', vars="temp_min", finalday = "2014-10-10", datasource= con)
-res = getWU(station = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
+res = getWU(stations = 'SBRJ', vars="temp_min", datasource= con)
+res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
 tail(res)
 }

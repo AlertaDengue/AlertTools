@@ -18,5 +18,5 @@ data.frame with the epidemiological weeks and corresponding extreme days. WARNIN
 Creates a sequence of epidemiological weeks and respective end and final days
 }
 \examples{
-seqSE(201502, 201510)
+seqSE(201502, 201710)
 }
