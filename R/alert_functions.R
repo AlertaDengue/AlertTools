@@ -19,21 +19,23 @@
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #' # Getting the data (requires a con connection)
-#'tw = getTweet(city = c(3205309), datasource = con) 
-#'cli = getWU(stations = 'SBVT', datasource=con)
-#'cas = getCases(city = 320530, datasource=con)
+#'tw = getTweet(city = 2304400, datasource = con) 
+#'cli = getWU(stations = 'SBVT', vars=c("temp_min", "umid_min"), datasource=con)
+#'cas = getCases(city = 2304400, cid10="A92.0",datasource=con)
 #' # Organizing the data
-#'casfit<-adjustIncidence(obj=cas)
+#'casfit<-adjustIncidence(obj=cas, method="bayesian")
 #'casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
 #'d<- mergedata(cases = casr, tweet = tw, climate = cli)
 #'d$temp_min <- nafill(d$temp_min, rule = "arima") 
+#'d$umid_min <- nafill(d$umid_min, rule = "arima") 
 #' # Parameters of the alert model (usually set up in the globalconfig and config files)
-#'criteria = list(crity = c("temp_min > tcrit & inc > 0", 3, 1),
+#'criteria = list(crity = c("umid_min > ucrit & inc > 0", 3, 1),
 #'crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
 #'critr = c("inc > inccrit", 2, 2))
 #'gtdist="normal"; meangt=3; sdgt = 1.2
 #'pars.RJ <- NULL
-#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
+#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit=50, inccrit = 100, preseas=8.28374162389761, 
+#'posseas = 7.67878514885295, legpos="bottomright")
 #' # Running the alert
 #'ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteria, pop = 1000000)
 #'ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteria, pop = 1000000)
@@ -173,7 +175,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'tail(res$data)
 
 update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writedb = FALSE,
-                          datasource, sefinal,adjustdelay=T){
+                          datasource, sefinal,adjustdelay=T, delaymethod="fixedprob"){
       
       # Getting metadata from table regional_saude
       if(!missing (city)) { # if updating a single city
@@ -305,17 +307,22 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             d$pop[is.na(d$pop)==TRUE] <- na.omit(unique(d$pop))[1]
             
             # se tiver ajuste de atraso pelo metodo tradicional, usar plnorm, senao pdig = 1 
+            if(adjustdelay == T){
+                  if(delaymethod=="fixedprob"){
+                        pdig <- rep(1, 20*7)[2:20]
+                        if(cid10=="A90") pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
+                        if(cid10=="A92.0") pdig <- plnorm(seq(7,20,by=7), pars$pdigChik[1], pars$pdigChik[2])
+                        p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
+                        dC2 <- adjustIncidence(d, pdig = pdig, method = "fixedprob") # ajusta a incidencia
+                  }
+                  if(delaymethod=="bayesian") dC2 <- adjustIncidence(d, pdig = pdig, method = "bayesian")
+            }else{
+                  d$tcasesmed <- d$casos
+                  d$tcasesICmin <- casos
+                  d$tcasesICmax <- casos
+            }
             
-            pdig <- rep(1, 20*7)[2:20]
-            if(adjustdelay==TRUE){
-                  if(cid10=="A90") pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
-                  if(cid10=="A920") p <- plnorm(seq(7,20,by=7), pars$pdigChik[1], pars$pdigChik[2])
-            } 
-            
-             p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
-           
-            
-            dC2 <- adjustIncidence(d, pdig = pdig) # ajusta a incidencia
+             
             dC3 <- Rt(dC2, count = "tcasesmed", gtdist=gtdist, meangt=meangt, sdgt = sdgt) # calcula Rt
             
             alerta <- fouralert(dC3, pars = parsi, crit = criteria, pop=dC0$pop[1], miss="last") # calcula alerta
