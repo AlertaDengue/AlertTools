@@ -167,7 +167,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'pars.RJ <- NULL
 #'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
 #'# Running the model:
-#'res <- update.alerta(city = 3205309, pars = pars.ES[["Central"]], crit = criteria, datasource = con)
+#'res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteria, datasource = con)
 #'res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
 
 #'tail(res$data)
@@ -619,6 +619,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       
       data <- obj$data
       indices <- obj$indices
+      cid10 <- data$CID10[1]
       
       cidade <- na.omit(unique(obj$data$cidade))
       if (length(cidade) > 1) stop("so posso gravar no bd uma cidade por vez.")
@@ -652,7 +653,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       
       if(write == "db"){
             # se tiver ja algum registro com mesmo geocodigo e SE, esse sera substituido pelo atualizado.
-            
+            print(paste("saving alerta table for ",cid10))
             varnames <- "(\"SE\", \"data_iniSE\", casos_est, casos_est_min, casos_est_max, casos,
             municipio_geocodigo,p_rt1,p_inc100k,\"Localidade_id\",nivel,versao_modelo,id)"
             
@@ -660,7 +661,12 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
                              "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
                              "nivel","versao_modelo","id")
             
-            updates <- paste(sepvarnames[1],"=excluded.",sepvarnames[1],sep="")
+            if(cid10=="A90") tabela <-  "Historico_alerta"
+            if(cid10=="A92.0") tabela <-  "Historico_alerta_chik"
+            if(cid10=="A92.8") tabela <-  "Historico_alerta_zika"
+            if(!(cid10 %in% c("A90", "A92.0", "A92.8")) stop(paste("não sei onde salvar histórico para o agravo", cid10))
+           
+                updates <- paste(sepvarnames[1],"=excluded.",sepvarnames[1],sep="")
             for(i in 2:13) updates <- paste(updates, paste(sepvarnames[i],"=excluded.",
                                                            sepvarnames[i],sep=""),sep=",") 
             
@@ -675,7 +681,9 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
                         else {linha = paste(linha, as.character(d[li,i]),sep=",")}
                   }
                   linha = gsub("NA","NULL",linha)
-                  insert_sql = paste("INSERT INTO \"Municipio\".\"Historico_alerta\" " ,varnames, 
+                  
+                  
+                  insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" " ,varnames, 
                                      " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT alertas_unicos 
                                      DO UPDATE SET ",updates, sep="")
                   

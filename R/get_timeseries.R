@@ -124,7 +124,7 @@ getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
 #'@examples
 #'dC0 = getCases(city = 330455, lastday ="2014-03-10", datasource = con) # dengue
 #'dC0 = getCases(city = 3302205, datasource = con) # dengue, until last day available
-#'dC0 = getCases(city = 330455, cid10= "A920", datasource = con) # chik 
+#'dC0 = getCases(city = 2304400, cid10= "A923", datasource = con) # zika 
 #'head(dC0)
 
 getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
@@ -134,8 +134,8 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       #dealing with synonimous cid
       if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
       if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"}  # chik
-      if (cid10 == "A92.8") cid <- c("A92.8") #zika
-      
+      if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- "A92.8"} #zika
+      if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
       # reading the data
       if (class(datasource) == "character") { # historical reasons
             load(datasource)
