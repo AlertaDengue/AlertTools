@@ -172,7 +172,8 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 
 #'tail(res$data)
 
-update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writedb = FALSE, datasource, sefinal,adjustdelay=T){
+update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writedb = FALSE,
+                          datasource, sefinal,adjustdelay=T){
       
       # Getting metadata from table regional_saude
       if(!missing (city)) { # if updating a single city
@@ -278,9 +279,17 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
                   d$tweet <- NA
             }
             
-            # interpolacao e extrapolação do clima
-            if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))  
-                        # parsi e' pars de uma unica cidade. 
+            # interpolacao e extrapolação das variaveis climaticas
+            allvars.cli <- c("temp_min","temp_med","temp_max","umid_min","umid_med","umid_max",
+                         "pressao_min","pressao_med","pressao_max")
+            
+            vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
+            
+            for (i in vars.cli) {
+                  if (is.na(tail(d[,i])[1])) try(d[,i] <-nafill(d[,i], rule="arima"))  
+            }
+                        
+            # parsi e' pars de uma unica cidade. 
             # E'preciso extrair no caso de region 
             if (nlugares > 1) {
                   d$nome_regional <- dd$nome_regional[dd$geocodigo==geocidade]
@@ -288,11 +297,6 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             } else {
                   parsi <- pars
             }
-            
-#             if(!all(names(parsi) %in% c("pdig","tcrit","inccrit","preseas","posseas",
-#                                        "crity","crito","critr"))) {
-#                   stop("Verifique o config dessa cidade. Está faltando parametros em pars para rodar o alerta")} 
-#             
             
             if (!missing(sefinal)) d <- subset(d,SE<=sefinal)
             # preenchendo potenciais missings
@@ -604,7 +608,7 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 #'cli = getWU(stations = 'SBCB', datasource=con)
 #'cas = getCases(city = 330020, withdivision = FALSE, datasource=con)
 #'casfit<-adjustIncidence(obj=cas)
-#'casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
+#'casr<-Rt(obj = casfit, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
 #'d<- mergedata(cases = casr, tweet = tw, climate = cli)
 #'crity <- c("temp_min > 22", 3, 3)
 #'crito <- c("p1 > 0.9", 3, 3)
