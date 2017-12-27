@@ -432,7 +432,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
 plot.alerta<-function(obj, var, cores = c("#0D6B0D","#C8D20F","orange","red"), 
                       ini=201001, fim=202001, ylab=var, yrange){
       
-      stopifnot(names(obj) == c("data", "indices", "rules","n"))
+      stopifnot(names(obj) == c("data", "indices", "rules","crit","n"))
       stopifnot(var %in% names(obj$data))
       
       datapos <- which(obj$data$SE <= fim & obj$data$SE >= ini)
