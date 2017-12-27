@@ -162,12 +162,12 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #' # Parameters for the model
-#'criteria = list(crity = c("temp_min > tcrit", 3, 1),
+#'criteria = list(crity = c("umid_max > ucrit", 3, 1),
 #'crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
 #'critr = c("inc > inccrit", 2, 2))
 #'gtdist="normal"; meangt=3; sdgt = 1.2
 #'pars.RJ <- NULL
-#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, inccrit = 100, preseas=8.28374162389761, posseas = 7.67878514885295, legpos="bottomright")
+#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
 #'# Running the model:
 #'res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteria, datasource = con)
 #'res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
@@ -223,8 +223,10 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
       message("obtendo dados de clima ...")
       estacoes <- unique(c(dd$estacao_wu_sec, dd$codigo_estacao_wu))
       cli <- list()
+      allvars.cli <- c("temp_min","temp_med","temp_max","umid_min","umid_med","umid_max",
+                       "pressao_min","pressao_med","pressao_max")
       for (k in 1:length(estacoes)) {
-            cliwu <- getWU(stations = estacoes[k],var="temp_min"
+            cliwu <- getWU(stations = estacoes[k],var=allvars.cli
                            ,datasource = datasource)
             if (!missing(sefinal)) cliwu =  subset(cliwu,SE<=sefinal)
             cli[[k]] <- cliwu
@@ -238,7 +240,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             geocidade = dd$geocodigo[i]
             lastdatewu = NA
             
-            # escolhendo a melhor estacao meteorologica:
+            # escolhendo a melhor estacao meteorologica com base na temperatura:
             estacao_sec = dd$estacao_wu_sec[i] # nome da estacao prioritaria
             dadoscli_sec <- cli[[estacao_sec]] # temperatura
             
@@ -282,10 +284,8 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             }
             
             # interpolacao e extrapolação das variaveis climaticas
-            allvars.cli <- c("temp_min","temp_med","temp_max","umid_min","umid_med","umid_max",
-                         "pressao_min","pressao_med","pressao_max")
             
-            vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
+                        vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
             
             for (i in vars.cli) {
                   if (is.na(tail(d[,i])[1])) try(d[,i] <-nafill(d[,i], rule="arima"))  

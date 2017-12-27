@@ -24,7 +24,7 @@ you can define the ini-end dates or define the last n weeks.
 cli = getWU(stations = 'SBCB', datasource=con)
 cas = getCases(city = 330020, withdivision = FALSE, datasource=con)
 casfit<-adjustIncidence(obj=cas)
-casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
+casr<-Rt(obj = casfit, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
 d<- mergedata(cases = casr, tweet = tw, climate = cli)
 crity <- c("temp_min > 22", 3, 3)
 crito <- c("p1 > 0.9", 3, 3)
