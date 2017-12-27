@@ -14,7 +14,7 @@
 #'@param pars list of parameters for the alerta, defined in config.R
 #'@param crit criteria for the alert colors, defined in configglobal.R
 #'@param miss how missing data is treated. "last" if last value is repeated. 
-#'It is currently the only option.
+#'It is currently the only option
 #'@return list with data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE, data, and rules.
 #'@examples
