@@ -4,7 +4,7 @@
 \alias{plot.inla.re}
 \title{plot delay and time random effects}
 \usage{
-\method{plot}{inla.re}(outputRE, xlab)
+plot.inla.re(outputRE, xlab)
 }
 \arguments{
 \item{outputRE}{random effect components of the object created by the fitDelay.inla function}

@@ -170,7 +170,9 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
 #'# Running the model:
 #'res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
-#'res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteriaU, datasource = con,sefinal=201613)
+#'res <- update.alerta(state = "Ceará", pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
+#'res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
+#'sefinal=201704, delaymethod="fixedprob")
 
 #'tail(res$data)
 
@@ -285,7 +287,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             
             # interpolacao e extrapolação das variaveis climaticas
             
-                        vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
+            vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
             
             for (i in vars.cli) {
                   if (is.na(tail(d[,i])[1])) try(d[,i] <-nafill(d[,i], rule="arima"))  
@@ -312,17 +314,20 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
                         pdig <- rep(1, 20*7)[2:20]
                         if(cid10=="A90") pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
                         if(cid10=="A92.0") pdig <- plnorm(seq(7,20,by=7), pars$pdigChik[1], pars$pdigChik[2])
-                        p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
+                        #p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
                         dC2 <- adjustIncidence(d, pdig = pdig, method = "fixedprob") # ajusta a incidencia
                   }
-                  if(delaymethod=="bayesian") dC2 <- adjustIncidence(d, pdig = pdig, method = "bayesian")
+                  if(delaymethod=="bayesian") {
+                        dC2 <- adjustIncidence(d, method = "bayesian")
+                  }
             }else{
-                  d$tcasesmed <- d$casos
-                  d$tcasesICmin <- casos
-                  d$tcasesICmax <- casos
+                  dC2 <- d
+                  dC2$tcasesmed <- dC2$casos
+                  dC2$tcasesICmin <- dC2$casos
+                  dC2$tcasesICmax <- dC2$casos
             }
             
-             
+            
             dC3 <- Rt(dC2, count = "tcasesmed", gtdist=gtdist, meangt=meangt, sdgt = sdgt) # calcula Rt
             
             alerta <- fouralert(dC3, pars = parsi, crit = crit, pop=dC0$pop[1], miss="last") # calcula alerta

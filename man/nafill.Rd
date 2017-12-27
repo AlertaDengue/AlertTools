@@ -4,7 +4,7 @@
 \alias{nafill}
 \title{methods to substitute NAs.Use the function na.approx from package zoo.}
 \usage{
-nafill(v, rule, maxgap = 4)
+nafill(v, rule, maxgap = 4, verbose = F)
 }
 \arguments{
 \item{v}{vector with missing elements.}

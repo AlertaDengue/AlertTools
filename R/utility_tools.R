@@ -140,7 +140,7 @@ seqSE <- function(from, to){
       
       if (from < SE$SE[1]){
             from <- SE$SE[1]
-            warning(paste("first SE set to", from))
+            #warning(paste("first SE set to", from))
       }
       
       if (to > SE$SE[N]){
@@ -288,9 +288,9 @@ sevendigitgeocode <- function(dig){
 #'head(cliSBCB)
 #'nafill(cliSBCB[,3], rule= "arima")
 
-nafill <- function(v, rule, maxgap = 4){
+nafill <- function(v, rule, maxgap = 4, verbose = F){
       Nna = sum(is.na(v))
-      message(paste("number of weeks with missing data is ", Nna))
+      if (verbose == T) message(paste("number of weeks with missing data is ", Nna))
       if(sum(is.na(v))!=0) {
             miss <- which(is.na(v))
             if (rule == "zero"){v[miss]<-0}
