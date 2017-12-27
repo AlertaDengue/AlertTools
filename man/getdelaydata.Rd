@@ -24,6 +24,3 @@ Gets delay data for one or more cities. Internal function used in the delay fitt
 \examples{
 dados <- getdelaydata(cities=3304557, years=c(2016, 2017), cid10="A92", datasource=con)  # Not run without connection
 }
-\author{
-Claudia Codeco
-}

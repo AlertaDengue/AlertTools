@@ -344,7 +344,6 @@ dd
 #'@param years vector with set of years for analysis. Default (NULL) is to get all years of data available.
 #'@param datasource valid connection to database
 #'@return list with d = data.frame with data.
-#'@author Claudia Codeco
 #'@examples
 #'dados <- getdelaydata(cities=3304557, years=c(2016, 2017), cid10="A92", datasource=con)  # Not run without connection
 
@@ -406,8 +405,7 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
 #'@param truncdays Default is 183 days
 #'@param plotar Default is TRUE
 #'@return list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
-#'are internal objects used for plotting.
-#'@author Leo Bastos
+#'are internal objects used for plotting. Author Leo Bastos
 #'@examples
 #'dados <- getdelaydata(cities=3302205, datasource=con)
 #'res = delaycalc(dados)  
@@ -613,8 +611,7 @@ plot.inla.re = function(outputRE, xlab){
 #'@description predicted incidence using fitDelay.inla(). 
 #'@title posterior distribution of the incidence 
 #'@param obj created by the fitDelay.inla function
-#'@return table with mean, median, 2.5% and 97.5% incidence.
-#'@author Leo Bastos
+#'@return table with mean, median, 2.5% and 97.5% incidence. Author. Leo Bastos
 #'@examples
 #'dados <- getdelaydata(cities=3302205, datasource=con)
 #'res = delaycalc(dados)

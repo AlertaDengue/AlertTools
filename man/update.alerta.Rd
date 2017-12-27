@@ -43,14 +43,14 @@ is authomatic according to data quality. But it can also be provided manually (n
 }
 \examples{
 # Parameters for the model
-criteria = list(crity = c("umid_max > ucrit", 3, 1),
+criteriaU = list(crity = c("umid_max > ucrit", 3, 1),
 crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
 critr = c("inc > inccrit", 2, 2))
 gtdist="normal"; meangt=3; sdgt = 1.2
 pars.RJ <- NULL
 pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
 # Running the model:
-res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteria, datasource = con)
-res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
+res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
+res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteriaU, datasource = con,sefinal=201613)
 tail(res$data)
 }

@@ -25,7 +25,7 @@ identifying the epidemiological week. Only one city at a time.}
 }
 \value{
 list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
-are internal objects used for plotting.
+are internal objects used for plotting. Author Leo Bastos
 }
 \description{
 The second function to be used in the delay fitting process using inla. Calculates the number
@@ -36,7 +36,4 @@ dados <- getdelaydata(cities=3302205, datasource=con)
 res = delaycalc(dados)  
 head(res$d)  # data
 head(res$delay.tbl)  # running matrix
-}
-\author{
-Leo Bastos
 }

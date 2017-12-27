@@ -17,8 +17,8 @@ fouralert(obj, pars, crit, pop, miss = "last")
 It is currently the only option.}
 }
 \value{
-data.frame with the week condition and the number of weeks within the 
-last lag weeks with conditions = TRUE.
+list with data.frame with the week condition and the number of weeks within the 
+last lag weeks with conditions = TRUE, data, and rules.
 }
 \description{
 Yellow is raised when environmental conditions required for

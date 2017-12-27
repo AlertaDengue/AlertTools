@@ -10,7 +10,7 @@ prob.inc(obj, plotar = T)
 \item{obj}{created by the fitDelay.inla function}
 }
 \value{
-table with mean, median, 2.5% and 97.5% incidence.
+table with mean, median, 2.5% and 97.5% incidence. Author. Leo Bastos
 }
 \description{
 predicted incidence using fitDelay.inla().
@@ -20,7 +20,4 @@ dados <- getdelaydata(cities=3302205, datasource=con)
 res = delaycalc(dados)
 outp<-fitDelay.inla(res)
 delay <- prob.inc(outp)
-}
-\author{
-Leo Bastos
 }

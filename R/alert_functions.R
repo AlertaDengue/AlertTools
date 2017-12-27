@@ -15,8 +15,8 @@
 #'@param crit criteria for the alert colors, defined in configglobal.R
 #'@param miss how missing data is treated. "last" if last value is repeated. 
 #'It is currently the only option.
-#'@return data.frame with the week condition and the number of weeks within the 
-#'last lag weeks with conditions = TRUE.
+#'@return list with data.frame with the week condition and the number of weeks within the 
+#'last lag weeks with conditions = TRUE, data, and rules.
 #'@examples
 #' # Getting the data (requires a con connection)
 #'tw = getTweet(city = 2304400, datasource = con) 
@@ -137,7 +137,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
       indices <- delayturnoff(cond=cred,level=4)
       indices <- delayturnoff(cond=corange,level=3)
       indices <- delayturnoff(cond=cyellow,level=2)
-      return(list(data=obj, indices=indices, rules=pars, n=4))      
+      return(list(data=obj, indices=indices, rules=pars, crit = crit, n=4))      
 }
 
 #update.alerta ---------------------------------------------------------------------
@@ -162,15 +162,15 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #' # Parameters for the model
-#'criteria = list(crity = c("umid_max > ucrit", 3, 1),
+#'criteriaU = list(crity = c("umid_max > ucrit", 3, 1),
 #'crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
 #'critr = c("inc > inccrit", 2, 2))
 #'gtdist="normal"; meangt=3; sdgt = 1.2
 #'pars.RJ <- NULL
 #'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
 #'# Running the model:
-#'res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteria, datasource = con)
-#'res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteria, datasource = con,sefinal=201613)
+#'res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
+#'res <- update.alerta(region = "Metropolitana I", pars = pars.RJ, crit = criteriaU, datasource = con,sefinal=201613)
 
 #'tail(res$data)
 
@@ -325,7 +325,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
              
             dC3 <- Rt(dC2, count = "tcasesmed", gtdist=gtdist, meangt=meangt, sdgt = sdgt) # calcula Rt
             
-            alerta <- fouralert(dC3, pars = parsi, crit = criteria, pop=dC0$pop[1], miss="last") # calcula alerta
+            alerta <- fouralert(dC3, pars = parsi, crit = crit, pop=dC0$pop[1], miss="last") # calcula alerta
             nome = na.omit(unique(dC0$nome))
             nick <- gsub(" ", "", nome, fixed = TRUE)
             #names(alerta) <- nick
