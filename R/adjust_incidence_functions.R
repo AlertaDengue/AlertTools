@@ -167,8 +167,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #}
 
 # fitDelayModel ---------------------------------------------------------------------
-#'@description Fit lognormal model to the notification delay and return the parameters. See
-#'details in doi: http://dx.doi.org/10.1101/046193     
+#'@description Fit lognormal model to the notification delay and return the parameters. 
 #'@title Fit lognormal model to the notification delay
 #'@param cities geocode of one of more cities. If more than one city, a single model is fitted to the whole dataset.  
 #'@param cid10 CID 10 code of the disease. Dengue = "A90" is default, Chik = "A920" 
@@ -275,7 +274,7 @@ fitDelayModel<-function(cities, period, plotar = TRUE, cid10 = "A90", datasource
 #'@param datasource sql connection.
 #'@param plotar if TRUE, show plot of the fitted model.
 #'@param write TRUE if result.
-#'@return object with a summary of the analysis and suggestion of best model.
+#'@return object with a summary of the analysis and suggestion of best model. 
 #'@examples
 #'con <- DenguedbConnect()
 #'par(mfrow=c(2,1))
@@ -395,12 +394,11 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
 
 
 # delaycalc ---------------------------------------------------------------------
-#'@description The second function to be used in the delay fitting process using inla. Calculates the number of cases reported
-#'per week with a given delay. Also removes data with notification delay greater than truncdays. Produces a 
-#'nive plot.  
+#'@description The second function to be used in the delay fitting process using inla. Calculates the number
+#' of cases reported per week with a given delay. Also removes data with notification delay greater than truncdays. 
 #'@title Organize delay data for analysis and produce a nice plot.
 #'@param d dataset with case data containing at least three variables: the initial and final dates and a variable
-#' identifying the epidemiological week (SEM_NOT). Only one city at a time.
+#' identifying the epidemiological week. Only one city at a time.
 #'@param tini variable indicating the initial date
 #'@param tfim variable indicating the end date
 #'@param SE variable indicating the epidemiological week

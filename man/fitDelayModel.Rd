@@ -39,8 +39,7 @@ object with a summary of the analysis and suggestion of best model
 Fit lognormal model to the notification delay and return the parameters. See
 details in doi: http://dx.doi.org/10.1101/046193
 
-Fit lognormal model to the notification delay and return the parameters. See
-details in doi: http://dx.doi.org/10.1101/046193
+Fit lognormal model to the notification delay and return the parameters.
 }
 \examples{
 con <- DenguedbConnect()

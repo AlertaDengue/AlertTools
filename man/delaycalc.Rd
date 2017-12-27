@@ -9,7 +9,7 @@ delaycalc(d, tini = "dt_notific", tfim = "dt_digita", SE = "SE_notif",
 }
 \arguments{
 \item{d}{dataset with case data containing at least three variables: the initial and final dates and a variable
-identifying the epidemiological week (SEM_NOT). Only one city at a time.}
+identifying the epidemiological week. Only one city at a time.}
 
 \item{tini}{variable indicating the initial date}
 
@@ -28,9 +28,8 @@ list with d = data.frame with the epidemiological weeks; delay.tbl and delay.wee
 are internal objects used for plotting.
 }
 \description{
-The second function to be used in the delay fitting process using inla. Calculates the number of cases reported
-per week with a given delay. Also removes data with notification delay greater than truncdays. Produces a 
-nive plot.
+The second function to be used in the delay fitting process using inla. Calculates the number
+of cases reported per week with a given delay. Also removes data with notification delay greater than truncdays.
 }
 \examples{
 dados <- getdelaydata(cities=3302205, datasource=con)
