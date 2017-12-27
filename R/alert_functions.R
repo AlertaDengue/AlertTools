@@ -20,7 +20,7 @@
 #'@examples
 #' # Getting the data (requires a con connection)
 #'tw = getTweet(city = 2304400, datasource = con) 
-#'cli = getWU(stations = 'SBVT', vars=c("temp_min", "umid_min"), datasource=con)
+#'cli = getWU(stations = 'SBFZ', vars=c("temp_min", "umid_min"), datasource=con)
 #'cas = getCases(city = 2304400, cid10="A92.0",datasource=con)
 #' # Organizing the data
 #'casfit<-adjustIncidence(obj=cas, method="bayesian")
@@ -29,16 +29,16 @@
 #'d$temp_min <- nafill(d$temp_min, rule = "arima") 
 #'d$umid_min <- nafill(d$umid_min, rule = "arima") 
 #' # Parameters of the alert model (usually set up in the globalconfig and config files)
-#'criteria = list(crity = c("umid_min > ucrit & inc > 0", 3, 1),
-#'crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
+#'criteriaU = list(crity = c("umid_min > ucrit & inc > 0", 3, 1),
+#'crito = c("p1 > 0.95 & inc > preseas", 3, 1),
 #'critr = c("inc > inccrit", 2, 2))
 #'gtdist="normal"; meangt=3; sdgt = 1.2
 #'pars.RJ <- NULL
-#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit=50, inccrit = 100, preseas=8.28374162389761, 
+#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=NA, ucrit=87, inccrit = 100, preseas=8.28374162389761, 
 #'posseas = 7.67878514885295, legpos="bottomright")
 #' # Running the alert
-#'ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteria, pop = 1000000)
-#'ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteria, pop = 1000000)
+#'ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteriaU, pop = 1000000)
+#'ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
 #' # For a more useful output
 #'res <- write.alerta(ale)
 #'tail(res)
@@ -626,7 +626,7 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 
 write.alerta<-function(obj, write = "no", version = Sys.Date()){
       
-      stopifnot(names(obj) == c("data", "indices", "rules","n"))
+      stopifnot(names(obj) == c("data", "indices", "rules","crit","n"))
       
       data <- obj$data
       indices <- obj$indices
@@ -660,8 +660,12 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       }
       
       d$tweet <- data$tweet
-      d$temp_min <- data$temp_min
-      
+      if("temp_min" %in% names(data)) d$temp_min <- data$temp_min
+      if("umid_min" %in% names(data)) d$umid_min <- data$umid_min
+      if("temp_med" %in% names(data)) d$temp_med <- data$temp_med
+      if("umid_med" %in% names(data)) d$umid_med <- data$umid_med
+      if("temp_max" %in% names(data)) d$temp_max <- data$temp_max
+      if("umid_max" %in% names(data)) d$umid_max <- data$umid_max
       if(write == "db"){
             # se tiver ja algum registro com mesmo geocodigo e SE, esse sera substituido pelo atualizado.
             print(paste("saving alerta table for ",cid10))

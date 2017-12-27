@@ -539,7 +539,7 @@ fitDelay.inla <- function(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar 
       
       message("sampling...")
       
-      delay.samples.list <- inla.posterior.sample(n = 10, output)
+      delay.samples.list <- inla.posterior.sample(n = 1000, output)
       
       
       # Sampling the missing triangule from inla output in vector format
