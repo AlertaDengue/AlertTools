@@ -51,7 +51,6 @@ pars.RJ <- NULL
 pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
 # Running the model:
 res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
-res <- update.alerta(state = "Ceará", pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
 res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
 sefinal=201704, delaymethod="fixedprob")
 tail(res$data)

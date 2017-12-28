@@ -21,5 +21,5 @@ a plot
 Function to plot the output of
 }
 \examples{
- # See fouralert function
+ # See update.alerta function for an example
 }

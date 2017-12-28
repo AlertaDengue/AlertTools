@@ -170,10 +170,8 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
 #'# Running the model:
 #'res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
-#'res <- update.alerta(state = "Ceará", pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
 #'res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
 #'sefinal=201704, delaymethod="fixedprob")
-
 #'tail(res$data)
 
 update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writedb = FALSE,
@@ -289,8 +287,8 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             
             vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
             
-            for (i in vars.cli) {
-                  if (is.na(tail(d[,i])[1])) try(d[,i] <-nafill(d[,i], rule="arima"))  
+            for (j in vars.cli) {
+                  if (is.na(tail(d[,j])[1])) try(d[,j] <-nafill(d[,j], rule="arima"))  
             }
                         
             # parsi e' pars de uma unica cidade. 
@@ -431,7 +429,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
 #'@param cores colors corresponding to the levels 1, 2, 3, 4.
 #'@return a plot
 #'@examples
-#'  # See fouralert function
+#'  # See update.alerta function for an example
 
 
 plot.alerta<-function(obj, var, cores = c("#0D6B0D","#C8D20F","orange","red"), 
@@ -543,7 +541,8 @@ map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
 #geraMapa --------------------------------------------------------------------
 #'@title Plot the alert map for any state.
 #'@description Function to plot a map of the alert 
-#'@param regionais vector of alerts created by update.alerta.
+#'@param alerta object created by update.alerta.
+#'@param subset nomes das cidades que serão mostradas no mapa. 
 #'@param se epidemiological week (format = 201610).  
 #'@param cores colors corresponding to the levels 1, 2, 3, 4.
 #'@param legpos legend position. Default is bottomright. Check the other options in the function legend.
@@ -556,12 +555,22 @@ map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
 #'@param resol dpi png resolution, default is 200
 #'@return a map
 #'@examples
-#'reg1 <- update.alerta(region="Noroeste", pars = pars.RJ, datasource = con, sefinal=201613)
-#'geraMapa(reg1, data=201613, shapefile="../report/RJ/shape/33MUE250GC_SIR.shp",
-#'se = 201613, varid="CD_GEOCMU", titulo="Regionais Norte e Nordeste \n", legpos="topright")
+#' # Parameters for the model
+#'criteriaU = list(crity = c("temp_min > tcrit", 3, 1),
+#'crito = c("p1 > 0.95 & inc > preseas", 3, 1),
+#'critr = c("inc > inccrit", 2, 2))
+#'gtdist="normal"; meangt=3; sdgt = 1.2
+#'pars.RJ <- NULL
+#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = NA, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
+#'# Running the model:
+#'res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=F, datasource = con,
+#'sefinal=201704, delaymethod="fixedprob")
+#'cidades = getCidades(regional = "Norte", uf = "Rio de Janeiro", datasource = con)["nome"]
+#'geraMapa(alerta=res, subset = cidades, se=201704, datasource=con, shapefile="shape/33MUE250GC_SIR.shp",
+#'varid="CD_GEOCMU", titulo="RJ-Norte", legpos="topright")
 
-geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), legpos="bottomright", se, datasource=con,
-                   shapefile, varid, varname, titulo="", filename, dir="",caption=TRUE, resol = 200){
+geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), legpos="bottomright", se, 
+                   datasource, shapefile, varid, varname, titulo="", filename, dir="",caption=TRUE, resol = 200){
       
       require(maptools,quietly = TRUE,warn.conflicts = FALSE)
       
