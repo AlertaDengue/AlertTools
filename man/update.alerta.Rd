@@ -4,7 +4,7 @@
 \alias{update.alerta}
 \title{Define conditions to issue a 4 level alert Green-Yellow-Orange-Red for any city or region.}
 \usage{
-update.alerta(city, region, state, pars, crit, cid10 = "A90",
+\method{update}{alerta}(city, region, state, pars, crit, cid10 = "A90",
   writedb = FALSE, datasource, sefinal, adjustdelay = T,
   delaymethod = "fixedprob")
 }

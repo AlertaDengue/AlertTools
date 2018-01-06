@@ -145,7 +145,7 @@ seqSE <- function(from, to){
       
       if (to > SE$SE[N]){
             to <- SE$SE[N]
-            warning(paste("This function only works from 2010 to 2017. Last SE set to", to))
+            warning(paste("This function only works from 2010 to 2018. Last SE set to", to))
       }
       
       SE[which(SE$SE==from):which(SE$SE==to),]
