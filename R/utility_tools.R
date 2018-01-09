@@ -128,9 +128,9 @@ SE2date <- function(se){
 #'@title Sequence of epidemiological weeks
 #'@param from first week in format 201401
 #'@param to first week in format 201401
-#'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works until dez 2017.
+#'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works up to dez 2018.
 #'@examples
-#'seqSE(201502, 201710)
+#'seqSE(201602, 201810)
 
 
 seqSE <- function(from, to){
