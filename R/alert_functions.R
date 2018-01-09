@@ -640,7 +640,7 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 
 write.alerta<-function(obj, write = "no", version = Sys.Date()){
       
-      stopifnot(names(obj) == c("data", "indices", "rules","crit","n"))
+      #stopifnot(names(obj) == c("data", "indices", "rules","crit","n"))
       
       data <- obj$data
       indices <- obj$indices
