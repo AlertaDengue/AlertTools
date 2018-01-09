@@ -617,7 +617,7 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 
 
 #write.alerta --------------------------------------------------------------------
-#'@title Write the alert into the database.
+#'@title Write the alert object into the database.
 #'@description Function to write the alert results into the database. It only writes one city at a time. It is recommended that the end data is specified.
 #'If this is the first time a city is included in the dataset, than use newcity = TRUE. This will force to insert from the beginning. Or if you want to update,
 #'you can define the ini-end dates or define the last n weeks.   

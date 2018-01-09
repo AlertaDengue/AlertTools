@@ -2,7 +2,7 @@
 % Please edit documentation in R/alert_functions.R
 \name{write.alerta}
 \alias{write.alerta}
-\title{Write the alert into the database.}
+\title{Write the alert object into the database.}
 \usage{
 write.alerta(obj, write = "no", version = Sys.Date())
 }
