@@ -21,15 +21,26 @@ If this is the first time a city is included in the dataset, than use newcity = 
 you can define the ini-end dates or define the last n weeks.
 }
 \examples{
-cli = getWU(stations = 'SBCB', datasource=con)
-cas = getCases(city = 330020, withdivision = FALSE, datasource=con)
-casfit<-adjustIncidence(obj=cas)
-casr<-Rt(obj = casfit, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
+# Getting the data (requires a con connection)
+tw = getTweet(city = 2304400, datasource = con) 
+cli = getWU(stations = 'SBFZ', vars=c("temp_min", "umid_min"), datasource=con)
+cas = getCases(city = 2304400, cid10="A92.0",datasource=con)
+# Organizing the data
+casfit<-adjustIncidence(obj=cas, method="bayesian")
+casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
 d<- mergedata(cases = casr, tweet = tw, climate = cli)
-crity <- c("temp_min > 22", 3, 3)
-crito <- c("p1 > 0.9", 3, 3)
-critr <- c("inc > 100", 3, 3)
-alerta <- fouralert(d, cy = crity, co = crito, cr = critr, pop=1000000)
-res <- write.alerta(alerta, write="no")
+# Parameters of the alert model (usually set up in the globalconfig and config files)
+criteriaU = list(crity = c("temp_min > tcrit & inc > 0", 3, 1),
+crito = c("p1 > 0.95 & inc > preseas", 3, 1),
+critr = c("inc > inccrit", 2, 2))
+gtdist="normal"; meangt=3; sdgt = 1.2
+pars.RJ <- NULL
+pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit=87, inccrit = 100, preseas=8.28374162389761, 
+posseas = 7.67878514885295, legpos="bottomright")
+# Running the alert
+ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteriaU, pop = 1000000)
+ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
+# For a more useful output
+res <- write.alerta(ale)
 tail(res)
 }

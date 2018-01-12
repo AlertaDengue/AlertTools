@@ -10,7 +10,7 @@
 #'@param format date format
 #'@return data.frame with the epidemiological weeks. Only works for years >= 2010.
 #'@examples
-#'data2SE("01-02-2010",format="%d-%m-%Y")
+#'data2SE("01-02-2018",format="%d-%m-%Y")
 #'data2SE("50-02-2010",format="%d-%m-%Y")
 #'data2SE(c("03-04-2013","07-01-2014"),format="%d-%m-%Y")
 
@@ -109,7 +109,7 @@ lastepiweek <- function(ano){
 #'@param SE string vector with dates to be converted, format 201420
 #'@return data.frame with SE and first day.
 #'@examples
-#'SE2date(201512)
+#'SE2date(201812)
 #'SE2date(se = c(201401:201409))
 
 SE2date <- function(se){
