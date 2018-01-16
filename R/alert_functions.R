@@ -490,7 +490,7 @@ plot.alerta<-function(obj, var, cores = c("#0D6B0D","#C8D20F","orange","red"),
 map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasource=con,
                   shapefile = "../report/Rio_de_Janeiro/shape/CAPS_SMS.shp", filename="", dir, resol=200){
       
-      stopifnot(names(obj[[1]]) == c("data", "indices", "rules","n"))
+      #stopifnot(names(obj[[1]]) == c("data", "indices", "rules","n"))
       
       require(maptools,quietly = TRUE,warn.conflicts = FALSE)
       mapa <- readShapeSpatial(shapefile,ID="COD_AP_SMS")
