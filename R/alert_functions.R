@@ -19,9 +19,9 @@
 #'last lag weeks with conditions = TRUE, data, and rules.
 #'@examples
 #' # Getting the data (requires a con connection)
-#'tw = getTweet(city = 2304400, datasource = con) 
-#'cli = getWU(stations = 'SBFZ', vars=c("temp_min", "umid_min"), datasource=con)
-#'cas = getCases(city = 2304400, cid10="A92.0",datasource=con)
+#'tw = getTweet(city = 3200136, datasource = con) 
+#'cli = getWU(stations = 'SBVT', vars=c("temp_min", "umid_min"), datasource=con)
+#'cas = getCases(city = 3200136,datasource=con)
 #' # Organizing the data
 #'casfit<-adjustIncidence(obj=cas, method="bayesian")
 #'casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
@@ -29,15 +29,15 @@
 #'d$temp_min <- nafill(d$temp_min, rule = "arima") 
 #'d$umid_min <- nafill(d$umid_min, rule = "arima") 
 #' # Parameters of the alert model (usually set up in the globalconfig and config files)
-#'criteriaU = list(crity = c("umid_min > ucrit & inc > 0", 3, 1),
+#'criteriaU = list(crity = c("temp_min > tcrit & inc > 0", 3, 1),
 #'crito = c("p1 > 0.95 & inc > preseas", 3, 1),
 #'critr = c("inc > inccrit", 2, 2))
 #'gtdist="normal"; meangt=3; sdgt = 1.2
-#'pars.RJ <- NULL
-#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=NA, ucrit=87, inccrit = 100, preseas=8.28374162389761, 
+#'pars.ES <- NULL
+#'pars.ES[["Central"]] <- list(pdig = c(2.997765,0.7859499),tcrit=NA, ucrit=87, inccrit = 100, preseas=8.28374162389761, 
 #'posseas = 7.67878514885295, legpos="bottomright")
 #' # Running the alert
-#'ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteriaU, pop = 1000000)
+#'ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
 #'ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
 #' # For a more useful output
 #'res <- write.alerta(ale)
@@ -169,7 +169,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'pars.RJ <- NULL
 #'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
 #'# Running the model:
-#'res <- update.alerta(city = 3205309, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
+#'res <- update.alerta(city = 3200136, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
 #'res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
 #'sefinal=201704, delaymethod="fixedprob")
 #'tail(res$data)
@@ -228,12 +228,16 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
       for (k in 1:length(estacoes)) {
             cliwu <- getWU(stations = estacoes[k],var=allvars.cli
                            ,datasource = datasource)
+            #message("estacao", k, "tem dimensao",nrow(cliwu))
+            if (!is.null(cliwu)){
             if (!missing(sefinal)) cliwu =  subset(cliwu,SE<=sefinal)
-            cli[[k]] <- cliwu
+                  cli[[k]] <- cliwu
+                  names(cli)[k]<-as.character(unique(cli[[k]]$estacao))      
+            }
       }
-      names(cli) <-estacoes
-      
-      
+      #names(cli) <-estacoes
+      estacoes.validas <- names(cli)
+      print(estacoes.validas)
       alertas <- list()
       for (i in 1:nlugares){ # para cada cidade ...
 
@@ -242,18 +246,23 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             
             # escolhendo a melhor estacao meteorologica com base na temperatura:
             estacao_sec = dd$estacao_wu_sec[i] # nome da estacao prioritaria
-            dadoscli_sec <- cli[[estacao_sec]] # temperatura
-            
-            na_sec = sum(is.na(dadoscli_sec$temp_min))/dim(dadoscli_sec)[1] # prop dados faltantes
-            if (na_sec < 1)lastdate_sec <- dadoscli_sec$SE[max(which(is.na(dadoscli_sec$temp_min)==FALSE))]  # ultima data  
+            na_sec = 1; na_pri = 1 
+            if (estacao_sec %in% estacoes.validas){
+                  dadoscli_sec <- cli[[estacao_sec]] # temperatura
+                  
+                  na_sec = sum(is.na(dadoscli_sec$temp_min))/dim(dadoscli_sec)[1] # prop dados faltantes
+                  if (na_sec < 1)lastdate_sec <- dadoscli_sec$SE[max(which(is.na(dadoscli_sec$temp_min)==FALSE))]  # ultima data 
+                  estacao = estacao_sec
+            }
             
             estacao_pri = dd$codigo_estacao_wu[i] # nome da estacao substituta
-            dadoscli_pri <- cli[[estacao_pri]] # temp na estacao substituta
-            na_pri = sum(is.na(dadoscli_pri$temp_min))/dim(dadoscli_pri)[1] # prop dados faltantes
-            if (na_pri < 1)lastdate_pri <- dadoscli_pri$SE[max(which(is.na(dadoscli_pri$temp_min)==FALSE))]  # ultima data  
+            if(estacao_pri %in% estacoes.validas){
+                  dadoscli_pri <- cli[[estacao_pri]] # temp na estacao substituta
+                  na_pri = sum(is.na(dadoscli_pri$temp_min))/dim(dadoscli_pri)[1] # prop dados faltantes
+                  if (na_pri < 1)lastdate_pri <- dadoscli_pri$SE[max(which(is.na(dadoscli_pri$temp_min)==FALSE))]  # ultima data        
+            }
             
-            estacao = estacao_sec
-            if(na_sec==1 & na_pri==1) message("WARNING: As duas estacoes met. da ", geocidade, "não tem dados de temperatura")
+            if(na_sec==1 & na_pri==1) message("WARNING: As duas estacoes met. da ", geocidade, " não tem dados de temperatura")
             if(na_sec==1 & na_pri!=1) {estacao = estacao_pri; lastdatewu = lastdate_pri}
             if(na_sec!=1 & na_pri==1) {estacao = estacao_sec; lastdatewu = lastdate_sec}      
             if(na_sec!=1 & na_pri!=1){

@@ -52,20 +52,23 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
       names(d)[which(names(d)== "Estacao_wu_estacao_id")]<-"estacao"
       
       # Atribuir SE e agregar por semana-----------------------------------------
-      d$SE <- data2SE(d$data_dia, format = "%Y-%m-%d")
-      
-      sem <- seqSE(from = min(d$SE), to = max(d$SE))$SE
-      df <- expand.grid(SE=sem, estacao = unique(d$estacao))
-      N <- length(df$SE)
-      
-      for (i in vars){
-            df[, i] <- NA
-            for (t in 1:N){
-                  subconj <- subset(d, (SE == df$SE[t] & estacao == df$estacao[t]))
-                  df[t, i] <- mean(subconj[,i])
+      if(nrow(d)!=0){
+            d$SE <- data2SE(d$data_dia, format = "%Y-%m-%d")
+            
+            sem <- seqSE(from = min(d$SE), to = max(d$SE))$SE
+            df <- expand.grid(SE=sem, estacao = unique(d$estacao))
+            N <- length(df$SE)
+            
+            for (i in vars){
+                  df[, i] <- NA
+                  for (t in 1:N){
+                        subconj <- subset(d, (SE == df$SE[t] & estacao == df$estacao[t]))
+                        df[t, i] <- mean(subconj[,i])
+                  }
             }
-      }
-      df
+            return(df)      
+      }else{message("estação(ões) ", stations, " não existem no banco de dados")
+            return(NULL)}
 }
 
 # GetTweet --------------------------------------------------------------
