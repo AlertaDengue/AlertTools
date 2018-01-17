@@ -70,10 +70,10 @@ episem <- function(x, format="%Y-%m-%d",retorna='') {
       diafim <- as.Date(paste(ano,'12','31',sep='-')) #Ultimo dia do ano
       diasem <- wday(diafim)                          #dia semana do ultimo dia
       
-      ewd <- ifelse (diasem < 3, diafim - diasem , diafim + 6 - diasem) 
+      ewd <- ifelse (diasem < 3, diafim - diasem - 1, diafim + 6 - diasem) 
       ewd <- as.Date(ewd,origin = '1970-01-01') # ultima semana epi do ano
       
-      if (x >= ewd) fwd <- ewd + 1 #caso a data (x) seja maior ou igual a ultiam semaan do ano
+      if (x > ewd) fwd <- ewd + 1 #caso a data (x) seja maior ou igual a ultiam semaan do ano
       epiweek <- floor(as.numeric(x - fwd) / 7 ) + 1 #numero de semanas e a diff da data e da primeira semana div por 7
       
       if(epiweek==0) epiweek <- 1 ## gatilho se for 0 vira semana 1
