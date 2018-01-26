@@ -32,7 +32,8 @@
 #'resfit<-adjustIncidence(obj=res,method="bayesian",datasource=con)
 #'tail(resfit)
 
-adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), Dmax=12, nyears = 3, datasource=NA, lastSE=NA){
+adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), Dmax=12, nyears = 3, 
+                          datasource, lastSE=NA){
       
   # checking if only one city in obj
   ncities <- length(unique(obj$cidade)) 
@@ -63,7 +64,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
  if (method == "bayesian"){
        thisyear <- floor(obj$SE[lse]/100)
        # Leo's functions
-       dados <- getdelaydata(cities=unique(obj$cidade), years = (thisyear-nyears):thisyear, cid10 = obj$CID10[1], datasource=con)
+       dados <- getdelaydata(cities=unique(obj$cidade), years = (thisyear-nyears):thisyear, cid10 = obj$CID10[1], 
+                             datasource=con)
        
        res <- delaycalc(dados, lastSE=lastSE)
        outp <- fitDelay.inla(res, Dmax = Dmax)
@@ -646,7 +648,7 @@ plot.inla.re = function(outputRE, xlab){
 
 prob.inc<-function(obj, plotar=T){
       
-      if(!all(c("post", "Dmax", "delay.data.obs","Tactual","delay.data.obs.trian","")
+      if(!all(c("post", "Dmax", "delay.data.obs","Tactual","delay.data.obs.trian")
          %in% names(obj)))stop("(bayesian delay fitting) argument obj seems wrong...")
      
       ccc <- obj$post

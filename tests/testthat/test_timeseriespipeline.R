@@ -27,6 +27,7 @@ test_that("output of adjustIncidence has the required columns.", {
                     "tcasesmed", "tcasesICmax") %in% names(dC1)))
 })
 
+
 ### =====================================
 # Testing the bayesiann adjust incidence functions 
 ### =====================================
@@ -49,6 +50,16 @@ test_that("prob.inc: returns a matrix", {
 
 test_that("prob.inc: returns a non-empty matrix", {
       expect_true(all(is.na(delay)) == FALSE)
+})
+
+rm(q0, q1, out0, delay)
+
+# Using the adjustIncidence to call the bayesian delay functions
+dC1<-adjustIncidence(obj=dC0, method = "bayesian")
+
+test_that("output of adjustIncidence has the required columns.", {
+      expect_true(all(c("localidade", "SE", "casos", "pdig", "tcasesICmin", 
+                        "tcasesmed", "tcasesICmax") %in% names(dC1)))
 })
 
 ### =====================
