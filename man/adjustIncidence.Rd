@@ -5,7 +5,7 @@
 \title{Adjust incidence data correcting for the notification delay.}
 \usage{
 adjustIncidence(obj, method = "fixedprob", pdig = plnorm((1:20) * 7, 2.5016,
-  1.1013), Dmax = 12, nyears = 3, datasource = NA)
+  1.1013), Dmax = 12, nyears = 3, datasource = NA, lastSE = NA)
 }
 \arguments{
 \item{obj}{data.frame with crude weekly cases (not adjusted). This data.frame comes from the getCases
@@ -21,6 +21,8 @@ was obtained from Rio de Janeiro.}
 \item{Dmax}{for the "bayesian" method. Maximum number of weeks that is modeled}
 
 \item{nyears}{for the "bayesian" method. Number of years of data used for fitting the model}
+
+\item{lastSE}{for the "bayesian" method. Last epidemiological week to be considered. If NA, will use last digitalization date.}
 }
 \value{
 data.frame with pdig (proportion reported), median and 95percent confidence interval for the 
@@ -34,7 +36,7 @@ notification process, there is, no influence of covariates or any temporal inhom
 }
 \examples{
 # fixedprob
-res = getCases(city = 330240, datasource=con) 
+res = getCases(city = 2305001, datasource=con) 
 head(res)
 resfit<-adjustIncidence(obj=res)
 tail(resfit)

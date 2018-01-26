@@ -25,4 +25,4 @@ test_that("episem output gave the wrong result''", {
       expect_true(out4 == 2014)
 })
 
-
+rm(out1, out2, out3, out4)

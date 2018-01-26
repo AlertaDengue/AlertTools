@@ -385,15 +385,27 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
             dd <- dbGetQuery(datasource,sqlselect)
             
       } else {stop("getdelaydata: requires a valid PostgreSQLConnection")}
-      dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
-      dd$cid10 <- cid10
-      #dd[,-dd$se_notif]
       
-      # Create SE_digit
-      dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
-      dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
-      
-      dd
+      if(nrow(dd) == 0){
+            message(paste("getdelaydata: found no data for the request:", sqlselect ))
+            return(NULL)
+      } else {
+            dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
+            dd$cid10 <- cid10
+            #dd[,-dd$se_notif]
+            
+            # Removing records with missing dt_digita
+            nb <- nrow(dd)
+            dd <- dd[!is.na(dd$dt_digita),]
+            na.dtdigita <- nb - nrow(dd)
+            if (na.dtdigita > 0) message(paste("getdelaydata: number of records with missing dates: ",na.dtdigita,
+                          " out of ",nb, "notifications" ))
+            
+            # Create SE_digit
+            dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
+            dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
+            dd
+      }
 }
 
 
@@ -509,6 +521,7 @@ delaycalc <- function(d, nt_year = "ano_notif", nt_week = "se_notif",
 
 fitDelay.inla <- function(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar = FALSE){
       
+      if(!all(c("d","delay.tbl","delay.week") %in% names(obj))) stop("fitDeday.inla: argument obj seems wrong")
       require(INLA)
       message("fitting..")
       # creating a continuous sequence of weeks within the study period (#aqui da para otimizar)
@@ -555,7 +568,8 @@ fitDelay.inla <- function(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar 
       
       
       # Sampling the missing triangule from inla output in vector format
-      aaa <- lapply(X = delay.samples.list, FUN = function(x, idx = index.missing) rnbinom(n = idx, mu = exp(x$latent[idx]), size = x$hyperpar[1])
+      aaa <- lapply(X = delay.samples.list, 
+                    FUN = function(x, idx = index.missing) rnbinom(n = idx, mu = exp(x$latent[idx]), size = x$hyperpar[1])
       ) 
       
       
@@ -591,7 +605,7 @@ fitDelay.inla <- function(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar 
             
       
       list(out=output,post=ccc,Tactual=Tactual, Dmax=Dmax,delay.data.obs=delay.data.obs,
-           delay.data.obs.trian=delay.data.obs.trian,Tmax=Tmax)
+           delay.data.obs.trian=delay.data.obs.trian)
 }
 
 
@@ -632,9 +646,11 @@ plot.inla.re = function(outputRE, xlab){
 
 prob.inc<-function(obj, plotar=T){
       
+      if(!all(c("post", "Dmax", "delay.data.obs","Tactual","delay.data.obs.trian","")
+         %in% names(obj)))stop("(bayesian delay fitting) argument obj seems wrong...")
+     
       ccc <- obj$post
       Dmax <- obj$Dmax
-      delay.data.obs <-obj$delay.data.obs
       Tactual <-obj$Tactual
       delay.data.obs.trian <- obj$delay.data.obs.trian
       delay.data.obs <- obj$delay.data.obs

@@ -4,22 +4,26 @@
 \alias{episem}
 \title{Define Epidemiological Week}
 \usage{
-episem(x, format = "\%Y-\%m-\%d", retorna = "")
+episem(x, format = "\%Y-\%m-\%d", separa = "", retorna = "YW")
 }
 \arguments{
-\item{date}{date to be converted (class Date)}
-
 \item{separa}{symbol between year and week}
+
+\item{retorna}{What should be return, if epidemiological year and week ('YW'), epi. year only ('Y') or epi. week only ('W').
+Default: 'YW'.}
+
+\item{date}{date to be converted (class Date)}
 }
 \value{
-epidemiological week
+epidemiological week or year. If separa = '', the output is numeric; otherwise is a character.
 }
 \description{
 Find to which epidemiological week belongs a given day
 }
 \examples{
 episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"))
-episem(x= as.Date("2015-01-50", format="\%Y-\%m-\%d"))
+episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"), separa='-')
+episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"), retorna='Y')
 }
 \author{
 Oswaldo Cruz

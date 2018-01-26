@@ -18,13 +18,37 @@ test_that("output getCases has the required columns", {
 })
 
 ### =====================================
-# Testing the adjustIncidence function
+# Testing the adjustIncidence function 
 ### =====================================
 dC1<-adjustIncidence(obj=dC0)
 
 test_that("output of adjustIncidence has the required columns.", {
   expect_true(all(c("localidade", "SE", "casos", "pdig", "tcasesICmin", 
                     "tcasesmed", "tcasesICmax") %in% names(dC1)))
+})
+
+### =====================================
+# Testing the bayesiann adjust incidence functions 
+### =====================================
+q0 <- getdelaydata(cities=geoc, years=2017, datasource=con)
+q1 <- getdelaydata(cities=330455, years=2017, datasource=con)
+
+res0 = delaycalc(q0)
+test_that("delayCalc: runnoff matrix contains all valid cases", {
+      expect_true(sum(res0$delay.tbl$Notifications) == nrow(q0))
+})
+
+# incluir teste se a sequencia de semanas epidemiologicas esta correta
+
+out0<-fitDelay.inla(res0)
+delay <- prob.inc(out0, plotar = F)
+
+test_that("prob.inc: returns a matrix", {
+      expect_true(class(delay) == "matrix")
+})
+
+test_that("prob.inc: returns a non-empty matrix", {
+      expect_true(all(is.na(delay)) == FALSE)
 })
 
 ### =====================

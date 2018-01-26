@@ -22,6 +22,6 @@ by other auxiliary functions.
 Fit model  Y ~ 1 + f(Time, model = "rw1") + f(Delay, model = "rw1") to object created by delaycalc.
 }
 \examples{
-res = delaycalc(dados)
+res <- delaycalc(dados)
 outp<-fitDelay.inla(res)
 }
