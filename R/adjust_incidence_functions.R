@@ -23,7 +23,7 @@
 #'predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'res = getCases(city = 330240, datasource=con) 
+#'res = getCases(city = 2305001, datasource=con) 
 #'head(res)
 #'resfit<-adjustIncidence(obj=res)
 #'tail(resfit)
@@ -407,7 +407,7 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
 #'@return list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
 #'are internal objects used for plotting. Author Leo Bastos
 #'@examples
-#'dados <- getdelaydata(cities=3302205, datasource=con)
+#'dados <- getdelaydata(cities=2305001, datasource=con)
 #'res = delaycalc(dados)  
 #'head(res$d)  # data
 #'head(res$delay.tbl)  # running matrix
@@ -470,7 +470,7 @@ delaycalc <- function(d, tini = "dt_notific", tfim = "dt_digita", SE = "SE_notif
 #'@return list containing the fitted model (out), the data, arguments and some objects to be used
 #'by other auxiliary functions. 
 #'@examples
-#'res = delaycalc(dados)
+#'res <- delaycalc(dados)
 #'outp<-fitDelay.inla(res)
 
 

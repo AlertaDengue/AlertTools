@@ -156,6 +156,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'@param crit criteria for the alert colors, defined in configglobal.R
 #'@param cid10 default is A90 (dengue). Chik = A92.0, Zika = A92.8
 #'@param adjustdelay Default is TRUE, if F, there is no delay adjustment and estimated = observed.
+#'@param delaymethod Defaut is "fixedprob", alternative is "bayesian". Only used if adjustdelay=T
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param sefinal if given, it stops at that week
 #'@return data.frame with the week condition and the number of weeks within the 
@@ -172,6 +173,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'res <- update.alerta(city = 3200136, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
 #'res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
 #'sefinal=201704, delaymethod="fixedprob")
+#'res <- update.alerta(city = 2305001, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con,adjustdelay=T, delaymethod = "bayesian")
 #'tail(res$data)
 
 update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writedb = FALSE,
