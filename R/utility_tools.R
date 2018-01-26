@@ -24,17 +24,21 @@ data2SE <- function(days, format = "%d/%m/%Y"){
 }
 
 # episem ---------------------------------------------------------------------
-#'@description Find to which epidemiological week belongs a given day 
-#'@author Oswaldo Cruz
-#'@title Define Epidemiological Week
-#'@param date date to be converted (class Date)
-#'@param separa symbol between year and week
-#'@return epidemiological week 
-#'@examples
-#'episem(x= as.Date("2015-01-01", format="%Y-%m-%d"))
-#'episem(x= as.Date("2015-01-50", format="%Y-%m-%d"))
+#' @description Find to which epidemiological week belongs a given day 
+#' @author Oswaldo Cruz
+#' @title Define Epidemiological Week
+#' @param date date to be converted (class Date)
+#' @param separa symbol between year and week
+#' @param retorna What should be return, if epidemiological year and week ('YW'), epi. year only ('Y') or epi. week only ('W').
+#'   Default: 'YW'.
+#' @return epidemiological week 
+#' @examples
+#' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"))
+#' episem(x= as.Date("2015-01-50", format="%Y-%m-%d"))
+#' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), separa='-')
+#' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), retorna='Y')
 
-episem <- function(x, format="%Y-%m-%d",retorna='') {
+episem <- function(x, format="%Y-%m-%d", separa='', retorna='YW') {
       # semana epi 1 de 2000 02/01/2000
       if (class(x)!= "Date") {
             x <- as.Date(x, format = format)
@@ -78,7 +82,14 @@ episem <- function(x, format="%Y-%m-%d",retorna='') {
       
       if(epiweek==0) epiweek <- 1 ## gatilho se for 0 vira semana 1
       epiyear <- year(fwd + 180) ## ano epidemiologico
-      epiyear*100+epiweek
+
+      if (retorna=='YW'){
+            sprintf("%4d%s%02d",epiyear,separa,epiweek)  ## formata string com separador
+      } else if (retorna=='Y') {
+            epiyear
+      } else {
+            epiweek
+      }
 }
 
 
