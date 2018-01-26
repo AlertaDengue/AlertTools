@@ -31,10 +31,9 @@ data2SE <- function(days, format = "%d/%m/%Y"){
 #' @param separa symbol between year and week
 #' @param retorna What should be return, if epidemiological year and week ('YW'), epi. year only ('Y') or epi. week only ('W').
 #'   Default: 'YW'.
-#' @return epidemiological week 
+#' @return epidemiological week or year. If separa = '', the output is numeric; otherwise is a character.
 #' @examples
 #' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"))
-#' episem(x= as.Date("2015-01-50", format="%Y-%m-%d"))
 #' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), separa='-')
 #' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), retorna='Y')
 
@@ -84,11 +83,17 @@ episem <- function(x, format="%Y-%m-%d", separa='', retorna='YW') {
       epiyear <- year(fwd + 180) ## ano epidemiologico
 
       if (retorna=='YW'){
-            sprintf("%4d%s%02d",epiyear,separa,epiweek)  ## formata string com separador
+            out <- sprintf("%4d%s%02d",epiyear,separa,epiweek)  ## formata string com separador
       } else if (retorna=='Y') {
-            epiyear
+            out <- epiyear
       } else {
-            epiweek
+            out <- epiweek
+      }
+      
+      if (separa =="") {
+            return(as.numeric(out))
+      } else {
+            return(out)
       }
 }
 
