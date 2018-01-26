@@ -24,17 +24,21 @@ data2SE <- function(days, format = "%d/%m/%Y"){
 }
 
 # episem ---------------------------------------------------------------------
-#'@description Find to which epidemiological week belongs a given day 
-#'@author Oswaldo Cruz
-#'@title Define Epidemiological Week
-#'@param date date to be converted (class Date)
-#'@param separa symbol between year and week
-#'@return epidemiological week 
-#'@examples
-#'episem(x= as.Date("2015-01-01", format="%Y-%m-%d"))
-#'episem(x= as.Date("2017-12-31", format="%Y-%m-%d"))
+#' @description Find to which epidemiological week belongs a given day 
+#' @author Oswaldo Cruz
+#' @title Define Epidemiological Week
+#' @param date date to be converted (class Date)
+#' @param separa symbol between year and week
+#' @param retorna What should be return, if epidemiological year and week ('YW'), epi. year only ('Y') or epi. week only ('W').
+#'   Default: 'YW'.
+#' @return epidemiological week 
+#' @examples
+#' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"))
+#' episem(x= as.Date("2015-01-50", format="%Y-%m-%d"))
+#' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), separa='-')
+#' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), retorna='Y')
 
-episem <- function(x, format="%Y-%m-%d",retorna='') {
+episem <- function(x, format="%Y-%m-%d", separa='', retorna='YW') {
       # semana epi 1 de 2000 02/01/2000
       if (class(x)!= "Date") {
             x <- as.Date(x, format = format)
@@ -70,15 +74,22 @@ episem <- function(x, format="%Y-%m-%d",retorna='') {
       diafim <- as.Date(paste(ano,'12','31',sep='-')) #Ultimo dia do ano
       diasem <- wday(diafim)                          #dia semana do ultimo dia
       
-      ewd <- ifelse (diasem < 3, diafim - diasem , diafim + 6 - diasem) 
+      ewd <- ifelse (diasem < 3, diafim - diasem - 1, diafim + 6 - diasem) 
       ewd <- as.Date(ewd,origin = '1970-01-01') # ultima semana epi do ano
       
-      if (x >= ewd) fwd <- ewd + 1 #caso a data (x) seja maior ou igual a ultiam semaan do ano
+      if (x > ewd) fwd <- ewd + 1 #caso a data (x) seja maior ou igual a ultiam semaan do ano
       epiweek <- floor(as.numeric(x - fwd) / 7 ) + 1 #numero de semanas e a diff da data e da primeira semana div por 7
       
       if(epiweek==0) epiweek <- 1 ## gatilho se for 0 vira semana 1
       epiyear <- year(fwd + 180) ## ano epidemiologico
-      epiyear*100+epiweek
+
+      if (retorna=='YW'){
+            sprintf("%4d%s%02d",epiyear,separa,epiweek)  ## formata string com separador
+      } else if (retorna=='Y') {
+            epiyear
+      } else {
+            epiweek
+      }
 }
 
 

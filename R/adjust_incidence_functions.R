@@ -19,6 +19,7 @@
 #'was obtained from Rio de Janeiro. 
 #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
 #'@param nyears for the "bayesian" method. Number of years of data used for fitting the model  
+#'@param lastSE for the "bayesian" method. Last epidemiological week to be considered. If NA, will use last digitalization date.
 #'@return data.frame with pdig (proportion reported), median and 95percent confidence interval for the 
 #'predicted cases-to-be-notified)
 #'@examples
@@ -31,7 +32,7 @@
 #'resfit<-adjustIncidence(obj=res,method="bayesian",datasource=con)
 #'tail(resfit)
 
-adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), Dmax=12, nyears = 3, datasource=NA){
+adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), Dmax=12, nyears = 3, datasource=NA, lastSE=NA){
       
   # checking if only one city in obj
   ncities <- length(unique(obj$cidade)) 
@@ -63,9 +64,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        thisyear <- floor(obj$SE[lse]/100)
        # Leo's functions
        dados <- getdelaydata(cities=unique(obj$cidade), years = (thisyear-nyears):thisyear, cid10 = obj$CID10[1], datasource=con)
-       lastdate <- max(dados$SE_notif)
        
-       res <- delaycalc(dados)
+       res <- delaycalc(dados, lastSE=lastSE)
        outp <- fitDelay.inla(res, Dmax = Dmax)
        delay <- prob.inc(outp, plotar = FALSE)
        
@@ -73,7 +73,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        nweeks <- dim(delay)[2]
        obj$tcasesICmin <- obj$casos; obj$tcasesICmax <- obj$casos; obj$tcasesmed <- obj$casos
        obj$tcasesICmin[(le-nweeks+1):le]<-delay[3,]
-       obj$tcasesmed[(le-nweeks+1):le]<-delay[1,]
+       obj$tcasesmed[(le-nweeks+1):le]<-round(delay[2,])
        obj$tcasesICmax[(le-nweeks+1):le]<-delay[4,]
  }   
  
@@ -387,7 +387,12 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
       } else {stop("getdelaydata: requires a valid PostgreSQLConnection")}
       dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
       dd$cid10 <- cid10
-      #dd[,-dd$se_notif]      
+      #dd[,-dd$se_notif]
+      
+      # Create SE_digit
+      dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
+      dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
+      
       dd
 }
 
@@ -396,13 +401,15 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
 #'@description The second function to be used in the delay fitting process using inla. Calculates the number
 #' of cases reported per week with a given delay. Also removes data with notification delay greater than truncdays. 
 #'@title Organize delay data for analysis and produce a nice plot.
-#'@param d dataset with case data containing at least three variables: the initial and final dates and a variable
-#' identifying the epidemiological week. Only one city at a time.
-#'@param tini variable indicating the initial date
-#'@param tfim variable indicating the end date
-#'@param SE variable indicating the epidemiological week
-#'@param date.format date format. Default is "%d-%m-%Y"
-#'@param truncdays Default is 183 days
+#'@param d dataset with case data containing at least three variables: the event week  (tini) and event registry (tfim). Only one city at a time.
+#'@param nt_year variable indicating the event year
+#'@param nt_week variable indicating the event week
+#'@param dg_year variable indicating the event registry year
+#'@param dg_week variable indicating the event registry week
+#'@param SE variable indicating epidemiological week of reference
+#'@param lastSE variable with final notification week to be considered. Format YYYYWW. If NA, uses 
+#' max(100*d$dg_year+d$dg_week). Default=NA.
+#'@param truncweeks Default is 25 weeks
 #'@param plotar Default is TRUE
 #'@return list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
 #'are internal objects used for plotting. Author Leo Bastos
@@ -412,51 +419,77 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
 #'head(res$d)  # data
 #'head(res$delay.tbl)  # running matrix
 
-delaycalc <- function(d, tini = "dt_notific", tfim = "dt_digita", SE = "SE_notif", date.format = "%Y-%m-%d", 
-                      truncdays = 183, verbose = TRUE){
+delaycalc <- function(d, nt_year = "ano_notif", nt_week = "se_notif",
+                      dg_year = "ano_digit", dg_week = "se_digit",
+                      SE = "SE_notif", lastSE=NA,
+                      truncweeks = 25, verbose = TRUE){
       
       # Checking if there is more than one city
       ncities <- length(unique(d$municipio_geocodigo))
       if(ncities != 1)stop("delaycalc error: delay function can only be applied to one city at a time.") 
       
-      dd <- d[,c(tini,tfim,SE)]
-      names(dd)<-c("tini","tfim","SE")
+      dd <- d[,c(SE, nt_year, nt_week, dg_year, dg_week)]
+      names(dd)<-c("SE", "nt_year", "nt_week", "dg_year", "dg_week")
       
-      # getting the time data  (# acrescentar testes de existencia e de formato)
-      tini = as.Date(as.character(d[,tini]),format=date.format )
-      tfim = as.Date(as.character(d[,tfim]),format=date.format )
       rm(d)
+
+      # Remove data uploaded later than lastSE, if any:
+      if (is.na(lastSE)){
+            lastdate <- max(dd$SE)      
+      } else {
+            lastdate <- lastSE
+      }
+      lastdate.year <- as.integer(lastdate/100)
+      lastdate.week <- as.integer(lastdate-100*lastdate.year)
+      dd <- dd[100*dd$dg_year + dd$dg_week <= lastdate, ]
       
-      # Calculating delay time
-      dd$DelayDays <- difftime(tfim, tini, units = "days")
+      # Calculating delay time in epiweeks
+      dd$DelayWeeks <- dd$dg_week - dd$nt_week +
+            (dd$dg_year - dd$nt_year)*as.integer(sapply(dd$nt_year,lastepiweek))
       
-      # Number of notifications greater than 6 months (>= 182 days)
+
+      # Number of notifications greater than truncweeks
       if (verbose==TRUE){
       
-            message(paste("number of notifications with delay greater than",truncdays,"days =",
-                    sum(dd$DelayDays >= truncdays, na.rm = T),"in",length(dd$DelayDays),". They will be excluded.")) 
+            message(paste("number of notifications with delay greater than",truncweeks,"weeks =",
+                    sum(dd$DelayWeeks >= truncweeks, na.rm = T),"in",length(dd$DelayWeeks),". They will be excluded.")) 
       }
       
-      dd <- na.exclude(dd[dd$DelayDays < truncdays, ])
+      dd <- na.exclude(dd[dd$DelayWeeks <= truncweeks, ])
       
-      # Delay in weeks
-      dd$DelayWeeks <- floor( dd$DelayDays / 7 )
+      # Prepare filled epiweeks data frame:
+      # # Fill all epiweeks:
+      fyear <- min(dd$nt_year)
+      fweek <- min(dd$nt_week[dd$nt_year == fyear])
+      years.list <- c(fyear:lastdate.year)
+      df.epiweeks <- data.frame(SE=character())
+      for (y in years.list){
+            epiweeks <- c()
+            fweek <- ifelse(y > fyear, 1, fweek)
+            lweek <- ifelse(y < lastdate.year, as.integer(lastepiweek(y)), lastdate.week)
+            for (w in c(fweek:lweek)){
+                  epiweeks <- c(epiweeks, paste0(y,sprintf('%02d', w)))
+            }
+            df.epiweeks <- rbind(df.epiweeks, data.frame(list(SE=epiweeks)))
+      }
+      rownames(df.epiweeks) <- df.epiweeks$SE
       
       aux <- tapply(dd$DelayWeeks >= 0 , INDEX = dd$SE, FUN = sum, na.rm = T)
       delay.tbl <- data.frame(Notifications = aux[order(rownames(aux))])
       
-      for(k in 0:26){  
+      for(k in 0:truncweeks){  
             aux <- tapply(dd$DelayWeeks == k, INDEX = dd$SE, FUN = sum, na.rm = T)
             delay.tbl[paste("d",k, sep="")] <- aux[order(rownames(aux))]
       }
       
-      delay.week <- paste("d",0:26, sep="")
-      cores <- heat.colors(n = 27, alpha = 0.8)
+      delay.week <- paste("d",0:truncweeks, sep="")
       
-      yyy <- t(as.matrix(delay.tbl[delay.week] ))
+      # Fill missing epiweeks (the ones wiht zero notifications):
+      delay.tbl <- merge(df.epiweeks, delay.tbl, by=0, all.x=T)
+      delay.tbl[is.na(delay.tbl)] <- 0
+      rownames(delay.tbl) <- delay.tbl$Row.names
       
-      
-      list(d = dd, delay.tbl = delay.tbl, delay.week = delay.week)
+      list(d = dd, delay.tbl = delay.tbl[, c('SE', 'Notifications', delay.week)], delay.week = delay.week)
 }
 
 
@@ -479,30 +512,9 @@ fitDelay.inla <- function(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar 
       require(INLA)
       message("fitting..")
       # creating a continuous sequence of weeks within the study period (#aqui da para otimizar)
-      d <- obj$d
-      d$ano <- floor(d$SE/100) # years in the dataset
-      allweeks = expand.grid(ano=min(d$ano):max(d$ano), semanas = 1:52)
-      allweeks = allweeks[order(allweeks$ano),]
-      allweeks$se <- allweeks$ano*100+allweeks$semanas  # all weeks
+      delay.week <- paste0("d",0:Dmax)
       
-      aux <- tapply(d$DelayWeeks >= 0 , INDEX = d$SE, FUN = sum, na.rm = T)
-      
-      #delay.tbl <- data.frame(Notifications = aux[order(rownames(aux))])
-      delay.tbl <- obj$delay.tbl
-      
-      #delay.week <- paste("d",0:26, sep="")
-      delay.week <- obj$delay.week
-      
-      for(k in 0:26){  
-            aux <- tapply(d$DelayWeeks == k, INDEX = d$SE, FUN = sum, na.rm = T)
-            delay.tbl[paste("d",k, sep="")] <- aux[order(rownames(aux))]
-      }
-      delay.data <- delay.tbl[delay.week]
-      
-      # tempo maximo do banco
-      Tmax <- nrow(delay.data)
-      
-      delay.data.obs <- delay.data[1:Tactual,(0:Dmax)+1]
+      delay.data.obs <- obj$delay.tbl[delay.week]
       
       # Time index of the unknown counts (Dmax+1,...,Tactual) 
       index.time <- (Tactual-Dmax+1):Tactual
