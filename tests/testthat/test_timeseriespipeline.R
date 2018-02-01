@@ -31,7 +31,7 @@ test_that("output of adjustIncidence has the required columns.", {
 ### =====================================
 # Testing the bayesiann adjust incidence functions 
 ### =====================================
-q0 <- getdelaydata(cities=geoc, years=2017, datasource=con)
+q0 <- getdelaydata(cities=geoc, years=2016:2017, datasource=con)
 q1 <- getdelaydata(cities=330455, years=2017, datasource=con)
 
 res0 = delaycalc(q0)

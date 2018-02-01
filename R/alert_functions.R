@@ -173,7 +173,6 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'res <- update.alerta(city = 3200136, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
 #'res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
 #'sefinal=201704, delaymethod="fixedprob")
-#'res <- update.alerta(city = 2305001, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con,adjustdelay=T, delaymethod = "bayesian")
 #'tail(res$data)
 
 update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writedb = FALSE,

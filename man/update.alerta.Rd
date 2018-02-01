@@ -4,7 +4,7 @@
 \alias{update.alerta}
 \title{Define conditions to issue a 4 level alert Green-Yellow-Orange-Red for any city or region.}
 \usage{
-update.alerta(city, region, state, pars, crit, cid10 = "A90",
+\method{update}{alerta}(city, region, state, pars, crit, cid10 = "A90",
   writedb = FALSE, datasource, sefinal, adjustdelay = T,
   delaymethod = "fixedprob")
 }
@@ -55,6 +55,5 @@ pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, i
 res <- update.alerta(city = 3200136, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
 res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
 sefinal=201704, delaymethod="fixedprob")
-res <- update.alerta(city = 2305001, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con,adjustdelay=T, delaymethod = "bayesian")
 tail(res$data)
 }
