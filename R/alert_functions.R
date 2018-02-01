@@ -231,11 +231,14 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
                            ,datasource = datasource)
             #message("estacao", k, "tem dimensao",nrow(cliwu))
             if (!is.null(cliwu)){
-            if (!missing(sefinal)) cliwu =  subset(cliwu,SE<=sefinal)
+                  if (!missing(sefinal)) cliwu =  subset(cliwu,SE<=sefinal)
+            } 
+            if (nrow(cliwu)>0){
                   cli[[k]] <- cliwu
                   names(cli)[k]<-as.character(unique(cli[[k]]$estacao))      
             }
       }
+
       #names(cli) <-estacoes
       estacoes.validas <- names(cli)
       print(estacoes.validas)
