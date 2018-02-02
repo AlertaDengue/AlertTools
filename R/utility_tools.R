@@ -365,21 +365,33 @@ temp.predict <- function(v, plotar = FALSE){
 #'@description  consult database to get list of regionais 
 #'@title get list of regionais. 
 #'@param uf full name of the state.
+#'@sortedby the options are: 'a' alphabetically, 'id' regional id number, if available 
 #'@param database name of the database
 #'@return vector with names of the regionais.
 #'@examples
 #'getRegionais(uf="Rio de Janeiro")
+#'getRegionais(uf="Rio de Janeiro", sortedby = 'id')
 
-getRegionais <- function(uf, datasource=con){
+getRegionais <- function(uf, sortedby = "a", datasource=con){
       
-      sqlquery = paste("SELECT nome_regional, uf 
+      sqlquery = paste("SELECT nome_regional, id_regional, uf 
                   FROM \"Dengue_global\".\"Municipio\" 
                   INNER JOIN \"Dengue_global\".regional_saude
                   ON municipio_geocodigo = geocodigo
                   where uf = '", uf, "'", sep="")
       
-      d = dbGetQuery(con, sqlquery)    
-      unique(d$nome_regional) 
+      d = dbGetQuery(datasource, sqlquery)    
+      if (nrow(d) == 0) stop(paste("Banco de dados não tem regionais para o estado ", uf))
+      
+      if(sortedby == 'a') out <- sort(unique(d$nome_regional)) 
+      if(sortedby == 'id') {
+            out <- unique(d[order(d$id_regional),"nome_regional"])
+            if (any(is.na(d$id_regional))) {
+                  warning("getRegionais: código das regionais não encontrado, trocando argummento para sortedby = 'a'")
+                  out <- sort(unique(d$nome_regional))
+            }
+            }
+      out
 }
 
 
