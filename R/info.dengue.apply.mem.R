@@ -42,7 +42,7 @@
 
 info.dengue.apply.mem <- function(mun_list=mun_list, start_year=0, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
                                   write='no', con, passwd=NULL, i.n.max=0,
-                                  limiar.preseason=0.90, limiar.epidemico=0.95, ...){
+                                  limiar.preseason=0.90, limiar.epidemico=0.95, i.type.curve=2, ...){
   
   require(mem, quietly=TRUE, warn.conflicts=FALSE)
   require(plyr, quietly=TRUE, warn.conflicts=FALSE)

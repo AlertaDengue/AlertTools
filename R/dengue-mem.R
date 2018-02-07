@@ -10,11 +10,11 @@ using MEM package https://cran.r-project.org/web/packages/mem/
 
 require(mem)
 require(plyr)
-require(logging)
+#require(logging)
 
 # Initialize logger
-basicConfig()
-addHandler(writeToFile, file="./dengue-mem.log", level='INFO')
+#basicConfig()
+#addHandler(writeToFile, file="./dengue-mem.log", level='INFO')
 bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
   "
   Function to bind season incidences from df1 onto df2, placing each season in a new colum
@@ -24,7 +24,7 @@ bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
   "
   
   if (missing(df1) | missing(df2) | missing(baseyear)){
-    logerror('missing argument on function call', logger='dengue-mem.bindseason')
+    #logerror('missing argument on function call', logger='dengue-mem.bindseason')
     return(NULL)
   }
 
@@ -37,31 +37,20 @@ bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
   newinc <- suff
   df3 <- rename(df3, c('SE'=newse, 'inc'=newinc))
   
-  loginfo('Function executed and exited with status 0', logger='dengue-mem.bindseason')
+  #loginfo('Function executed and exited with status 0', logger='dengue-mem.bindseason')
   return(df3)
 }
 
-applymem <- function(df.data, l.seasons, ...){
-  "
-  Function to apply epimem algorithm on df.data and generate full reports as well as a data frame
-  with summary of relevant thresholds (pre, pos, mid, high, veryhigh)
 
-  Input:
-  :df.data: data frame with municipio_geocodigo in a column named municipio_geocodigo, and incidence seasons in each column
-            each row gives the incidence in each season, for each municipio_geocodigo, for each week.
-  :l.seasons: vector with incidence columns to be used
-
-  Returns:
-  :epithresholds: list with full epimem report for each municipio_geocodigo, keyed by AP's name.
-  :dfthresholds: data frame with thresholds for each AP.
-
-  Defatul arguments passed to memmodel function:
+# applymem ------------------------------------
+#'@description  Function to apply epimem algorithm on df.data and generate full reports as well as a data frame with summary of relevant thresholds (pre, pos, mid, high, veryhigh) 
+#'@title Get epidemic thresholds  for a list of cities
+#'@param df.data data frame with municipio_geocodigo in a column named municipio_geocodigo, and incidence seasons in each column each row gives the incidence in each season, for each municipio_geocodigo, for each week.
+#'@param l.seasons vector with incidence columns to be used. Additional arguments accepted by memmodel function
 #' @param i.n.max Number of pre-epidemic values used to calculate the threshold.
 #' @param i.type.curve Type of confidence interval to calculate the modelled curve.
 #' @param i.level.threshold Level of confidence interval to calculate the threshold.
 #' @param i.level.curve Level of confidence interval to calculate the modelled curve.
-
-  Additional arguments accepted by memmodel function:
 #' @param i.data Data frame of input data.
 #' @param i.seasons Maximum number of seasons to use.
 #' @param i.type.threshold Type of confidence interval to calculate the threshold.
@@ -75,11 +64,15 @@ applymem <- function(df.data, l.seasons, ...){
 #' @param i.param Parameter to calculate the optimal timing of the epidemic.
 #' @param i.type.boot Type of bootstrap technique.
 #' @param i.iter.boot Number of bootstrap iterations.
-  "
+#'@author Marcelo F Gomes
+#'@details internal function, used by info.dengue.apply.mem.   Defatul arguments passed to memmodel function:
+#'@return epithresholds: list with full epimem report for each municipio_geocodigo, keyed by AP's name. dfthresholds: data frame with thresholds for each AP.
 
+applymem <- function(df.data, l.seasons, ...){
   if (missing(df.data)){
-    logerror('missing argument on function call', logger='dengue-mem.applymem')
-    return(NULL)
+    #logerror('missing argument on function call', logger='dengue-mem.applymem')
+    message('missing argument on function call: applymem')
+        return(NULL)
   }
   
   # List of municipio_geocodigos
@@ -112,6 +105,7 @@ applymem <- function(df.data, l.seasons, ...){
       discard <- NULL
       prethreshold <- epitmp$pre.post.intervals[1,3]
       postthreshold <- epitmp$pre.post.intervals[2,3]
+      epitmp$typ.real.curve <- epitmp$typ.curve 
       typ.real.curve <- rename(data.frame(epitmp$typ.real.curve), c('X1'='baixo', 'X2'='mediano' ,'X3'='alto'))
       # Clean typical curve:
       typ.real.curve$mediano[is.na(typ.real.curve$mediano)] <- 0
@@ -121,6 +115,7 @@ applymem <- function(df.data, l.seasons, ...){
       
       episeasons <- sapply(non.null.seasons, max, na.rm=TRUE) > prethreshold
       epitmp <- memmodel(i.data=non.null.seasons[, episeasons], ...)
+      epitmp$typ.real.curve <- epitmp$typ.curve 
       
       # Store full report in epithresholds:
       epithresholds[[geocod]] <- epitmp
@@ -133,23 +128,23 @@ applymem <- function(df.data, l.seasons, ...){
       dfthresholds$pre[dfthresholds$municipio_geocodigo==geocod] <- epitmp$pre.post.intervals[1,3]
       dfthresholds$pos[dfthresholds$municipio_geocodigo==geocod] <- epitmp$pre.post.intervals[2,3]
       dfthresholds$veryhigh[dfthresholds$municipio_geocodigo==geocod] <- epitmp$epi.intervals[1,4]
-      dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod] <- (epitmp$mean.start.threshold - 1 + 41) %% 52
+      dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod] <- (epitmp$mean.start - 1 + 41) %% 52
       if (dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod]==0){
         dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod] = 52
       }
-      ci.start.i <- (epitmp$ci.start.threshold[1,1] - 1 + 41) %% 52
+      ci.start.i <- (epitmp$ci.start[1,1] - 1 + 41) %% 52
       if (ci.start.i==0){
         ci.start.i = 52
       }
-      ci.start.f <- (epitmp$ci.start.threshold[1,3] - 1 + 41) %% 52
+      ci.start.f <- (epitmp$ci.start[1,3] - 1 + 41) %% 52
       if (ci.start.f==0){
         ci.start.f = 52
       }
       dfthresholds$inicio.ic[dfthresholds$municipio_geocodigo==geocod] <- paste0('[', ci.start.i, '-',
                                                                                  ci.start.f, ']')
-      dfthresholds$duracao[dfthresholds$municipio_geocodigo==geocod] <- epitmp$mean.length.threshold
-      dfthresholds$duracao.ic[dfthresholds$municipio_geocodigo==geocod] <- paste0('[', epitmp$ci.length.threshold[1,1], '-',
-                                                                                  epitmp$ci.length.threshold[1,3], ']')
+      dfthresholds$duracao[dfthresholds$municipio_geocodigo==geocod] <- epitmp$mean.length
+      dfthresholds$duracao.ic[dfthresholds$municipio_geocodigo==geocod] <- paste0('[', epitmp$ci.length[1,1], '-',
+                                                                                  epitmp$ci.length[1,3], ']')
       return(list("epithresholds.tmp"=epithresholds, "dfthresholds.tmp"=dfthresholds))
     }
     
@@ -160,7 +155,7 @@ applymem <- function(df.data, l.seasons, ...){
     }
     
   }
-  loginfo('Function executed and exited with status 0', logger='dengue-mem.applymem')
+  #loginfo('Function executed and exited with status 0!', logger='dengue-mem.applymem')
   return(list("epimemthresholds"=epithresholds, "dfthresholds"=dfthresholds))
 }
 
