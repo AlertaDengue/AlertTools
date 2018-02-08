@@ -86,8 +86,6 @@ applymem <- function(df.data, l.seasons, ...){
   
   dfthresholds['pre'] <- NULL # Pre-epidemic threshold (at .95 confidence interval by default)
   dfthresholds['pos'] <- NULL # Post-epidemic threshold
-  dfthresholds['mid'] <- NULL # Mid activity threshold (corresponding to 0.4 quantile by default)
-  dfthresholds['high'] <- NULL # High activity threshold (corresponding to 0.9 quantile by default)
   dfthresholds['veryhigh'] <- NULL # Very high activity threshold (corresponding to 0.95 quantile by default)
   dfthresholds['inicio'] <- NULL # Typical begining of epidemic activity
   dfthresholds['duracao'] <- NULL # Typical duration
@@ -116,6 +114,8 @@ applymem <- function(df.data, l.seasons, ...){
       episeasons <- sapply(non.null.seasons, max, na.rm=TRUE) > prethreshold
       epitmp <- memmodel(i.data=non.null.seasons[, episeasons], ...)
       epitmp$typ.real.curve <- epitmp$typ.curve 
+      prethreshold <- epitmp$pre.post.intervals[1,3]
+      postthreshold <- epitmp$pre.post.intervals[2,3]
       
       # Store full report in epithresholds:
       epithresholds[[geocod]] <- epitmp
@@ -125,8 +125,8 @@ applymem <- function(df.data, l.seasons, ...){
       epithresholds[[geocod]]$typ.real.curve['SE'] <- c(seq(41,52), seq(1,40))
       
       # Store epidemic thresholds
-      dfthresholds$pre[dfthresholds$municipio_geocodigo==geocod] <- epitmp$pre.post.intervals[1,3]
-      dfthresholds$pos[dfthresholds$municipio_geocodigo==geocod] <- epitmp$pre.post.intervals[2,3]
+      dfthresholds$pre[dfthresholds$municipio_geocodigo==geocod] <- prethreshold
+      dfthresholds$pos[dfthresholds$municipio_geocodigo==geocod] <- postthreshold
       dfthresholds$veryhigh[dfthresholds$municipio_geocodigo==geocod] <- epitmp$epi.intervals[1,4]
       dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod] <- (epitmp$mean.start - 1 + 41) %% 52
       if (dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod]==0){
