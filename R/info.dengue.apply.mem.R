@@ -97,7 +97,7 @@ info.dengue.apply.mem <- function(mun_list=mun_list, start_year=0, end_year=as.i
                            i.level.intensity=limiar.epidemico,...)$dfthresholds[base.cols]
     thresholds.tab <- merge(thresholds.tab, thresholds, by='municipio_geocodigo', all=TRUE)
     thresholds.tab[,c('casos_pre', 'casos_pos', 'casos_muitoalta')] <- 
-      data.table(t(apply(thresholds.tab[, ..base.cols], 1, function(x)
+      data.table(t(apply(thresholds.tab[, base.cols], 1, function(x)
         df.pop$populacao[df.pop$municipio_geocodigo == x[1]]*as.numeric(x[2:4])/100000)))
     thresholds.tab[,c('casos_pre', 'casos_pos', 'casos_muitoalta')] <- round(thresholds.tab[,c('casos_pre',
                                                                                                'casos_pos',
