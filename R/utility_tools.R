@@ -365,7 +365,7 @@ temp.predict <- function(v, plotar = FALSE){
 #'@description  consult database to get list of regionais 
 #'@title get list of regionais. 
 #'@param uf full name of the state.
-#'@sortedby the options are: 'a' alphabetically, 'id' regional id number, if available 
+#'@param sortedby the options are: 'a' alphabetically, 'id' regional id number, if available 
 #'@param database name of the database
 #'@return vector with names of the regionais.
 #'@examples
@@ -501,6 +501,80 @@ write.parameters<-function(params, tab, senha){
       dbReadTable(conn, c("Dengue_global","regional_saude"))
       dbDisconnect(conn)
 }
+
+# read.parameters ------------------------------------
+#'@description  Read the alert parameters for a set of  cities from the database, to be used in the update.alert. 
+#'Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_posseason",
+#'"limiar_epidemico, "estacao_wu_sec".  
+#'@title Get city alert parameters. 
+#'@param city geocode
+#'@param region regional's name
+#'@param state state's name
+#'@param datasource SQL connection to the database
+#'@return dataframe with all parameters
+#'@examples
+#'res = read.parameters(city = 3118601, datasource = con)
+#'res = read.parameters(region="Norte", state = "Rio de Janeiro", datasource = con)
+#'res = read.parameters(state = "Rio de Janeiro", datasource = con)
+#'res = read.parameters(datasource = con) #set no filter to get all cities
+
+read.parameters<-function(city, region, state, datasource){
+      
+      vars  = " geocodigo, nome, nome_regional, id_regional, uf, populacao, codigo_estacao_wu, 
+                estacao_wu_sec,limiar_preseason, limiar_posseason, limiar_epidemico "
+
+            # Getting metadata from table regional_saude
+      if(!missing (city)) { # if updating a single city
+            if(nchar(city) == 6) city <- sevendigitgeocode(city) 
+            
+            
+            sql = paste("SELECT ",vars, " FROM \"Dengue_global\".\"Municipio\" 
+                        INNER JOIN \"Dengue_global\".regional_saude
+                        ON municipio_geocodigo = geocodigo
+                        where geocodigo = '", city, "'", sep=" ")
+            dd <- dbGetQuery(datasource,sql)
+            
+      }
+      
+      if (!missing(region)){ # if one or more regionais
+            regionais = region
+            sql1 = paste("'", regionais[1], sep = "")
+            ns = length(regionais)
+            if (ns > 1) for (i in 2:ns) sql1 = paste(sql1, regionais[i], sep = "','")
+            sql1 <- paste(sql1, "'", sep = "")
+            
+            sql = paste("SELECT ", vars, " FROM \"Dengue_global\".\"Municipio\" 
+                        INNER JOIN \"Dengue_global\".regional_saude
+                        ON municipio_geocodigo = geocodigo
+                        where nome_regional IN (",sql1,")",sep="")
+            dd <- dbGetQuery(con,sql)
+            if (dim(dd)[1]==0) stop(paste("A regional",region, "nao foi achada. 
+                                          Verifique se escreveu certo (por extenso)"))
+            
+            if(length(unique(dd$uf)) > 1){
+                  if (missing(state)) stop(cat("Existe mais de uma regional com esse nome. 
+                                          Especifique o estado (por extenso):", unique(dd$uf)))
+                  dd <- subset(dd, uf == state)
+            }
+      }
+      
+      if((missing(city) & missing(region) & !missing(state))){ # state level
+            sql = paste("SELECT ",vars, " FROM \"Dengue_global\".\"Municipio\" 
+                        INNER JOIN \"Dengue_global\".regional_saude
+                        ON municipio_geocodigo = geocodigo
+                        where uf = '", state, "'", sep="")
+            dd <- dbGetQuery(datasource,sql)
+      }
+      
+      if((missing(city) & missing(region) & missing(state))){
+            sql = paste("SELECT ",vars, " FROM \"Dengue_global\".\"Municipio\" 
+                        INNER JOIN \"Dengue_global\".regional_saude
+                        ON municipio_geocodigo = geocodigo", sep="")
+            dd <- dbGetQuery(datasource,sql)
+      }
+      dd
+}
+      
 
 
 # insertCityinAlerta ------------------------------------

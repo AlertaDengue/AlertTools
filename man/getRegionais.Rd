@@ -4,10 +4,12 @@
 \alias{getRegionais}
 \title{get list of regionais.}
 \usage{
-getRegionais(uf, datasource = con)
+getRegionais(uf, sortedby = "a", datasource = con)
 }
 \arguments{
 \item{uf}{full name of the state.}
+
+\item{sortedby}{the options are: 'a' alphabetically, 'id' regional id number, if available}
 
 \item{database}{name of the database}
 }
@@ -19,4 +21,5 @@ consult database to get list of regionais
 }
 \examples{
 getRegionais(uf="Rio de Janeiro")
+getRegionais(uf="Rio de Janeiro", sortedby = 'id')
 }

@@ -131,7 +131,7 @@ info.dengue.apply.mem <- function(mun_list, start_year=0, end_year=as.integer(fo
   
   if (write=='db'){
     tgt.cols <- c('municipio_geocodigo', 'limiar_preseason', 'limiar_posseason', 'limiar_epidemico')
-    write.parameters(params=tgt.cols, tab=thresholds.table[, ..tgt.cols], senha=password)
+    write.parameters(params=tgt.cols, tab=thresholds.table[, tgt.cols], senha=passwd)
   } else {
     return(thresholds.table)
   }

@@ -56,6 +56,10 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
                   cred = gsub(k,pars[[k]],cred)
             }
       }
+      if(any(is.na(cyellow)))stop("yellow criteria missing, could not parse it, missing parameters?")
+      if(any(is.na(corange)))stop("orange criteria missing, could not parse it, missing parameters?")
+      if(any(is.na(cred)))stop("red criteria missing, could not parse it, missing parameters?")
+      
       incpos = pars$posseas
       
       # calculate incidence"
@@ -168,7 +172,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'critr = c("inc > inccrit", 2, 2))
 #'gtdist="normal"; meangt=3; sdgt = 1.2
 #'pars.RJ <- NULL
-#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
+#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),ucrit=NA, tcrit=22, legpos="bottomright")
 #'# Running the model:
 #'res <- update.alerta(city = 3549805, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
 #'res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
@@ -181,46 +185,24 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
       # Getting metadata from table regional_saude
       if(!missing (city)) { # if updating a single city
             if(nchar(city) == 6) city <- sevendigitgeocode(city) 
-            
-            sql = paste("SELECT geocodigo, codigo_estacao_wu, estacao_wu_sec
-                        FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo
-                        where geocodigo = '", city, "'", sep="")
-            dd <- dbGetQuery(con,sql)
-            
+            dd <- read.parameters(city = city, datasource = datasource)
       }
       
       if (!missing(region)){ # if one or more regionais
-            regionais = region
-            sql1 = paste("'", regionais[1], sep = "")
-            ns = length(regionais)
-            if (ns > 1) for (i in 2:ns) sql1 = paste(sql1, regionais[i], sep = "','")
-            sql1 <- paste(sql1, "'", sep = "")
-            
-            sql = paste("SELECT geocodigo, nome, populacao, uf, codigo_estacao_wu, estacao_wu_sec, nome_regional
-                        FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo
-                        where nome_regional IN (",sql1,")",sep="")
-            dd <- dbGetQuery(con,sql)
-            if (dim(dd)[1]==0) stop(paste("A regional",region, "nao foi achada. 
-                                          Verifique se escreveu certo (por extenso)"))
-            
-            if(length(unique(dd$uf)) > 1){
-                  if (missing(state)) stop(paste("Existe mais de uma regional com esse nome. 
-                                          Especifique o estado (por extenso):", unique(dd$uf)))
-                  dd <- subset(dd, uf == state)
-            }
-            
+            dd <- read.parameters(region = region, state = state, datasource=datasource)     
+            } 
+      
+      if ((missing(region) & missing(city) &!missing(state)))  {
+            dd <- read.parameters(state = state, datasource=datasource)    
       }
       #
       nlugares = dim(dd)[1]
-      if (nlugares == 0) stop("A cidade ou regiao nao foi encontrada")
+      if (nlugares == 0) stop("A cidade ou regiao ou estado nao foi encontrada(o)")
       
       print(paste("sera'feita analise de",nlugares,"cidade(s):"))
       print(dd$geocodigo)      
       
+      # -------------------------------------
       message("obtendo dados de clima ...")
       estacoes <- unique(c(dd$estacao_wu_sec, dd$codigo_estacao_wu))
       cli <- list()
@@ -276,10 +258,10 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             
             print(paste("(Cidade ",i,"de",nlugares,")","Rodando alerta para ", geocidade, "usando estacao", estacao,"(ultima leitura:", lastdatewu,")"))
             
-            # consulta dados do sinan
+            # --------------- consulta dados do sinan
             dC0 = getCases(city = geocidade, cid10 = cid10, datasource=datasource) 
             
-            # consulta dados do tweet apenas se for dengue 
+            # --------------- consulta dados do tweet apenas se for dengue 
             if(cid10 == "A90") dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) 
             dW = cli[[estacao]]
             
@@ -296,7 +278,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
                   d$tweet <- NA
             }
             
-            # interpolacao e extrapolação das variaveis climaticas
+            # ----------- interpolacao e extrapolação das variaveis climaticas
             
             vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
             
@@ -304,7 +286,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
                   if (is.na(tail(d[,j])[1])) try(d[,j] <-nafill(d[,j], rule="arima"))  
             }
                         
-            # parsi e' pars de uma unica cidade. 
+            # parsi e' pars de uma unica cidade. Atualmente os limiares sao lidos do banco de dados
             # E'preciso extrair no caso de region 
             if (nlugares > 1) {
                   d$nome_regional <- dd$nome_regional[dd$geocodigo==geocidade]
@@ -313,6 +295,11 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
                   parsi <- pars
             }
             
+            # Limiares
+            parsi$preseas <- dd$limiar_preseason[i]
+            parsi$posseas <- dd$limiar_posseason[i]
+            parsi$inccrit <- dd$limiar_epidemico[i]
+                  
             if (!missing(sefinal)) d <- subset(d,SE<=sefinal)
             # preenchendo potenciais missings
             d$cidade[is.na(d$cidade)==TRUE] <- geocidade
@@ -341,8 +328,8 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             
             dC3 <- Rt(dC2, count = "tcasesmed", gtdist=gtdist, meangt=meangt, sdgt = sdgt) # calcula Rt
             
-            alerta <- fouralert(dC3, pars = parsi, crit = crit, pop=dC0$pop[1], miss="last") # calcula alerta
-            nome = na.omit(unique(dC0$nome))
+            alerta <- fouralert(dC3, pars = parsi, crit = crit, pop=dd$pop[i], miss="last") # calcula alerta
+            nome = dd$nome[i]
             nick <- gsub(" ", "", nome, fixed = TRUE)
             #names(alerta) <- nick
             N = dim(alerta$indices)[1]
