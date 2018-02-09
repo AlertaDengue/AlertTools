@@ -86,16 +86,14 @@ applymem <- function(df.data, l.seasons, ...){
   
   dfthresholds['pre'] <- NULL # Pre-epidemic threshold (at .95 confidence interval by default)
   dfthresholds['pos'] <- NULL # Post-epidemic threshold
-  dfthresholds['mid'] <- NULL # Mid activity threshold (corresponding to 0.4 quantile by default)
-  dfthresholds['high'] <- NULL # High activity threshold (corresponding to 0.9 quantile by default)
   dfthresholds['veryhigh'] <- NULL # Very high activity threshold (corresponding to 0.95 quantile by default)
   dfthresholds['inicio'] <- NULL # Typical begining of epidemic activity
   dfthresholds['duracao'] <- NULL # Typical duration
   
   for (geocodid in municipio_geocodigoids){
-    f <- function(geocod, ...){
+    f <- function(geocod, l.seasons, ...){
       # Firstly, use all seasons
-      df.geocodid <- df.data[df.data$municipio_geocodigo==geocodid, l.seasons]
+      df.geocodid <- df.data[df.data$municipio_geocodigo==geocod, l.seasons]
       non.null.seasons <- df.geocodid[, colSums(df.geocodid)>0]
       l.seasons.geocodid <- names(non.null.seasons)
       epitmp <- memmodel(i.data=non.null.seasons, ...)
@@ -116,6 +114,8 @@ applymem <- function(df.data, l.seasons, ...){
       episeasons <- sapply(non.null.seasons, max, na.rm=TRUE) > prethreshold
       epitmp <- memmodel(i.data=non.null.seasons[, episeasons], ...)
       epitmp$typ.real.curve <- epitmp$typ.curve 
+      prethreshold <- epitmp$pre.post.intervals[1,3]
+      postthreshold <- epitmp$pre.post.intervals[2,3]
       
       # Store full report in epithresholds:
       epithresholds[[geocod]] <- epitmp
@@ -125,38 +125,30 @@ applymem <- function(df.data, l.seasons, ...){
       epithresholds[[geocod]]$typ.real.curve['SE'] <- c(seq(41,52), seq(1,40))
       
       # Store epidemic thresholds
-      dfthresholds$pre[dfthresholds$municipio_geocodigo==geocod] <- epitmp$pre.post.intervals[1,3]
-      dfthresholds$pos[dfthresholds$municipio_geocodigo==geocod] <- epitmp$pre.post.intervals[2,3]
-      dfthresholds$mid[dfthresholds$municipio_geocodigo==geocod] <- epitmp$epi.intervals[1,4]
-      dfthresholds$high[dfthresholds$municipio_geocodigo==geocod] <- epitmp$epi.intervals[2,4]
-      dfthresholds$veryhigh[dfthresholds$municipio_geocodigo==geocod] <- epitmp$epi.intervals[3,4]
-      #dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod] <- (epitmp$mean.start.threshold - 1 + 41) %% 52
+      dfthresholds$pre[dfthresholds$municipio_geocodigo==geocod] <- prethreshold
+      dfthresholds$pos[dfthresholds$municipio_geocodigo==geocod] <- postthreshold
+      dfthresholds$veryhigh[dfthresholds$municipio_geocodigo==geocod] <- epitmp$epi.intervals[1,4]
       dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod] <- (epitmp$mean.start - 1 + 41) %% 52
       if (dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod]==0){
         dfthresholds$inicio[dfthresholds$municipio_geocodigo==geocod] = 52
       }
-      #ci.start.i <- (epitmp$ci.start.threshold[1,1] - 1 + 41) %% 52
       ci.start.i <- (epitmp$ci.start[1,1] - 1 + 41) %% 52
       if (ci.start.i==0){
         ci.start.i = 52
       }
-      #ci.start.f <- (epitmp$ci.start.threshold[1,3] - 1 + 41) %% 52
       ci.start.f <- (epitmp$ci.start[1,3] - 1 + 41) %% 52
       if (ci.start.f==0){
         ci.start.f = 52
       }
       dfthresholds$inicio.ic[dfthresholds$municipio_geocodigo==geocod] <- paste0('[', ci.start.i, '-',
                                                                                  ci.start.f, ']')
-      #dfthresholds$duracao[dfthresholds$municipio_geocodigo==geocod] <- epitmp$mean.length.threshold
       dfthresholds$duracao[dfthresholds$municipio_geocodigo==geocod] <- epitmp$mean.length
-      #dfthresholds$duracao.ic[dfthresholds$municipio_geocodigo==geocod] <- paste0('[', epitmp$ci.length.threshold[1,1], '-',
-      #                                                                            epitmp$ci.length.threshold[1,3], ']')
       dfthresholds$duracao.ic[dfthresholds$municipio_geocodigo==geocod] <- paste0('[', epitmp$ci.length[1,1], '-',
                                                                                   epitmp$ci.length[1,3], ']')
       return(list("epithresholds.tmp"=epithresholds, "dfthresholds.tmp"=dfthresholds))
     }
     
-    res <- try(f(geocod=geocodid), TRUE)
+    res <- try(f(geocod=geocodid, l.seasons=l.seasons, ...), TRUE)
     if (!inherits(res, "try-error")){
       epithresholds <- res$epithresholds.tmp
       dfthresholds <- res$dfthresholds

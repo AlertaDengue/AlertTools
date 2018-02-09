@@ -40,9 +40,10 @@
 #' Write to database instead of returning object:
 #' info.dengue.apply.mem(con=con, passwd=password, start_year=0, mun_list=mun_list, output='db')
 
-info.dengue.apply.mem <- function(mun_list=mun_list, start_year=0, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
+info.dengue.apply.mem <- function(mun_list, start_year=0, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
                                   write='no', con, passwd=NULL, i.n.max=0,
-                                  limiar.preseason=0.90, limiar.epidemico=0.95, ...){
+                                  limiar.preseason=0.95, limiar.epidemico=0.95, i.type.curve=2,
+                                  i.type.threshold=2, i.type.intensity=2, ...){
   
   require(mem, quietly=TRUE, warn.conflicts=FALSE)
   require(plyr, quietly=TRUE, warn.conflicts=FALSE)
@@ -94,7 +95,9 @@ info.dengue.apply.mem <- function(mun_list=mun_list, start_year=0, end_year=as.i
     thresholds.tab <- data.table(municipio_geocodigo=mun_chunck)
     base.cols <- c('municipio_geocodigo', 'pre', 'pos', 'veryhigh')
     thresholds <- applymem(dfsimple, seasons, i.n.max=i.n.max, i.level.threshold=limiar.preseason,
-                           i.level.intensity=limiar.epidemico,...)$dfthresholds[base.cols]
+                           i.level.intensity=limiar.epidemico,
+                           i.type.curve=i.type.curve, i.type.threshold=i.type.threshold,
+                           i.type.intensity=i.type.intensity, ...)$dfthresholds[base.cols]
     thresholds.tab <- merge(thresholds.tab, thresholds, by='municipio_geocodigo', all=TRUE)
     thresholds.tab[,c('casos_pre', 'casos_pos', 'casos_muitoalta')] <- 
       data.table(t(apply(thresholds.tab[, ..base.cols], 1, function(x)
