@@ -513,10 +513,10 @@ write.parameters<-function(params, tab, senha){
 #'@param datasource SQL connection to the database
 #'@return dataframe with all parameters
 #'@examples
-#'res = read.parameters(city = 3118601, datasource = con)
-#'res = read.parameters(region="Norte", state = "Rio de Janeiro", datasource = con)
-#'res = read.parameters(state = "Rio de Janeiro", datasource = con)
-#'res = read.parameters(datasource = con) #set no filter to get all cities
+#'read.parameters(city = 3118601, datasource = con)
+#'read.parameters(region="Norte", state = "Rio de Janeiro", datasource = con)
+#'read.parameters(state = "Rio de Janeiro", datasource = con)
+#'read.parameters(datasource = con) #set no filter to get all cities
 
 read.parameters<-function(city, region, state, datasource){
       

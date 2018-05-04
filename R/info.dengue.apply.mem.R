@@ -34,11 +34,13 @@
 #' Return object instead of writing to data base:
 #' mun_list <- c(3304557, 4106902, 3205309)
 #' mun_list <- c(3205309)
+#' cid <- getCidades(uf = "Minas Gerais", datasource=cond)
+#' info.dengue.apply.mem(con=cond, passwd=password, start_year=0, mun_list=cid$municipio_geocodigo, write='db')
 #' 
-#' thresholds.table <- info.dengue.apply.mem(con=con, passwd=password, start_year=0, mun_list=mun_list)
+#' thresholds.table <- info.dengue.apply.mem(con=cond, passwd=password, start_year=0, mun_list=mun_list)
 #' 
 #' Write to database instead of returning object:
-#' info.dengue.apply.mem(con=con, passwd=password, start_year=0, mun_list=mun_list, output='db')
+#' info.dengue.apply.mem(con=cond, passwd=password, start_year=0, mun_list=mun_list, write='db')
 
 info.dengue.apply.mem <- function(mun_list, start_year=0, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
                                   write='no', con, passwd=NULL, i.n.max=0,

@@ -311,7 +311,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
                   if(delaymethod=="fixedprob"){
                         pdig <- rep(1, 20*7)[2:20]
                         if(cid10=="A90") pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
-                        if(cid10=="A92.0") pdig <- plnorm(seq(7,20,by=7), pars$pdigChik[1], pars$pdigChik[2])
+                        if(cid10=="A92.0") pdig <- plnorm(seq(7,20,by=7), parsi$pdigChik[1], parsi$pdigChik[2])
                         #p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
                         dC2 <- adjustIncidence(d, pdig = pdig, method = "fixedprob") # ajusta a incidencia
                   }
