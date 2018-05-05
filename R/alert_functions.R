@@ -758,11 +758,16 @@ write.alertaRio<-function(obj, write = "no", version = Sys.Date()){
       
       n <- length(obj)
       dados <- data.frame()
-      cid <- obj[[1]]$data$cid10[1]
+      cid10 <- obj[[1]]$data$cid10[1]
+      #dealing with synonimous cid
+      if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
+      if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"}  # chik
+      if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- "A92.8"} #zika
+      if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
       
       # nome da tabela no banco de dados e do respectivo constraint 
-      if (cid == "A90") {tabela <- "alerta_mrj"; sqlconstr = "unique_aps_se"}
-      if (cid == "A920") {tabela <- "alerta_mrj_chik"; sqlconstr = "unique_chik_aps_se"}
+      if (cid10 == "A90") {tabela <- "alerta_mrj"; sqlconstr = "unique_aps_se"}
+      if (cid10 == "A920") {tabela <- "alerta_mrj_chik"; sqlconstr = "unique_chik_aps_se"}
       
       for (i in 1:n){
             data <- obj[[i]]$data
