@@ -370,7 +370,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
 #'crito = c("p1 > 0.9 & inc > preseas", 2, 2),
 #'critr = c("inc > inccrit", 1, 2)
 #')
-#'alerio2 <- alertaRio(naps = c(0,1), pars=params, cid = "A920", crit = criter, datasource=con, se=201704)
+#'alerio2 <- alertaRio(naps = 0:2, pars=params, cid = "A920", crit = criter, datasource=con, se=201804)
 #'names(alerio2)
 
 
