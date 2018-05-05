@@ -300,14 +300,22 @@ read.cases <- function(start_year, end_year, con, mun_list=NULL){
 #'@examples
 #'dC = getCasesinRio(APSid = 9, datasource = con) # Rio de Janeiro
 #'tail(dC)
-#'dC1 = getCasesinRio(APSid = 9, cid10 = "A920", datasource = con) # Rio de Janeiro
+#'dC1 = getCasesinRio(APSid = 1, cid10 = "A920", datasource = con) # Rio de Janeiro
 #'tail(dC1)
 
 getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
                           datasource) {
       
       sqldate <- paste("'", lastday, "'", sep = "")
+      #dealing with synonimous cid
+      if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
+      if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"}  # chik
+      if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- "A92.8"} #zika
+      if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
       sqlcid <- paste("'", cid10, "'", sep = "")
+      
+      if(!(APSid %in% 1:9))stop("APS desconhecida ou ausente. Especificar: 0(APS1), 1 (APS2.1), 2 (APS2.2), 
+                                    3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4) 7(APS5.1), 8(APS5.2), 9(APS5.3) ")
       
       sqlquery = paste("SELECT n.dt_notific, n.ano_notif, se_notif, l.id, l.nome
       FROM  \"Municipio\".\"Notificacao\" AS n 
