@@ -767,7 +767,7 @@ write.alertaRio<-function(obj, write = "no", version = Sys.Date()){
       
       # nome da tabela no banco de dados e do respectivo constraint 
       if (cid10 == "A90") {tabela <- "alerta_mrj"; sqlconstr = "unique_aps_se"}
-      if (cid10 == "A920") {tabela <- "alerta_mrj_chik"; sqlconstr = "unique_chik_aps_se"}
+      if (cid10 == "A92.0") {tabela <- "alerta_mrj_chik"; sqlconstr = "unique_chik_aps_se"}
       
       for (i in 1:n){
             data <- obj[[i]]$data
