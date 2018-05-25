@@ -24,8 +24,8 @@ Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_p
 "limiar_epidemico, "estacao_wu_sec".
 }
 \examples{
-res = read.parameters(city = 3118601, datasource = con)
-res = read.parameters(region="Norte", state = "Rio de Janeiro", datasource = con)
-res = read.parameters(state = "Rio de Janeiro", datasource = con)
-res = read.parameters(datasource = con) #set no filter to get all cities
+read.parameters(city = 3118601, datasource = con)
+read.parameters(region="Norte", state = "Rio de Janeiro", datasource = con)
+read.parameters(state = "Rio de Janeiro", datasource = con)
+read.parameters(datasource = con) #set no filter to get all cities
 }

@@ -36,6 +36,6 @@ crity = c("temp_min > tcrit | (temp_min < tcrit & inc > preseas)", 3, 0),
 crito = c("p1 > 0.9 & inc > preseas", 2, 2),
 critr = c("inc > inccrit", 1, 2)
 )
-alerio2 <- alertaRio(naps = c(0,1), pars=params, cid = "A920", crit = criter, datasource=con, se=201704)
+alerio2 <- alertaRio(naps = 0:2, pars=params, cid = "A920", crit = criter, datasource=con, se=201804)
 names(alerio2)
 }

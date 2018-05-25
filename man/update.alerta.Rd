@@ -4,9 +4,9 @@
 \alias{update.alerta}
 \title{Define conditions to issue a 4 level alert Green-Yellow-Orange-Red for any city or region.}
 \usage{
-\method{update}{alerta}(city, region, state, pars, crit, cid10 = "A90",
-  writedb = FALSE, datasource, sefinal, adjustdelay = T,
-  delaymethod = "fixedprob")
+\method{update}{alerta}(city, region, state, pars, crit, GT = list(gtdist =
+  "normal", meangt = 3, sdgt = 1.2), cid10 = "A90", writedb = FALSE,
+  datasource, sefinal, adjustdelay = T, delaymethod = "fixedprob")
 }
 \arguments{
 \item{city}{city's geocode (6 or 7 digits).}
@@ -18,6 +18,8 @@
 \item{pars}{list of parameters for the alerta, defined in config.R}
 
 \item{crit}{criteria for the alert colors, defined in configglobal.R}
+
+\item{GT}{list with the generation time distribution . Default is dengue}
 
 \item{cid10}{default is A90 (dengue). Chik = A92.0, Zika = A92.8}
 
@@ -48,9 +50,8 @@ is authomatic according to data quality. But it can also be provided manually (n
 criteriaU = list(crity = c("umid_max > ucrit", 3, 1),
 crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
 critr = c("inc > inccrit", 2, 2))
-gtdist="normal"; meangt=3; sdgt = 1.2
 pars.RJ <- NULL
-pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = 100, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
+pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),ucrit=80, tcrit=22, legpos="bottomright")
 # Running the model:
 res <- update.alerta(city = 3549805, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
 res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,

@@ -58,7 +58,7 @@ Rtoriginal<-function(obj, count = "casos", meangt, CI = "beta", alpha = .95, a0 
 }
 
 
-##################
+#Rt -----------------------
 #'@description Calculates the effective reproductive number from the growth rate 
 #'of cases. Uses formula 4.2 in Wallinga and Lispitch (2007). Confidence interval assume
 #'ratio between two Poissons (see Luis Max documentation). 

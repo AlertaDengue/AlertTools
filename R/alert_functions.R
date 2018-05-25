@@ -158,6 +158,7 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'If not provided, use default from database. To be implemented.  
 #'@param pars list of parameters for the alerta, defined in config.R
 #'@param crit criteria for the alert colors, defined in configglobal.R
+#'@param GT list with the generation time distribution . Default is dengue
 #'@param cid10 default is A90 (dengue). Chik = A92.0, Zika = A92.8
 #'@param adjustdelay Default is TRUE, if F, there is no delay adjustment and estimated = observed.
 #'@param delaymethod Defaut is "fixedprob", alternative is "bayesian". Only used if adjustdelay=T
@@ -170,16 +171,15 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'criteriaU = list(crity = c("umid_max > ucrit", 3, 1),
 #'crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
 #'critr = c("inc > inccrit", 2, 2))
-#'gtdist="normal"; meangt=3; sdgt = 1.2
 #'pars.RJ <- NULL
-#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),ucrit=NA, tcrit=22, legpos="bottomright")
+#'pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),ucrit=80, tcrit=22, legpos="bottomright")
 #'# Running the model:
 #'res <- update.alerta(city = 3549805, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
 #'res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
 #'sefinal=201704, delaymethod="fixedprob")
 #'tail(res$data)
 
-update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writedb = FALSE,
+update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "normal", meangt=3, sdgt=1.2), cid10 = "A90", writedb = FALSE,
                           datasource, sefinal,adjustdelay=T, delaymethod="fixedprob"){
       
       # Getting metadata from table regional_saude
@@ -326,7 +326,7 @@ update.alerta <- function(city, region, state, pars, crit, cid10 = "A90", writed
             }
             
             
-            dC3 <- Rt(dC2, count = "tcasesmed", gtdist=gtdist, meangt=meangt, sdgt = sdgt) # calcula Rt
+            dC3 <- Rt(dC2, count = "tcasesmed", gtdist=GT$gtdist, meangt=GT$meangt, sdgt = GT$sdgt) # calcula Rt
             
             alerta <- fouralert(dC3, pars = parsi, crit = crit, pop=dd$pop[i], miss="last") # calcula alerta
             nome = dd$nome[i]
@@ -411,8 +411,8 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
             # interpolacao e extrapolação do clima
             if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))       
             casfit<-adjustIncidence(obj=d, pdig = p)
-            casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)   
-            
+            if(cid10=="A90") casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)   
+            if(cid10=="A920") casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=2, sdgt = 1)   
               
             res[[i]] <- fouralert(obj = casr[casr$SE <= se,], pars = pars, crit = crit, pop=cas$pop[1])
       }
