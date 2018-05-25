@@ -342,8 +342,9 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
       pop = NA
       sql2 <- paste("SELECT nome,id,populacao from \"Municipio\".\"Localidade\" WHERE id =", APSid) 
       varglobais <- dbGetQuery(datasource,sql2)
+      st$cidade <- 3304557
       st$pop <- varglobais$populacao     
-      st$cid10 <- cid10
+      st$CID10 <- cid10
       st$localidade <- varglobais$nome
       st$localidadeid <- varglobais$id
       st  

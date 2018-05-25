@@ -361,6 +361,7 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
 #'@param datasource it is the name of the sql connection.
 #'@param se last epidemiological week (format = 201401) 
 #'@param cid10 default is A90 (dengue). Chik = A920.
+#'@param delaymethod atribbute of adjuntincidence. "fixedprob" or "bayesian"
 #'@param verbose FALSE
 #'@return list with an alert object for each APS.
 #'@examples
@@ -370,11 +371,14 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
 #'crito = c("p1 > 0.9 & inc > preseas", 2, 2),
 #'critr = c("inc > inccrit", 1, 2)
 #')
-#'alerio2 <- alertaRio(naps = 0:2, pars=params, cid = "A920", crit = criter, datasource=con, se=201804)
+#'ini = Sys.time()
+#'alerio2 <- alertaRio(naps = 0, pars=params, cid = "A920", crit = criter, datasource=con, se=201804,
+#'delaymethod="fixedprob",verbose=FALSE)
+#'Sys.time()-ini
+
 #'names(alerio2)
 
-
-alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", verbose = TRUE){
+alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", verbose = TRUE, delaymethod = "fixedprob"){
       
       message("obtendo dados de clima e tweets ...")
       if(cid10 == "A90") tw = getTweet(city = 3304557, cid10="A90", datasource = datasource) 
@@ -394,7 +398,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
       APS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
                , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")[(naps + 1)]
       
-      # parametros do modelo de ajuste de atraso 
+      # parametros do modelo de ajuste de atraso (caso fixedprob)
       if(cid10=="A90") p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
       if(cid10=="A920") p <- plnorm(seq(7,20,by=7), pars$pdigChik[1], pars$pdigChik[2])
       
@@ -409,8 +413,9 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
             if (cid10=="A90") d <- merge(d, tw, by.x = "SE", by.y = "SE")
             else d$tweet <- NA
             # interpolacao e extrapolação do clima
-            if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))       
-            casfit<-adjustIncidence(obj=d, pdig = p)
+            if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))   
+            # delay model
+            casfit<-adjustIncidence(obj=d, pdig = p,method = delaymethod)
             if(cid10=="A90") casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)   
             if(cid10=="A920") casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=2, sdgt = 1)   
               
