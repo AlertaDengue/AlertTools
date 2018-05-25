@@ -2,7 +2,7 @@
 % Please edit documentation in R/alert_functions.R
 \name{fouralert}
 \alias{fouralert}
-\title{Define conditions to issue a 4 level alert Green-Yellow-Orange-Red.}
+\title{Define conditions to issue a four level alert Green-Yellow-Orange-Red.}
 \usage{
 fouralert(obj, pars, crit, pop, miss = "last")
 }

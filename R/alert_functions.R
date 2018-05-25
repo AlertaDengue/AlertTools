@@ -5,7 +5,7 @@
 
 
 #fouralert ---------------------------------------------------------------------
-#'@title Define conditions to issue a 4 level alert Green-Yellow-Orange-Red.
+#'@title Define conditions to issue a four level alert Green-Yellow-Orange-Red.
 #'@description Yellow is raised when environmental conditions required for
 #'positive mosquito population growth are detected, green otherwise.Orange 
 #'indicates evidence of sustained transmission, red indicates evidence of 
@@ -16,7 +16,7 @@
 #'@param miss how missing data is treated. "last" if last value is repeated. 
 #'It is currently the only option
 #'@return list with data.frame with the week condition and the number of weeks within the 
-#'last lag weeks with conditions = TRUE, data, and rules.
+#'last lag weeks with conditions = TRUE, data, and rules.  
 #'@examples
 #' # Getting the data (requires a con connection)
 #'tw = getTweet(city = 3200136, datasource = con) 
