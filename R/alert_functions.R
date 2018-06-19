@@ -763,7 +763,7 @@ write.alertaRio<-function(obj, write = "no", version = Sys.Date()){
       
       n <- length(obj)
       dados <- data.frame()
-      cid10 <- obj[[1]]$data$cid10[1]
+      cid10 <- obj[[1]]$data$CID10[1]
       #dealing with synonimous cid
       if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
       if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"}  # chik
