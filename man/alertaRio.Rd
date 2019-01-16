@@ -5,7 +5,7 @@
 \title{4 level alert Green-Yellow-Orange-Red for Rio de Janeiro.}
 \usage{
 alertaRio(naps = 0:9, pars, crit, datasource, se, cid10 = "A90",
-  verbose = TRUE)
+  verbose = TRUE, delaymethod = "fixedprob")
 }
 \arguments{
 \item{naps}{subset of vector 0:9 corresponding to the id of the APS. Default is all of them.}
@@ -19,6 +19,8 @@ alertaRio(naps = 0:9, pars, crit, datasource, se, cid10 = "A90",
 \item{cid10}{default is A90 (dengue). Chik = A920.}
 
 \item{verbose}{FALSE}
+
+\item{delaymethod}{atribbute of adjuntincidence. "fixedprob" or "bayesian"}
 }
 \value{
 list with an alert object for each APS.
@@ -36,6 +38,9 @@ crity = c("temp_min > tcrit | (temp_min < tcrit & inc > preseas)", 3, 0),
 crito = c("p1 > 0.9 & inc > preseas", 2, 2),
 critr = c("inc > inccrit", 1, 2)
 )
-alerio2 <- alertaRio(naps = 0:2, pars=params, cid = "A920", crit = criter, datasource=con, se=201804)
+ini = Sys.time()
+alerio2 <- alertaRio(naps = 0, pars=params, cid = "A920", crit = criter, datasource=con, se=201804,
+delaymethod="fixedprob",verbose=FALSE)
+Sys.time()-ini
 names(alerio2)
 }
