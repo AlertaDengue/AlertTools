@@ -21,7 +21,7 @@ epidemiological week or year. If separa = '', the output is numeric; otherwise i
 Find to which epidemiological week belongs a given day
 }
 \examples{
-episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"))
+episem(x= as.Date("2018-12-31", format="\%Y-\%m-\%d"))
 episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"), separa='-')
 episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"), retorna='Y')
 }

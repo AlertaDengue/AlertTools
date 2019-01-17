@@ -53,7 +53,7 @@ critr = c("inc > inccrit", 2, 2))
 pars.RJ <- NULL
 pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),ucrit=80, tcrit=22, legpos="bottomright")
 # Running the model:
-res <- update.alerta(city = 3549805, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con)
+res <- update.alerta(city = 3549805, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con,sefinal=201850)
 res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
 sefinal=201704, delaymethod="fixedprob")
 tail(res$data)

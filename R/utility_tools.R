@@ -4,15 +4,16 @@
 # -----------------------------------------------------------
 
 # data2SE ---------------------------------------------------------------------
-#'@description Find to which epidemiological week belongs a given day (only >=2010)
+#'@description Find to which epidemiological week belongs a given day. Uses episem function 
+#'(formula generated data).
 #'@title Define Epidemiological Week
 #'@param date string vector with dates to be converted
 #'@param format date format
-#'@return data.frame with the epidemiological weeks. Only works for years >= 2010.
+#'@return data.frame with the epidemiological weeks. 
 #'@examples
-#'data2SE("01-02-2018",format="%d-%m-%Y")
-#'data2SE("50-02-2010",format="%d-%m-%Y")
-#'data2SE(c("03-04-2013","07-01-2014"),format="%d-%m-%Y")
+#'data2SE("01-02-2020",format="%d-%m-%Y")
+#'data2SE("12-02-2008",format="%d-%m-%Y")
+#'data2SE(c("03-04-2013","07-01-2019"),format="%d-%m-%Y")
 
 data2SE <- function(days, format = "%d/%m/%Y"){
   sem <- rep(NA,length(days))      
@@ -33,7 +34,7 @@ data2SE <- function(days, format = "%d/%m/%Y"){
 #'   Default: 'YW'.
 #' @return epidemiological week or year. If separa = '', the output is numeric; otherwise is a character.
 #' @examples
-#' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"))
+#' episem(x= as.Date("2018-12-31", format="%Y-%m-%d"))
 #' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), separa='-')
 #' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), retorna='Y')
 
@@ -105,7 +106,9 @@ episem <- function(x, format="%Y-%m-%d", separa='', retorna='YW') {
 #' @author Marcelo F Gomes
 #' @param ano Year
 #' @keywords internal
-#' 
+#' @examples 
+#' lastepiweek(2018)
+
 lastepiweek <- function(ano){
       
       # Calcula o valor da última semana do ano
@@ -151,7 +154,7 @@ SE2date <- function(se){
 
 seqSE <- function(from, to){
       #load("R/sysdata.rda")
-      SE$SE <- SE$Ano*100 + SE$SE
+      #SE$SE <- SE$Ano*100 + SE$SE
       N <- dim(SE)[1]
       
       if (from < SE$SE[1]){
