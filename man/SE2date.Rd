@@ -16,6 +16,6 @@ data.frame with SE and first day.
 Return the first day of the Epidemiological Week
 }
 \examples{
-SE2date(201812)
+SE2date(se=201812)
 SE2date(se = c(201401:201409))
 }

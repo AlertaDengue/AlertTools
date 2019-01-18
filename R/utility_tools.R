@@ -128,16 +128,16 @@ lastepiweek <- function(ano){
 #'@param SE string vector with dates to be converted, format 201420
 #'@return data.frame with SE and first day.
 #'@examples
-#'SE2date(201812)
+#'SE2date(se=201812)
 #'SE2date(se = c(201401:201409))
 
 SE2date <- function(se){
       if(!class(se[1]) %in% c("numeric","integer")) stop("se should be numeric or integer")
 
       #load("R/sysdata.rda")
-      SE$sem <- SE$Ano*100 + SE$SE
+      #SE$sem <- SE$Ano*100 + SE$SE
       res <- data.frame(SE = se, ini = as.Date("1970-01-01"))
-      for (i in 1:length(res$SE)) res$ini[i] <- SE$Inicio[SE$sem == res$SE[i]]
+      for (i in 1:length(res$SE)) res$ini[i] <- SE$Inicio[SE$SE == res$SE[i]]
       res
 }
 
