@@ -18,30 +18,24 @@
 #'@return list with data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE, data, and rules.  
 #'@examples
-#' # Getting the data (requires a con connection)
-#'tw = getTweet(city = 3200136, datasource = con) 
-#'cli = getWU(stations = 'SBVT', vars=c("temp_min", "umid_min"), datasource=con)
-#'cas = getCases(city = 3200136,datasource=con)
-#' # Organizing the data
-#'casfit<-adjustIncidence(obj=cas, method="bayesian")
-#'casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
-#'d<- mergedata(cases = casr, tweet = tw, climate = cli)
-#'d$temp_min <- nafill(d$temp_min, rule = "arima") 
-#'d$umid_min <- nafill(d$umid_min, rule = "arima") 
 #' # Parameters of the alert model (usually set up in the globalconfig and config files)
-#'criteriaU = list(crity = c("temp_min > tcrit & inc > 0", 3, 1),
-#'crito = c("p1 > 0.95 & inc > preseas", 3, 1),
-#'critr = c("inc > inccrit", 2, 2))
-#'gtdist="normal"; meangt=3; sdgt = 1.2
-#'pars.ES <- NULL
-#'pars.ES[["Central"]] <- list(pdig = c(2.997765,0.7859499),tcrit=NA, ucrit=87, inccrit = 100, preseas=8.28374162389761, 
-#'posseas = 7.67878514885295, legpos="bottomright")
-#' # Running the alert
-#'ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
-#'ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
-#' # For a more useful output
-#'res <- write.alerta(ale)
-#'tail(res)
+#'criteriaU = list(crity = c("temp_min > 22 & inc > 0", 3, 1),
+#'crito = c("p1 > 0.95 & inc > 10", 3, 1),
+#'critr = c("inc > 100", 2, 2))
+#'pars.ES <- list(Central = list(pdig = c(2.997765,0.7859499),tcrit=NA, ucrit=87, inccrit = 100, preseas=8.28374162389761, 
+#'posseas = 7.67878514885295, legpos="bottomright")) 
+#'# Get, organize data 
+#'cas = getCases(city = 3200136,cid10 = "A90", datasource=con) %>% 
+#'      adjustIncidence(method="bayesian") %>%
+#'      Rt(count = "tcasesmed",gtdist="normal", meangt=3, sdgt = 1)
+#'cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) %>%
+#'      mutate(nafill(temp_min, rule = "arima")) 
+#'# Calculate alert      
+#'ale = join_all(list(cas,cli),by="SE") %>%
+#'      fouralert(pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
+#'# Better visualization
+#'tail(write.alerta(ale))
+
 
 fouralert <- function(obj, pars, crit, pop, miss="last"){
       le <- dim(obj)[1]
