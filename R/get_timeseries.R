@@ -71,6 +71,35 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
             return(NULL)}
 }
 
+#bestWU -----------------------------------------------------------------
+#'@description Receives a set of meteorological data and return the most complete for
+#' a given city.If both are good, the first is returned.
+#'@title Chooses the most updated meteorological data for a city from a set of choices
+#'@param series list of the competing time series.
+#'See examples.
+#'@param var name of the meteorological variable 
+#'@return data.frame with the series 
+#'@examples
+#'series1 = getWU(stations = 'SBRJ',vars="temp_min", datasource= con)
+#'series2 = getWU(stations = 'SBGL',vars="temp_min", datasource= con)
+#'res = bestWU(list(series1, series2),var="temp_min")
+#'tail(res)
+
+bestWU <- function(series,var){
+      
+      if(missing(var))stop("bestWU: please specify a valid meteorological variable")
+      if(class(series)!="list") stop("bestWU: WU data must be in a list")
+      # prop missing data
+      propNA <- sapply(series,function(x,v=var) sum(is.na(x[,v]))/nrow(x))
+      # last date with data
+      lastdate <- sapply(series, function(x,v=var) x$SE[max(which(is.na(x[,v])==FALSE))])
+      
+      if(all(propNA ==1)) {
+            message("WARNING: As duas estacoes met. não tem dados de temperatura")
+            return(NULL)}
+            else {return(series[[which.max(lastdate)[1]]])}
+}
+
 # GetTweet --------------------------------------------------------------
 #'@description Create weekly time series from tweeter data from server. The 
 #'source of this data is the Observatorio da Dengue (UFMG).

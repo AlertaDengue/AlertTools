@@ -249,7 +249,7 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
                   lastdatewu = ifelse(lastdate_sec>=lastdate_pri , lastdate_sec, lastdate_pri)
                   estacao = ifelse(lastdate_sec>=lastdate_pri, estacao_sec, estacao_pri)
             }
-            
+            ##
             print(paste("(Cidade ",i,"de",nlugares,")","Rodando alerta para ", geocidade, "usando estacao", estacao,"(ultima leitura:", lastdatewu,")"))
             
             # --------------- consulta dados do sinan
@@ -343,6 +343,7 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
       if(nlugares > 1) res = alertas
       res
 }
+
 
 #alertaRio ---------------------------------------------------------------------
 #'@title 4 level alert Green-Yellow-Orange-Red for Rio de Janeiro.
