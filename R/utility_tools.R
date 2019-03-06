@@ -269,13 +269,15 @@ DenguedbConnect <- function(){
 #'@return 7 digits municipality geocode.   
 #'@examples
 #'sevendigitgeocode(330455)
+#'sevendigitgeocode(3304557)
 
 sevendigitgeocode <- function(dig){
+      
       peso <- c(1, 2, 1, 2, 1, 2, 0)
       soma <- 0
       digchar <- strsplit(as.character(dig),"")[[1]]
       ndig <- length(digchar)
-
+      if (ndig == 7) return(dig)
       if (ndig!=6) stop("this funtion receives 6 digits geocodes only")
       
       for (i in 1:6){

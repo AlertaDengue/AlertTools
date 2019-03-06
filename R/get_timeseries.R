@@ -160,14 +160,14 @@ getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
 #'@param datasource PostgreSQLConnection to project database . 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
-#'dC0 = getCases(city = 330455, lastday ="2018-03-10", datasource = con) # dengue
-#'dC0 = getCases(city = 3302205, datasource = con) # dengue, until last day available
-#'dC0 = getCases(city = 2304400, cid10= "A923", datasource = con) # zika 
-#'head(dC0)
+#'d <- getCases(city = 330455, lastday ="2018-03-10", datasource = con) # dengue
+#'d <- getCases(city = 3302205, datasource = con) # dengue, until last day available
+#'d <- getCases(city = c(3302205,230440), datasource = con) # dengue, two cities
+#'tail(d)
 
 getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       
-      if(nchar(city) == 6) city <- sevendigitgeocode(city)   
+      city <- sapply(city, function(x) sevendigitgeocode(x))
       
       #dealing with synonimous cid
       if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
@@ -175,63 +175,49 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- "A92.8"} #zika
       if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
       # reading the data
-      if (class(datasource) == "character") { # historical reasons
-            load(datasource)
-            dd <- subset(sinan, DT_DIGITA <= lastday)
-            dd$SEM_NOT <- as.numeric(as.character(dd$SEM_NOT))
-            
-      } else if (class(datasource) == "PostgreSQLConnection"){ # current entry
+      if (class(datasource) == "PostgreSQLConnection"){ # current entry
             sql1 <- paste("'", lastday, "'", sep = "")
-            
-            # dealing with multiple cids
+            # dealing with multiple cids 
             lcid <- length(cid)
             cid10command <- paste("'", cid[1], sep="")
             if (lcid > 1) for (i in 2:lcid) cid10command = paste(cid10command, cid[i], sep = "','")
             cid10command <- paste(cid10command, "'", sep = "")
             
-            sql <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= ",sql1, " AND municipio_geocodigo = ", city, 
-                         " AND cid10_codigo IN(", cid10command,")", sep="")
+            # dealing with multiple cities
+            sqlcity = paste("'", city[1], sep = "")
+            nci = length(city)
+            if (nci > 1) for (i in 2:nci) sqlcity = paste(sqlcity, city[i], sep = "','")
+            sqlcity <- paste(sqlcity, "'", sep = "")
+            
+            sql <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= ",sql1, 
+                         " AND municipio_geocodigo IN (", sqlcity, 
+                         ") AND cid10_codigo IN(", cid10command,")", sep="")
             
             dd <- dbGetQuery(datasource,sql)
-            if (dim(dd)[1]==0) {
-                  message(paste("getCases did not find cid10" , cid10, "for city", city))
-            } else {
-                  dd$SEM_NOT <- dd$ano_notif * 100 + dd$se_notif
-            }
+            if(nrow(dd)==0)stop(paste("getCases did not find cid10" , cid10, 
+                                "for city", city))
             
-      } else { # one or more dbf files
-            nf = length(datasource)
-            dd <- read.dbf(datasource[1])[,c("ID_MUNICIP","DT_NOTIFIC","SEM_NOT",
-                                             "NU_ANO","DT_SIN_PRI","DT_DIGITA",
-                                             "SEM_PRI","NM_BAIRRO")]
-            dd <- subset(dd, ID_MUNICIP=city)
-            if (nf > 1){
-                  for (i in 2:nf) {
-                        di <- read.dbf(datasource[i])[,c("ID_MUNICIP","DT_NOTIFIC","SEM_NOT",
-                                                         "NU_ANO","DT_SIN_PRI","DT_DIGITA",
-                                                         "SEM_PRI","NM_BAIRRO")]
-                  dd <- rbind(dd, subset(di, ID_MUNICIP==city))
-                  dd$SEM_NOT <- as.numeric(as.character(dd$SEM_NOT))
-                  } 
-            }
-      }
+            # pegando nome da cidade e populacao
+            sql2 <- paste("SELECT nome,populacao,geocodigo from \"Dengue_global\".\"Municipio\" WHERE geocodigo IN(", sqlcity,")") 
+            varglobais <- dbGetQuery(datasource,sql2)
+      }else{stop("getCases requires a PostgreSQL connection")}
       
-      sem <- seqSE(from = 201001, to = data2SE(lastday,format="%Y-%m-%d"))$SE
-      nsem <- length(sem)
+      # casos por semana por cidade
+      casos = dd %>%
+            mutate(SE = ano_notif*100+se_notif) %>%
+            count(c("municipio_geocodigo","SE"))  
+      # criando serie 
+      sem <-  expand.grid(municipio_geocodigo = city, SE = seqSE(from = 201001, to = max(casos$SE))$SE)
+      st <- full_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 
+            arrange(municipio_geocodigo,SE) %>%
+            mutate(localidade = 0) %>%  # para uso qdo tiver divisao submunicipal
+            mutate(geocodigo = municipio_geocodigo) %>%
+            full_join(.,varglobais,"geocodigo") %>%
+            mutate(CID10 = cid10) %>%
+            select(SE, cidade = municipio_geocodigo,casos =freq,localidade,nome,pop=populacao) 
       
-      st <- data.frame(SE = sem, casos = 0)
-      for(i in 1:nsem) st$casos[i] <- sum(dd$SEM_NOT == st$SE[i])
-
-      st$localidade <- 0
-      st$cidade <- city
             
-      # pegando nome da cidade e populacao
-      sql2 <- paste("SELECT * from \"Dengue_global\".\"Municipio\" WHERE geocodigo =", city) 
-      varglobais <- dbGetQuery(datasource,sql2)
-      st$nome <- varglobais$nome 
-      st$pop <- varglobais$populacao
-      st$CID10 <- cid10
-      if(any(is.na(st$pop)))message("getCases function failed to import pop data for city", city)
+      if(any(is.na(st$pop)))warning("getCases function failed to import pop data for city", city)
       
       st  
 }

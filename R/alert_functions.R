@@ -190,7 +190,7 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
             dd <- read.parameters(state = state, datasource=datasource)    
       }
       #
-      nlugares = dim(dd)[1]
+      nlugares = nrow(dd)[1]
       if (nlugares == 0) stop("A cidade ou regiao ou estado nao foi encontrada(o)")
       
       print(paste("sera'feita analise de",nlugares,"cidade(s):"))
@@ -202,6 +202,7 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
       cli <- list()
       allvars.cli <- c("temp_min","temp_med","temp_max","umid_min","umid_med","umid_max",
                        "pressao_min","pressao_med","pressao_max")
+      
       for (k in 1:length(estacoes)) {
             cliwu <- getWU(stations = estacoes[k],var=allvars.cli
                            ,datasource = datasource)
