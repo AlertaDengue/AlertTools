@@ -13,7 +13,7 @@
 #' to open the database connection. 
 #'@return data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
 #'@examples
-#'res = getWU(stations = 'SBRJ', vars="temp_min", datasource= con)
+#'res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", datasource= con)
 #'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
 #'tail(res)
 
@@ -22,18 +22,10 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
       if (!all(nchar(stations) == 4)) stop("'stations' should be a vector of 4 digit station names")
       nsta = length(stations)
       
-      # loading Test data -------------------------------------------
-      if (class(datasource) == "character") {
-            load(datasource)
-            cities = unique(WUdata$cidade[WUdata$Estacao_wu_estacao_id%in%stations])
-            message(paste("stations belong to city(es):", cities))
-            d <- subset(WUdata, Estacao_wu_estacao_id %in% stations)
-            d <- subset(d, as.Date(d$data, format = "%Y-%m-%d") <= finalday)
-                  
-      } else if (class(datasource) == "PostgreSQLConnection") {
+      if (class(datasource) == "PostgreSQLConnection") {
             # creating the sql query for the stations
             sql1 = paste("'", stations[1], sep = "")
-            nsta = length(stations)
+            
             if (nsta > 1) for (i in 2:nsta) sql1 = paste(sql1, stations[i], sep = "','")
             sql1 <- paste(sql1, "'", sep = "")
             # sql query for the date
@@ -43,32 +35,28 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
             nv = length(vars)
             if (nv > 1) for (i in 2:nv) sql3 = paste(sql3, vars[i], sep = ",")
           
-            sql <- paste("SELECT", sql3, "from \"Municipio\".\"Clima_wu\" WHERE 
-                        \"Estacao_wu_estacao_id\"
-                        IN  (", sql1, ") AND data_dia <= ",sql2)
-            d <- dbGetQuery(datasource,sql)
-      }
-      
-      names(d)[which(names(d)== "Estacao_wu_estacao_id")]<-"estacao"
-      
-      # Atribuir SE e agregar por semana-----------------------------------------
-      if(nrow(d)!=0){
-            d$SE <- data2SE(d$data_dia, format = "%Y-%m-%d")
+            sql <- paste("SELECT ", sql3, " from \"Municipio\".\"Clima_wu\" WHERE 
+                        \"Estacao_wu_estacao_id\" IN  (", sql1, ") AND 
+                         data_dia <= ",sql2,sep="")
+            d <- dbGetQuery(datasource,sql) 
             
-            sem <- seqSE(from = min(d$SE), to = max(d$SE))$SE
-            df <- expand.grid(SE=sem, estacao = unique(d$estacao))
-            N <- length(df$SE)
-            
-            for (i in vars){
-                  df[, i] <- NA
-                  for (t in 1:N){
-                        subconj <- subset(d, (SE == df$SE[t] & estacao == df$estacao[t]))
-                        df[t, i] <- mean(subconj[,i])
-                  }
-            }
-            return(df)      
-      }else{message("estação(ões) ", stations, " não existem no banco de dados")
-            return(NULL)}
+      }else{stop("getCases requires a PostgreSQL connection")}
+      
+      # agregando vars climaticas por semana
+      d1 = d %>% 
+            mutate(estacao = Estacao_wu_estacao_id) %>% 
+            mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) %>% # creating column SE
+            group_by(estacao,SE)  %>%
+            summarise_at(vars(vars),list(mean),na.rm=TRUE)
+      
+      # criar serie temporal-----------------------------------------
+        st <-  expand.grid(estacao = stations, 
+                        SE = seqSE(from = 201001, to = max(d1$SE))$SE,
+                        stringsAsFactors = FALSE) %>%
+                full_join(.,d1,by = c("estacao", "SE")) %>%
+            arrange(estacao,SE)
+    st
+    
 }
 
 #bestWU -----------------------------------------------------------------
