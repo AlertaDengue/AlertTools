@@ -112,42 +112,45 @@ bestWU <- function(series,var){
 #' to open the database connection. 
 #'@return data.frame with weekly counts of people tweeting on dengue.
 #'@examples
-#'res = getTweet(city = 330455, lastday = "2014-03-01", datasource = con)
+#'res = getTweet(city = 3302205, lastday = "2014-03-01", datasource = con)
+#'res = getTweet(city = 230440, lastday = "2014-03-01", datasource = con)
+#'res <- getTweet(city = c(3302205,230440), datasource = con) #  two cities
 #'tail(res)
 
 getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       
-      if(nchar(city) == 6) city <- sevendigitgeocode(city)   
+      city <- sapply(city, function(x) sevendigitgeocode(x))
       
       if (cid10 == "A90"){ # get tweets on dengue
-            c1 <- paste("select data_dia, numero from \"Municipio\".\"Tweet\" where 
-                \"Municipio_geocodigo\" = ", city)
-            tw <- dbGetQuery(datasource,c1)
-            if (dim(tw)[1]>0) 
-                  names(tw) <- c("data_dia","tweet")
-      } else {stop("there is no tweet for cid10 in the database")}
+            sqldate <- paste("'", lastday, "'", sep = "")
+            # sql call for dealing with multiple cities
+            sqlcity = paste("'", city[1], sep = "")
+            nci = length(city)
+            if (nci > 1) for (i in 2:nci) sqlcity = paste(sqlcity, city[i], sep = "','")
+            sqlcity <- paste(sqlcity, "'", sep = "")
+            
+            c1 <- paste("select \"Municipio_geocodigo\", data_dia, numero from \"Municipio\".\"Tweet\" where 
+                \"Municipio_geocodigo\" IN (", sqlcity,") AND data_dia <= ", sqldate,sep="")
+            
+            tw <- dbGetQuery(datasource,c1) %>%  # query
+                  mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) # criating column SE
+            
+      } else {stop(paste("there is no tweet for", cid10,"in the database"))}
       
-      if (sum(tw$tweet)==0) message(paste("cidade",city,"nunca tweetou sobre dengue"))
+      # reporting cities without tweets
+      tots = tapply(tw$numero,tw$Municipio_geocodigo,sum)
+      if (any(tots==0)) message(paste("cidade(s)",city[which(tots==0)],"nunca tweetou sobre dengue"))
       
-      
-      # output com data de 201001 ate lastday
-      sem <- seqSE(from = 201001, to = data2SE(lastday,format="%Y-%m-%d"))$SE
-      tw.agregado <- data.frame(SE = sem, tweet = NA)
-      
-      if (dim(tw)[1]>0){
-            #      tw <- subset(tw, as.Date(data_dia, format = "%Y-%m-%d") <= lastday)
-            # transformar data em SE -----------------------------------------
-            tw$SE <- data2SE(tw$data_dia, format = "%Y-%m-%d")
-            obsSE <- unique(tw$SE)
-            for (i in obsSE) {
-                  #twse <- tw$SE[i] 
-                  tw.agregado$tweet[tw.agregado$SE==i] <- sum(tw$tweet[tw$SE==i])
-                  #tw.agregado$tweet[tw.agregado$SE==twse] <- tw.agregado$tweet[tw.agregado$SE==twse] + sum(tw$tweet[i])
-            }
-            tw.agregado$cidade <- city
-      }
-      
-      tw.agregado
+      # time series : counting number of tweets per SE and city
+      sem <-  expand.grid(Municipio_geocodigo = city, 
+                          SE = seqSE(from = 201001, to = max(tw$SE))$SE)
+      st <- full_join(sem,tw,by = c("Municipio_geocodigo", "SE")) %>% 
+            arrange(Municipio_geocodigo,SE) %>%
+            group_by(Municipio_geocodigo,SE)  %>%
+            summarize(tweets = sum(numero))  %>%
+            select(cidade = Municipio_geocodigo, SE, tweets)
+     
+      as.data.frame(st)
 }
 
 
