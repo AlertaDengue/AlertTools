@@ -3,6 +3,69 @@
 # Claudia Codeco 2015
 # -----------------------------------------------------------
 
+#setCriteria -------------------------------------------------------------------
+#'@title Define rules to issue a four level alert Green-Yellow-Orange-Red.
+#'@description The criteria for transition between colors (alert levels) can be 
+#'chosen from existing rules or can be specified by the user. The built in rules are: 
+#'Af (minimum temperature defines yellow) and Aw (humidity does).   
+#'@param rule built-in rules: "Af" or "Aw" .
+#'@param crit_y string defining criterion for transition to yellow (level 2)
+#'@param crit_o string defining criterion for transition to orange (level 3)  
+#'@param crit_r string defining criterion for transition to red (level 4)
+#'@param delay_y vector with two elements (delay to turn on Y, delay to turn off Y)
+#'@param delay_o vector with two elements (delay to turn on O, delay to turn off O)
+#'@param delay_r vector with two elements (delay to turn on R, delay to turn off R)
+#'@param values data.frame of values for the critical parameters.    
+#'@return list with rules.  
+#'@examples
+#'Af is originally created for dengue in Southeast Brazil
+#'setCriteria(rule="Af")
+#'Defining a rule
+#'crit_y = "temp_min > tcrit & casos > 0"
+#'crit_o = "p1 > pcrit & inc > preseas"
+#'crit_r = "inc > inccrit & casos > casosmin"
+#'delay_y = c(3,1); delay_o = c(3,1); delay_r = c(2,2)
+#'crit <- setCriteria(crit_y,crit_o, crit_r, delay_y, delay_o, delay_r)
+#'Defining values
+#'val <- list(vars = c("tcrit","pcrit","inccrit","preseas","casosmin"), pars = c(22,0.95,100,10,5))
+#'setCriteria(rule="Af",values=val)
+
+setCriteria <- function(crit_y, crit_o, crit_r, delay_y = c(3,1), delay_o = c(3,1), 
+                        delay_r=c(2,2),rule=NULL, values=NULL){
+      
+      if(rule == "Af"){
+             criteria = list(
+                   crity = c("temp_min > tcrit & casos > 0", delay_y),
+                   crito = c("p1 > 0.95 & inc > preseas", delay_o),
+                   critr = c("inc > inccrit & casos > 5", delay_r)
+             )
+       }
+       if (rule == "Aw"){
+             criteria = list(
+                   crity = c("umid_max > ucrit & casos > 0", delay_y),
+                   crito = c("p1 > 0.95", delay_o),
+                   critr = c("inc > inccrit & casos > 5", delay_r)
+             )
+       }
+      if (missing(rule)){
+            criteria = list(
+                  crity = c(crit_y, delay_y),
+                  crito = c(crit_o, delay_o),
+                  critr = c(crit_r, delay_r)
+            )      
+            
+      }
+      # reading the criteria
+      if(!missing(values)) {
+            for  (i in 1:length(values$pars)) {
+                  criteria = gsub(values$vars[i],values$pars[i],criteria)
+            }
+      }
+            
+      criteria
+}
+
+
 
 #fouralert ---------------------------------------------------------------------
 #'@title Define conditions to issue a four level alert Green-Yellow-Orange-Red.

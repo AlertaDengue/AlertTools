@@ -135,8 +135,8 @@ getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       st <- full_join(sem,tw,by = c("Municipio_geocodigo", "SE")) %>% 
             arrange(Municipio_geocodigo,SE) %>%
             group_by(Municipio_geocodigo,SE)  %>%
-            summarize(tweets = sum(numero))  %>%
-            select(cidade = Municipio_geocodigo, SE, tweets)
+            summarize(tweet = sum(numero))  %>%
+            select(cidade = Municipio_geocodigo, SE, tweet)
      
       as.data.frame(st)
 }
@@ -196,7 +196,7 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       # casos por semana por cidade
       casos = dd %>%
             mutate(SE = ano_notif*100+se_notif) %>%
-            count(c("municipio_geocodigo","SE"))  
+            count(municipio_geocodigo,SE)  
       # criando serie 
       sem <-  expand.grid(municipio_geocodigo = city, SE = seqSE(from = 201001, to = max(casos$SE))$SE)
       st <- full_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 
@@ -205,7 +205,7 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
             mutate(geocodigo = municipio_geocodigo) %>%
             full_join(.,varglobais,"geocodigo") %>%
             mutate(CID10 = cid10) %>%
-            select(SE, cidade = municipio_geocodigo,casos =freq,localidade,nome,pop=populacao) 
+            select(SE, cidade = municipio_geocodigo,casos =n,localidade,nome,pop=populacao) 
       
             
       if(any(is.na(st$pop)))warning("getCases function failed to import pop data for city", city)
