@@ -47,7 +47,7 @@ setCriteria <- function(rule=NULL, values=NULL,
             names(criteria) <- c("crity","crito","critr")
             
       }
-      # substituting values (could be better programmed)
+      # substituting values
       if(!is.null(values)) {
             criteria <- lapply(criteria, function(x) c(str_replace_all(x[1], values), x[c(2,3)]))
       }
@@ -70,18 +70,16 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'last lag weeks with conditions = TRUE, data, and rules.  
 #'@examples
 #' # Parameters of the alert model (usually set up in the globalconfig and config files)
-#'criteriaU = setCriteria(rule = "Af", val <- list(vars = c("tcrit","pcrit","inccrit","preseas","casosmin"), pars = c(22,0.95,100,10,5)))
-#'pars.ES <- list(Central = list(pdig = c(2.997765,0.7859499),tcrit=NA, ucrit=87, inccrit = 100, preseas=8.28374162389761, 
-#'posseas = 7.67878514885295, legpos="bottomright")) 
+#'criteriaU = setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
+#'pars.ES <- NULL
 #'# Get, organize data 
 #'cas = getCases(city = 3200136,cid10 = "A90", datasource=con) %>% 
-#'      adjustIncidence(method="bayesian") %>%
-#'      Rt(count = "tcasesmed",gtdist="normal", meangt=3, sdgt = 1)
+#'      Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1)
 #'cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) %>%
 #'      mutate(nafill(temp_min, rule = "arima")) 
 #'# Calculate alert      
 #'ale = join_all(list(cas,cli),by="SE") %>%
-#'      fouralert(pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
+#'      fouralert(pars = NULL, crit = criteriaU, pop = 1000000)
 #'# Better visualization
 #'tail(write.alerta(ale))
 

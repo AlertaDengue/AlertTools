@@ -151,7 +151,7 @@ getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
 #'@param datasource PostgreSQLConnection to project database . 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
-#'d <- getCases(city = 330455, lastday ="2018-03-10", datasource = con) # dengue
+#'d <- getCases(city = 3302205, lastday ="2018-03-10", datasource = con) # dengue
 #'d <- getCases(city = 3304557, cid10="A92.0", datasource = con) # chikungunya, until last day available
 #'d <- getCases(city = c(3302205,230440), datasource = con) # dengue, two cities
 #'tail(d)
@@ -196,7 +196,8 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
       # casos por semana por cidade
       casos = dd %>%
             mutate(SE = ano_notif*100+se_notif) %>%
-            count(municipio_geocodigo,SE)  
+            group_by(municipio_geocodigo)%>%
+            count(SE)  
       # criando serie 
       sem <-  expand.grid(municipio_geocodigo = city, SE = seqSE(from = 201001, to = max(casos$SE))$SE)
       st <- full_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 
