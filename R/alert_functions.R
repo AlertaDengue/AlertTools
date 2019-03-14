@@ -8,63 +8,51 @@
 #'@description The criteria for transition between colors (alert levels) can be 
 #'chosen from existing rules or can be specified by the user. The built in rules are: 
 #'Af (minimum temperature defines yellow) and Aw (humidity does).   
-#'@param rule built-in rules: "Af" or "Aw" .
-#'@param crit_y string defining criterion for transition to yellow (level 2)
-#'@param crit_o string defining criterion for transition to orange (level 3)  
-#'@param crit_r string defining criterion for transition to red (level 4)
-#'@param delay_y vector with two elements (delay to turn on Y, delay to turn off Y)
-#'@param delay_o vector with two elements (delay to turn on O, delay to turn off O)
-#'@param delay_r vector with two elements (delay to turn on R, delay to turn off R)
-#'@param values data.frame of values for the critical parameters.    
-#'@return list with rules.  
+#'@param rule either a built-in rule ("Af" or "Aw") or a list with three elements defining criteria for transition to yellow (level 2),
+#' orange (level 3) and red (level 4). See description.
+#'@param delays list with three elements, each one is a vector: c(delay to turn on, delay to turn off)
+#'@param values named vector of values for the critical parameters. Use character.   
+#'@return list with rules. To be useful, this list must contain variables that match
+#' those in the data.  
 #'@examples
 #'Af is originally created for dengue in Southeast Brazil
 #'setCriteria(rule="Af")
 #'Defining a rule
-#'crit_y = "temp_min > tcrit & casos > 0"
-#'crit_o = "p1 > pcrit & inc > preseas"
-#'crit_r = "inc > inccrit & casos > casosmin"
-#'delay_y = c(3,1); delay_o = c(3,1); delay_r = c(2,2)
-#'crit <- setCriteria(crit_y,crit_o, crit_r, delay_y, delay_o, delay_r)
+#'myrule = list(crity = "temp_min > 25 & casos > 0", crito = "p1 > 0.9 & inc > 1", 
+#'critr = "inc > 100 & casos > 10")
+#'mydelay = list(delayy = c(3,1), delayo = c(3,1), delayr = c(2,2))
+#'setCriteria(rule = myrule, delays = mydelay)
 #'Defining values
-#'val <- list(vars = c("tcrit","pcrit","inccrit","preseas","casosmin"), pars = c(22,0.95,100,10,5))
+#'val = c("tcrit"="22","preseas"="10","inccrit"="100")
 #'setCriteria(rule="Af",values=val)
 
-setCriteria <- function(crit_y, crit_o, crit_r, delay_y = c(3,1), delay_o = c(3,1), 
-                        delay_r=c(2,2),rule=NULL, values=NULL){
+setCriteria <- function(rule=NULL, values=NULL, 
+                        delays = list(delayy = c(0,0), delayo = c(0,0), delayr = c(0,0))){
       
-      if(rule == "Af"){
+      if(rule[1] == "Af"){
+            criteria <- list(
+                  crity = c("temp_min > tcrit & casos > 0", 3, 2),
+                  crito = c("p1 > 0.95 & inc > preseas", 3, 2),
+                  critr = c("inc > inccrit & casos > 5", 2, 2)
+            )
+             
+       } else if (rule[1] == "Aw"){
              criteria = list(
-                   crity = c("temp_min > tcrit & casos > 0", delay_y),
-                   crito = c("p1 > 0.95 & inc > preseas", delay_o),
-                   critr = c("inc > inccrit & casos > 5", delay_r)
+                   crity = c("umid_max > ucrit & casos > 0", 3, 2),
+                   crito = c("p1 > 0.95", 3, 2),
+                   critr = c("inc > inccrit & casos > 5", 2, 2)
              )
-       }
-       if (rule == "Aw"){
-             criteria = list(
-                   crity = c("umid_max > ucrit & casos > 0", delay_y),
-                   crito = c("p1 > 0.95", delay_o),
-                   critr = c("inc > inccrit & casos > 5", delay_r)
-             )
-       }
-      if (missing(rule)){
-            criteria = list(
-                  crity = c(crit_y, delay_y),
-                  crito = c(crit_o, delay_o),
-                  critr = c(crit_r, delay_r)
-            )      
+       } else {
+            criteria<-lapply(1:3, function(x) c(rule[[x]], delays[[x]]))
+            names(criteria) <- c("crity","crito","critr")
             
       }
-      # reading the criteria
-      if(!missing(values)) {
-            for  (i in 1:length(values$pars)) {
-                  criteria = gsub(values$vars[i],values$pars[i],criteria)
-            }
+      # substituting values (could be better programmed)
+      if(!is.null(values)) {
+            criteria <- lapply(criteria, function(x) c(str_replace_all(x[1], values), x[c(2,3)]))
       }
-            
       criteria
 }
-
 
 
 #fouralert ---------------------------------------------------------------------
@@ -82,9 +70,7 @@ setCriteria <- function(crit_y, crit_o, crit_r, delay_y = c(3,1), delay_o = c(3,
 #'last lag weeks with conditions = TRUE, data, and rules.  
 #'@examples
 #' # Parameters of the alert model (usually set up in the globalconfig and config files)
-#'criteriaU = list(crity = c("temp_min > 22 & inc > 0", 3, 1),
-#'crito = c("p1 > 0.95 & inc > 10", 3, 1),
-#'critr = c("inc > 100", 2, 2))
+#'criteriaU = setCriteria(rule = "Af", val <- list(vars = c("tcrit","pcrit","inccrit","preseas","casosmin"), pars = c(22,0.95,100,10,5)))
 #'pars.ES <- list(Central = list(pdig = c(2.997765,0.7859499),tcrit=NA, ucrit=87, inccrit = 100, preseas=8.28374162389761, 
 #'posseas = 7.67878514885295, legpos="bottomright")) 
 #'# Get, organize data 

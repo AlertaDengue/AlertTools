@@ -152,7 +152,7 @@ getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
 #'d <- getCases(city = 330455, lastday ="2018-03-10", datasource = con) # dengue
-#'d <- getCases(city = 3302205, datasource = con) # dengue, until last day available
+#'d <- getCases(city = 3304557, cid10="A92.0", datasource = con) # chikungunya, until last day available
 #'d <- getCases(city = c(3302205,230440), datasource = con) # dengue, two cities
 #'tail(d)
 
