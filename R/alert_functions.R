@@ -73,45 +73,31 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'criteriaU = setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
 #'pars.ES <- NULL
 #'# Get, organize data 
-#'cas = getCases(city = 3200136,cid10 = "A90", datasource=con) %>% 
-#'      Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1)
+#'cas = getCases(city = 3304557, cid10 = "A90", datasource=con) %>% 
+#'      Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) %>%
+#'      mutate(inc = casos/pop*100000)
 #'cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) %>%
-#'      mutate(nafill(temp_min, rule = "arima")) 
+#'      mutate(temp_min = nafill(temp_min, rule = "arima")) 
 #'# Calculate alert      
-#'ale = join_all(list(cas,cli),by="SE") %>%
-#'      fouralert(pars = NULL, crit = criteriaU, pop = 1000000)
+#'ale = join_all(list(cas,cli),by="SE") 
+#'res = fouralert(ale, crit = criteriaU)
 #'# Better visualization
 #'tail(write.alerta(ale))
 
 
-fouralert <- function(obj, pars, crit, pop, miss="last"){
-      le <- dim(obj)[1]
+fouralert <- function(obj, crit, miss="last"){
+      le <- nrow(obj)
       
-      vars = names(pars)
-      # reading the criteria 
-      cyellow = crit[[1]]; corange = crit[[2]]; cred = crit[[3]]
-      for (k in vars) {
-            if (k != "pdig"){ 
-                  cyellow = gsub(k,pars[[k]],cyellow)
-                  corange = gsub(k,pars[[k]],corange)
-                  cred = gsub(k,pars[[k]],cred)
-            }
-      }
-      if(any(is.na(cyellow)))stop("yellow criteria missing, could not parse it, missing parameters?")
-      if(any(is.na(corange)))stop("orange criteria missing, could not parse it, missing parameters?")
-      if(any(is.na(cred)))stop("red criteria missing, could not parse it, missing parameters?")
+      # criteria
+      #cyellow = crit[[1]]; corange = crit[[2]]; cred = crit[[3]]
+      parsed_rules <- lapply(crit, function(x) parse(text=x[1]))
+      delay_turnon <- lapply(crit, function(x) as.numeric(x[[2]]))
+      delay_turnoff <- lapply(crit, function(x) as.numeric(x[[3]]))
       
-      incpos = pars$posseas
-      
-      # calculate incidence"
-      if("tcasesmed" %in% names(obj)){
-            obj$inc <- obj$tcasesmed / pop * 100000      
-      } else{
-            obj$inc <- obj$casos / pop * 100000      
-      }
-      
+      #incpos = pars$posseas
       # accumulating condition function
       accumcond <- function(vec, lag) {
+            if (lag == 1) return(vec)
             le <- length(vec)
             ac <- vec[lag:le]
             for(j in 1:(lag-1)) ac <- rowSums(cbind(ac, vec[(lag-j):(le-j)]), na.rm = TRUE)
@@ -119,70 +105,61 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
       }
       
       
-      # data.frame to store results"
-      indices <- data.frame(cytrue = rep(NA,le), nytrue = rep(NA,le),
-                            cotrue = rep(NA,le), notrue = rep(NA,le),
-                            crtrue = rep(NA,le), nrtrue = rep(NA,le)
-                            )
-      
       # calculating each condition (week and accumulated)  
-      assertcondition <- function(dd, cond){
-            condtrue <- with(dd, as.numeric(eval(parse(text = cond[1]))))
-            if (miss == "last"){
-                  if(is.na(condtrue[le])) message("missing condition, repeating last value")
-                  mi <- which(is.na(condtrue))
+      assertcondition <- function(dd, nivel){
+            condtrue <- with(dd, as.numeric(eval(parsed_rules[[nivel]])))
+            mi <- which(is.na(condtrue)) # missing conditions
+            if (miss == "last"){  
+                  if(le %in% mi) message("missing condition, repeating last value")
                   for (i in mi[mi!=1]) condtrue[i] <- condtrue[i-1]
             }
-            accun <- as.numeric(cond[2])
-            if (accun > 1){
-                  ncondtrue <- with(dd, accumcond(condtrue, as.numeric(cond[2])))      
-            } else {
-                  ncondtrue <- condtrue
-            }
-            
+            # counting accumulated conditions
+            ncondtrue <- accumcond(condtrue, delay_turnon[[nivel]])
             cbind(condtrue, ncondtrue)
       }
+      indices <- data.frame(cbind(assertcondition(obj, 1),
+                                  assertcondition(obj, 2),
+                                  assertcondition(obj, 3)))
+      names(indices) <- c("cytrue", "nytrue","cotrue", "notrue","crtrue", "nrtrue")
       
-      indices[,c("cytrue", "nytrue")] <- assertcondition(obj , cyellow)
-      indices[,c("cotrue", "notrue")] <- assertcondition(obj , corange)
-      indices[,c("crtrue", "nrtrue")] <- assertcondition(obj, cred)
-            
-      # setting the level
+      # setting the alert level when delay_on is reached(1 = green, 2 = yellow, 3 = orange, 4 = red)
       indices$level <- 1
-      indices$level[indices$nytrue == as.numeric(cyellow[2])] <-2
-      indices$level[indices$notrue == as.numeric(corange[2])] <-3
-      indices$level[indices$nrtrue == as.numeric(cred[2])] <-4
+      indices$level[indices$nytrue == delay_turnon[1]] <-2
+      indices$level[indices$notrue == delay_turnon[2]] <-3
+      indices$level[indices$nrtrue == delay_turnon[3]] <-4
       
+    
       # making it orange if now is pRt>crit and in the past 3 weeks, alert was orange at least once 
-      for (k in 5:dim(indices)[1]){
-            if (indices$level[k] != 4 & indices$cotrue[k] == 1 & 
-                any(indices$level[(k-2):k]==3)) indices$level[k]<-3
-      }
+      #for (k in 5:dim(indices)[1]){
+      #      if (indices$level[k] != 4 & indices$cotrue[k] == 1 & 
+      #          any(indices$level[(k-2):k]==3)) indices$level[k]<-3
+      #}
       
-      # making it yellow if inc > posinc, and rt was orange or red at least once in the last 8 weeks 
-      for (k in 10:dim(indices)[1]){
-                  if (indices$level[k] %in% c(1,2) & obj$inc[k] > incpos & any(indices$level[(k-8):k] >= 3)) indices$level[k]<-2
-      }
+      # slow turn-off :
+      # if inc > 0, and rt was orange or red at least once in the past 8 weeks 
+      
+      indices$level[intersect(x = which(obj$inc>0), 
+                              y = which(rollapply(indices$level,8,function(x) any(x>=3))))]<-2
+      
       # delay turnoff
-      delayturnoff <- function(cond, level, d=indices){
-            delay = as.numeric(as.character(cond[3]))
-            N = dim(d)[1]
-            if(delay > 0){
-                  cand <- c()
-                  for(i in 1:delay){
-                        cand <- unique(c(cand, which(d$level==level) + i))
-                        cand <- cand[cand<=N]
-                  }
-                  for (j in cand){
-                        d$level[j] <- max(d$level[j], 2) # fica amarelo no delay
-                  }
-            }
-            d
-      } 
-      indices <- delayturnoff(cond=cred,level=4)
-      indices <- delayturnoff(cond=corange,level=3)
-      indices <- delayturnoff(cond=cyellow,level=2)
-      return(list(data=obj, indices=indices, rules=pars, crit = crit, n=4))      
+      
+      delayturnoff <- function(level){
+            delay_level = delay_turnoff[[(level-1)]]# as.numeric(as.character(cond[3])) 
+            N = dim(d)[1]  # le
+            ifelse (delay == 0, return(indices),
+                    {pos <- which(d$level==delay_level) %>% # following up weeks
+                    lapply(.,function(x)x+seq(1,delay_level)) %>% 
+                          unlist() %>% 
+                          unique()
+                    indices$level[pos] <- unlist(lapply(indices$level[pos], function(x) max(x,2)))
+                    return(indices)
+            })
+      }
+            
+      indices <- delayturnoff(level=4)
+      indices <- delayturnoff(level=3)
+      indices <- delayturnoff(level=2)
+      return(list(data=obj, indices=indices, crit = crit, n=4))      
 }
 
 #update.alerta ---------------------------------------------------------------------
