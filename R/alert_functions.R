@@ -61,17 +61,14 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'positive mosquito population growth are detected, green otherwise.Orange 
 #'indicates evidence of sustained transmission, red indicates evidence of 
 #'an epidemic scenario.  
-#'@param obj dataset from the mergedata function.
-#'@param pars list of parameters for the alerta, defined in config.R
-#'@param crit criteria for the alert colors, defined in configglobal.R
+#'@param obj dataset with data to feed the alert, containing the variables specified in crit.
+#'@param crit criteria for the alert colors. See setCriteria()
 #'@param miss how missing data is treated. "last" if last value is repeated. 
 #'It is currently the only option
-#'@return list with data.frame with the week condition and the number of weeks within the 
-#'last lag weeks with conditions = TRUE, data, and rules.  
+#'@return list containing the data, the alert indices, and the rules used to define the indices.  
 #'@examples
-#' # Parameters of the alert model (usually set up in the globalconfig and config files)
+#' # Parameters of the alert model
 #'criteriaU = setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
-#'pars.ES <- NULL
 #'# Get, organize data 
 #'cas = getCases(city = 3304557, cid10 = "A90", datasource=con) %>% 
 #'      Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) %>%
@@ -79,10 +76,10 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) %>%
 #'      mutate(temp_min = nafill(temp_min, rule = "arima")) 
 #'# Calculate alert      
-#'ale = join_all(list(cas,cli),by="SE") 
-#'res = fouralert(ale, crit = criteriaU)
+#'ale <- join_all(list(cas,cli),by="SE") 
+#'res <- fouralert(ale, crit = criteriaU)
 #'# Better visualization
-#'tail(write.alerta(ale))
+#'tail(write.alerta(res))
 
 
 fouralert <- function(obj, crit, miss="last"){
@@ -94,7 +91,6 @@ fouralert <- function(obj, crit, miss="last"){
       delay_turnon <- lapply(crit, function(x) as.numeric(x[[2]]))
       delay_turnoff <- lapply(crit, function(x) as.numeric(x[[3]]))
       
-      #incpos = pars$posseas
       # accumulating condition function
       accumcond <- function(vec, lag) {
             if (lag == 1) return(vec)
@@ -103,7 +99,6 @@ fouralert <- function(obj, crit, miss="last"){
             for(j in 1:(lag-1)) ac <- rowSums(cbind(ac, vec[(lag-j):(le-j)]), na.rm = TRUE)
             c(rep(NA,(lag-1)), ac)
       }
-      
       
       # calculating each condition (week and accumulated)  
       assertcondition <- function(dd, nivel){
@@ -135,22 +130,21 @@ fouralert <- function(obj, crit, miss="last"){
       #          any(indices$level[(k-2):k]==3)) indices$level[k]<-3
       #}
       
-      # slow turn-off :
-      # if inc > 0, and rt was orange or red at least once in the past 8 weeks 
-      
+      # from orange-red to yellow:
+      # if inc > 0, and rt was orange or red at least once in the past 8 weeks -> level yellow
       indices$level[intersect(x = which(obj$inc>0), 
                               y = which(rollapply(indices$level,8,function(x) any(x>=3))))]<-2
       
-      # delay turnoff
-      
+      # delayed turnoff
       delayturnoff <- function(level){
             delay_level = delay_turnoff[[(level-1)]]# as.numeric(as.character(cond[3])) 
-            N = dim(d)[1]  # le
-            ifelse (delay == 0, return(indices),
-                    {pos <- which(d$level==delay_level) %>% # following up weeks
-                    lapply(.,function(x)x+seq(1,delay_level)) %>% 
+            
+            ifelse (delay_level == 0, return(indices),
+                    {pos <- which(indices$level==delay_level) %>% # weeks with alert at level delay_level
+                    lapply(.,function(x)x+seq(0,delay_level)) %>% # current and subsequent weeks 
                           unlist() %>% 
                           unique()
+                    pos <- pos[pos<=le] # remove inexisting rows
                     indices$level[pos] <- unlist(lapply(indices$level[pos], function(x) max(x,2)))
                     return(indices)
             })

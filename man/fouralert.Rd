@@ -4,21 +4,18 @@
 \alias{fouralert}
 \title{Define conditions to issue a four level alert Green-Yellow-Orange-Red.}
 \usage{
-fouralert(obj, pars, crit, pop, miss = "last")
+fouralert(obj, crit, miss = "last")
 }
 \arguments{
-\item{obj}{dataset from the mergedata function.}
+\item{obj}{dataset with data to feed the alert, containing the variables specified in crit.}
 
-\item{pars}{list of parameters for the alerta, defined in config.R}
-
-\item{crit}{criteria for the alert colors, defined in configglobal.R}
+\item{crit}{criteria for the alert colors. See setCriteria()}
 
 \item{miss}{how missing data is treated. "last" if last value is repeated. 
 It is currently the only option}
 }
 \value{
-list with data.frame with the week condition and the number of weeks within the 
-last lag weeks with conditions = TRUE, data, and rules.
+list containing the data, the alert indices, and the rules used to define the indices.
 }
 \description{
 Yellow is raised when environmental conditions required for
@@ -27,21 +24,17 @@ indicates evidence of sustained transmission, red indicates evidence of
 an epidemic scenario.
 }
 \examples{
-# Parameters of the alert model (usually set up in the globalconfig and config files)
-criteriaU = list(crity = c("temp_min > 22 & inc > 0", 3, 1),
-crito = c("p1 > 0.95 & inc > 10", 3, 1),
-critr = c("inc > 100", 2, 2))
-pars.ES <- list(Central = list(pdig = c(2.997765,0.7859499),tcrit=NA, ucrit=87, inccrit = 100, preseas=8.28374162389761, 
-posseas = 7.67878514885295, legpos="bottomright")) 
+# Parameters of the alert model
+criteriaU = setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
 # Get, organize data 
-cas = getCases(city = 3200136,cid10 = "A90", datasource=con) \%>\% 
-     adjustIncidence(method="bayesian") \%>\%
-     Rt(count = "tcasesmed",gtdist="normal", meangt=3, sdgt = 1)
+cas = getCases(city = 3304557, cid10 = "A90", datasource=con) \%>\% 
+     Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) \%>\%
+     mutate(inc = casos/pop*100000)
 cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) \%>\%
-     mutate(nafill(temp_min, rule = "arima")) 
+     mutate(temp_min = nafill(temp_min, rule = "arima")) 
 # Calculate alert      
-ale = join_all(list(cas,cli),by="SE") \%>\%
-     fouralert(pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
+ale <- join_all(list(cas,cli),by="SE") 
+res <- fouralert(ale, crit = criteriaU)
 # Better visualization
-tail(write.alerta(ale))
+tail(write.alerta(res))
 }
