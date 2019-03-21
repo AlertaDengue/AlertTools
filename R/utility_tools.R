@@ -244,16 +244,17 @@ lastDBdate <- function(tab, city = NULL, station = NULL, datasource){
 # DenguedbConnect ---------------------------------------------------------------------
 #'@description  Opens a connection to the Project database. 
 #'@title Returns the connection to the database. 
+#'@param pass password
 #'@return "PostgreSQLConnection" object   
 #'@examples
 #'con <- DenguedbConnect()
 #'dbListTables(con) 
 #'dbDisconnect(con)
 
-DenguedbConnect <- function(){
+DenguedbConnect <- function(pass){
       dbname <- "dengue"
       user <- "dengueadmin"
-      password <- "aldengue"
+      password <- pass
       host <- "localhost"
       
       dbConnect(dbDriver("PostgreSQL"), user=user,
@@ -508,79 +509,38 @@ write.parameters<-function(params, tab, senha){
 }
 
 # read.parameters ------------------------------------
-#'@description  Read the alert parameters for a set of  cities from the database, to be used in the update.alert. 
-#'Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_posseason",
-#'"limiar_epidemico, "estacao_wu_sec".  
-#'@title Get city alert parameters. 
-#'@param city geocode
-#'@param region regional's name
-#'@param state state's name
+#'@description  Read the alert parameters for a set of cities from the database, to be used in the infodengue pipeline. 
+#'Currently, the parameters are: "limiar_preseason" (pre-season incidence threshold calculated using MEM), 
+#'"limiar_posseason" (pos-season incidence threshold), "limiar_epidemico"(epidemic threshold), "varcli" (name of the critical 
+#'meteorological variable), "clicrit" (critical value of the meteorological variable), "cid10",
+#'"codmodelo" (name of the heuristic decision model, see serCriteria()). These parameters are specified when the city is initiated 
+#'in the pipeline.
+#'@title Get city-level alert parameters for the infodengue pipeline. 
+#'@param cities cities' geocodes. Tip: find them using getCidades(). 
+#'@param cid10 Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"
 #'@param datasource SQL connection to the database
 #'@return dataframe with all parameters
 #'@examples
-#'read.parameters(city = 3118601, datasource = con)
-#'read.parameters(region="Norte", state = "Rio de Janeiro", datasource = con)
-#'read.parameters(state = "Rio de Janeiro", datasource = con)
-#'read.parameters(datasource = con) #set no filter to get all cities
+#'read.parameters(cities = 3118601, cid10 = "A90")
+#'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+#'read.parameters(cities = cid$municipio_geocodigo, cid10 = "A90")
 
-read.parameters<-function(city, region, state, datasource){
+read.parameters<-function(cities, cid10 = "A90", datasource=con){
       
-      vars  = " geocodigo, nome, nome_regional, id_regional, uf, populacao, codigo_estacao_wu, 
-                estacao_wu_sec,limiar_preseason, limiar_posseason, limiar_epidemico "
-
-            # Getting metadata from table regional_saude
-      if(!missing (city)) { # if updating a single city
-            if(nchar(city) == 6) city <- sevendigitgeocode(city) 
+      cities <- sapply(cities, function(x) sevendigitgeocode(x))
             
+      # reading parameters from database
+      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      comando = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
+                        "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
             
-            sql = paste("SELECT ",vars, " FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo
-                        where geocodigo = '", city, "'", sep=" ")
-            dd <- dbGetQuery(datasource,sql)
+      dd <- dbGetQuery(datasource,comando)
             
-      }
+      #stopifnot(all(cities %in% dd$municipio_geocodigo),message("check if cities are in the parameter table"))      
       
-      if (!missing(region)){ # if one or more regionais
-            regionais = region
-            sql1 = paste("'", regionais[1], sep = "")
-            ns = length(regionais)
-            if (ns > 1) for (i in 2:ns) sql1 = paste(sql1, regionais[i], sep = "','")
-            sql1 <- paste(sql1, "'", sep = "")
-            
-            sql = paste("SELECT ", vars, " FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo
-                        where nome_regional IN (",sql1,")",sep="")
-            dd <- dbGetQuery(con,sql)
-            if (dim(dd)[1]==0) stop(paste("A regional",region, "nao foi achada. 
-                                          Verifique se escreveu certo (por extenso)"))
-            
-            if(length(unique(dd$uf)) > 1){
-                  if (missing(state)) stop(cat("Existe mais de uma regional com esse nome. 
-                                          Especifique o estado (por extenso):", unique(dd$uf)))
-                  dd <- subset(dd, uf == state)
-            }
-      }
-      
-      if((missing(city) & missing(region) & !missing(state))){ # state level
-            sql = paste("SELECT ",vars, " FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo
-                        where uf = '", state, "'", sep="")
-            dd <- dbGetQuery(datasource,sql)
-      }
-      
-      if((missing(city) & missing(region) & missing(state))){
-            sql = paste("SELECT ",vars, " FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo", sep="")
-            dd <- dbGetQuery(datasource,sql)
-      }
       dd
 }
       
-
 
 # insertCityinAlerta ------------------------------------
 #'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 
@@ -626,10 +586,3 @@ insertCityinAlerta<-function(city,id_regional,regional,senha){
       
       
      
-      
-
-
-#'lastDBdate(tab="tweet", city=330240)
-#'lastDBdate(tab="sinan", city=330240)
-#'lastDBdate(tab="clima_wu", station="SBAF")  
-
