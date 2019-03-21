@@ -22,25 +22,14 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
       if (!all(nchar(stations) == 4)) stop("'stations' should be a vector of 4 digit station names")
       nsta = length(stations)
       
-      if (class(datasource) == "PostgreSQLConnection") {
-            # creating the sql query for the stations
-            sql1 = paste("'", stations[1], sep = "")
-            
-            if (nsta > 1) for (i in 2:nsta) sql1 = paste(sql1, stations[i], sep = "','")
-            sql1 <- paste(sql1, "'", sep = "")
-            # sql query for the date
-            sql2 = paste("'", finalday, "'", sep = "")
-            # sql query for the variables
-            sql3 = paste("data_dia, \"Estacao_wu_estacao_id\",", vars[1], sep = "")
-            nv = length(vars)
-            if (nv > 1) for (i in 2:nv) sql3 = paste(sql3, vars[i], sep = ",")
-          
-            sql <- paste("SELECT ", sql3, " from \"Municipio\".\"Clima_wu\" WHERE 
-                        \"Estacao_wu_estacao_id\" IN  (", sql1, ") AND 
-                         data_dia <= ",sql2,sep="")
-            d <- dbGetQuery(datasource,sql) 
-            
-      }else{stop("getCases requires a PostgreSQL connection")}
+      # reading data from database
+      sqlstations = paste("'", str_c(stations, collapse = "','"),"'", sep="")
+      
+      comando <- paste("SELECT * from \"Municipio\".\"Clima_wu\" WHERE 
+                        \"Estacao_wu_estacao_id\" IN  (", sqlstations, ") AND 
+                         data_dia <= '",finalday,"'",sep="")
+      
+      d <- dbGetQuery(datasource,comando) 
       
       # agregando vars climaticas por semana
       d1 = d %>% 
@@ -92,45 +81,42 @@ bestWU <- function(series,var){
 #'@description Create weekly time series from tweeter data from server. The 
 #'source of this data is the Observatorio da Dengue (UFMG).
 #'@title Get Tweeter Data
-#'@param city city's geocode.
+#'@param cities cities's geocode. Use getCidades()
 #'@param cid10 default is A90 (dengue). If not dengue, returns NA
 #'@param finalday last day. Default is the last available.
-#'@param datasource server or "data/tw.rda" if using test dataset. 
-#' Use the connection to the Postgresql server if using project data. See also DenguedbConnect
-#' to open the database connection. 
+#'@param datasource Use the connection to the Postgresql server for using project data.  
 #'@return data.frame with weekly counts of people tweeting on dengue.
 #'@examples
-#'res = getTweet(city = 3302205, lastday = "2014-03-01", datasource = con)
-#'res = getTweet(city = 230440, lastday = "2014-03-01", datasource = con)
-#'res <- getTweet(city = c(3302205,230440), datasource = con) #  two cities
+#'res = getTweet(cities = 3302205, lastday = "2014-03-01")
+#'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+#'res <- getTweet(cities = cid$municipio_geocodigo) 
 #'tail(res)
 
-getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
+getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con) {
       
-      city <- sapply(city, function(x) sevendigitgeocode(x))
+      cities <- sapply(cities, function(x) sevendigitgeocode(x))
       
-      if (cid10 == "A90"){ # get tweets on dengue
-            sqldate <- paste("'", lastday, "'", sep = "")
-            # sql call for dealing with multiple cities
-            sqlcity = paste("'", city[1], sep = "")
-            nci = length(city)
-            if (nci > 1) for (i in 2:nci) sqlcity = paste(sqlcity, city[i], sep = "','")
-            sqlcity <- paste(sqlcity, "'", sep = "")
+      # get tweets on dengue ---------------------------------------------
+      if (cid10 == "A90"){ 
             
-            c1 <- paste("select \"Municipio_geocodigo\", data_dia, numero from \"Municipio\".\"Tweet\" where 
-                \"Municipio_geocodigo\" IN (", sqlcity,") AND data_dia <= ", sqldate,sep="")
+            sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+
+            comando <- paste("SELECT \"Municipio_geocodigo\", data_dia, numero FROM \"Municipio\".\"Tweet\" WHERE 
+                \"Municipio_geocodigo\" IN (", sqlcity,") AND data_dia <= '", lastday,"'",sep="")
             
-            tw <- dbGetQuery(datasource,c1) %>%  # query
-                  mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) # criating column SE
+            tw <- dbGetQuery(datasource,comando) 
             
       } else {stop(paste("there is no tweet for", cid10,"in the database"))}
       
-      # reporting cities without tweets
+      # warning: there are cities without any tweet 
       tots = tapply(tw$numero,tw$Municipio_geocodigo,sum)
-      if (any(tots==0)) message(paste("cidade(s)",city[which(tots==0)],"nunca tweetou sobre dengue"))
+      if (any(tots==0)) message(paste("cidade(s)",cities[which(tots==0)],"nunca tweetou sobre dengue"))
       
-      # time series : counting number of tweets per SE and city
-      sem <-  expand.grid(Municipio_geocodigo = city, 
+      # Counting number of tweets per SE and city -----------------
+      tw <- tw %>%  # 
+            mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) # creating column SE
+      
+      sem <-  expand.grid(Municipio_geocodigo = cities, 
                           SE = seqSE(from = 201001, to = max(tw$SE))$SE)
       st <- full_join(sem,tw,by = c("Municipio_geocodigo", "SE")) %>% 
             arrange(Municipio_geocodigo,SE) %>%
@@ -145,55 +131,51 @@ getTweet <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
 # GetCases --------------------------------------------------------------
 #'@description Create weekly time series from case data from server. The source is the SINAN. 
 #'@title Get Case Data and aggregate per week and area
-#'@param city city's geocode.
+#'@param cities cities' geocode.
 #'@param finalday last day. Default is the last available.
 #'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8", 
 #'@param datasource PostgreSQLConnection to project database . 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
-#'d <- getCases(city = 3302205, lastday ="2018-03-10", datasource = con) # dengue
-#'d <- getCases(city = 3304557, cid10="A92.0", datasource = con) # chikungunya, until last day available
-#'d <- getCases(city = c(3302205,230440), datasource = con) # dengue, two cities
+#'d <- getCases(cities = 3302205, lastday ="2018-03-10") # dengue
+#'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
+#'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+#'d <- getCases(cities = cid$municipio_geocodigo, datasource = con) 
 #'tail(d)
 
-getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
+getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con) {
       
-      city <- sapply(city, function(x) sevendigitgeocode(x))
+      city <- sapply(cities, function(x) sevendigitgeocode(x))
       
-      #dealing with synonimous cid
-      if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
-      if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"}  # chik
-      if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- "A92.8"} #zika
+      #dealing with synonimous cid ----------------------------------------------
+      if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
+            if (cid10 %in% c("A92", "A920","A92.0")) { # chik
+                  cid <-c("A92", "A920","A92.0")
+                  cid10 <- "A92.0"}  else{
+                        if (cid10 %in% c("A92.8","A928")){  # zika
+                              cid <- c("A92.8","A928")
+                              cid10 <- "A92.8"                      
+                        }                  
+                  }
+      }
       if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
-      # reading the data
-      if (class(datasource) == "PostgreSQLConnection"){ # current entry
-            sql1 <- paste("'", lastday, "'", sep = "")
-            # dealing with multiple cids 
-            lcid <- length(cid)
-            cid10command <- paste("'", cid[1], sep="")
-            if (lcid > 1) for (i in 2:lcid) cid10command = paste(cid10command, cid[i], sep = "','")
-            cid10command <- paste(cid10command, "'", sep = "")
-            
-            # dealing with multiple cities
-            sqlcity = paste("'", city[1], sep = "")
-            nci = length(city)
-            if (nci > 1) for (i in 2:nci) sqlcity = paste(sqlcity, city[i], sep = "','")
-            sqlcity <- paste(sqlcity, "'", sep = "")
-            
-            sql <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= ",sql1, 
-                         " AND municipio_geocodigo IN (", sqlcity, 
-                         ") AND cid10_codigo IN(", cid10command,")", sep="")
-            
-            dd <- dbGetQuery(datasource,sql)
-            if(nrow(dd)==0)stop(paste("getCases did not find cid10" , cid10, 
-                                "for city", city))
-            
-            # pegando nome da cidade e populacao
-            sql2 <- paste("SELECT nome,populacao,geocodigo from \"Dengue_global\".\"Municipio\" WHERE geocodigo IN(", sqlcity,")") 
-            varglobais <- dbGetQuery(datasource,sql2)
-      }else{stop("getCases requires a PostgreSQL connection")}
+    
+       # reading notification data form the database ----------------------------
+      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
       
-      # casos por semana por cidade
+      comando <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
+                         "' AND municipio_geocodigo IN (", sqlcity, 
+                         ") AND cid10_codigo IN(", sqlcid,")", sep="")
+            
+      dd <- dbGetQuery(datasource,comando)
+      if(nrow(dd)==0)stop(paste("getCases did not find cid10" , cid10, "for city", city))
+            
+      # pegando nome da cidade e populacao -----------------------------------------
+      sql2 <- paste("SELECT nome,populacao,geocodigo from \"Dengue_global\".\"Municipio\" WHERE geocodigo IN(", sqlcity,")") 
+      varglobais <- dbGetQuery(datasource,sql2)
+      
+      # agregando casos por semana por cidade ---------------------------------------
       casos = dd %>%
             mutate(SE = ano_notif*100+se_notif) %>%
             group_by(municipio_geocodigo)%>%
@@ -208,8 +190,9 @@ getCases <- function(city, lastday = Sys.Date(), cid10 = "A90", datasource) {
             mutate(CID10 = cid10) %>%
             select(SE, cidade = municipio_geocodigo,casos =n,localidade,nome,pop=populacao) 
       
+      st$casos[is.na(st$casos)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
             
-      if(any(is.na(st$pop)))warning("getCases function failed to import pop data for city", city)
+      if(any(is.na(st$pop)))warning("getCases function failed to import pop data for one or more cities", cities)
       
       st  
 }
