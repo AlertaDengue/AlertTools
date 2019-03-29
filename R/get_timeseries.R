@@ -17,7 +17,7 @@
 #'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
 #'tail(res)
 
-getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource) {
+getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource=con) {
       
       if (!all(nchar(stations) == 4)) stop("'stations' should be a vector of 4 digit station names")
       nsta = length(stations)
@@ -55,10 +55,10 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
 #'@param series list of the competing time series.
 #'See examples.
 #'@param var name of the meteorological variable 
-#'@return data.frame with the series 
+#'@return data.frame with the best series 
 #'@examples
-#'series1 = getWU(stations = 'SBRJ',vars="temp_min", datasource= con)
-#'series2 = getWU(stations = 'SBGL',vars="temp_min", datasource= con)
+#'series1 = getWU(stations = 'SBCP',vars="temp_min", datasource= con)
+#'series2 = getWU(stations = 'SBME',vars="temp_min", datasource= con)
 #'res = bestWU(list(series1, series2),var="temp_min")
 #'tail(res)
 
@@ -145,7 +145,8 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 
 getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con) {
       
-      city <- sapply(cities, function(x) sevendigitgeocode(x))
+      stopifnot(class(cities) %in% c("integer","numeric")) 
+      cities <- sapply(cities, function(x) sevendigitgeocode(x))
       
       #dealing with synonimous cid ----------------------------------------------
       if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
@@ -181,7 +182,7 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
             group_by(municipio_geocodigo)%>%
             count(SE)  
       # criando serie 
-      sem <-  expand.grid(municipio_geocodigo = city, SE = seqSE(from = 201001, to = max(casos$SE))$SE)
+      sem <-  expand.grid(municipio_geocodigo = cities, SE = seqSE(from = 201001, to = max(casos$SE))$SE)
       st <- full_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 
             arrange(municipio_geocodigo,SE) %>%
             mutate(localidade = 0) %>%  # para uso qdo tiver divisao submunicipal

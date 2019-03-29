@@ -70,7 +70,7 @@ setCriteria <- function(rule=NULL, values=NULL,
 #' # Parameters of the alert model
 #'criteriaU = setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
 #'# Get, organize data 
-#'cas = getCases(city = 3304557, cid10 = "A90", datasource=con) %>% 
+#'cas = getCases(cities = 3304557, cid10 = "A90", datasource=con) %>% 
 #'      Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) %>%
 #'      mutate(inc = casos/pop*100000)
 #'cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) %>%
@@ -160,9 +160,7 @@ fouralert <- function(obj, crit, miss="last"){
 #'@title pipeline used by infodengue 
 #'@description wrap of functions used by Infodengue.
 #'@param cities geocodes of the cities. 
-#'@param crit criteria for the alert colors, defined by setCriteria(). If missing, tries to find in the database
 #'@param cid10 default is A90 (dengue). Chik = A92.0, Zika = A92.8
-#'@param GT list containing generation time distribution . Default is dengue
 #'@param finalday if provided, uses only disease data reported up to that day
 #'@param nowcasting  "fixedprob" for static model, "bayesian" for the dynamic model. 
 #'@param writedb TRUE if it should write into the database, default is FALSE.
@@ -172,183 +170,207 @@ fouralert <- function(obj, crit, miss="last"){
 #' # Parameters for the model
 #'criteriaU <- setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", crit = criteriaU, 
-#'sefinal=201850, nowcasting = FALSE, writedb = FALSE)
+#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", finalday= "2018-03-10", 
+#' nowcasting = "fixedprob", writedb = FALSE)
 #'tail(res$data)
 
-update.alerta <- function(cities, crit, cid10="A90", GT = list(gtdist = "normal", meangt=3, sdgt=1.2),  writedb = FALSE,
+pipe.infodengue <- function(cities, cid10="A90", writedb = FALSE,
                            finalday = Sys.Date(), nowcasting=FALSE, datasource = con){
       
-      # Reading criteria from argument or from table regional_saude
-      if(missing(crit)){
-            dd <- read.parameters(city = cities, datasource = datasource)
-      }
-      if(!missing (city)) { # if updating a single city
-            if(nchar(city) == 6) city <- sevendigitgeocode(city) 
-            
-      }
-      
-      if (!missing(region)){ # if one or more regionais
-            dd <- read.parameters(region = region, state = state, datasource=datasource)     
-      } 
-      
-      if ((missing(region) & missing(city) &!missing(state)))  {
-            dd <- read.parameters(state = state, datasource=datasource)    
-      }
-      #
-      nlugares = nrow(dd)[1]
-      if (nlugares == 0) stop("A cidade ou regiao ou estado nao foi encontrada(o)")
-      
+      # Reading infodengue parameters for each city
+      pars_table <- read.parameters(cities = cities, cid10 = cid10, datasource)
+      nlugares <- nrow(pars_table)
+      cidades <- pars_table$municipio_geocodigo
       print(paste("sera'feita analise de",nlugares,"cidade(s):"))
-      print(dd$geocodigo)      
+      print(cidades)      
       
-      # -------------------------------------
-      message("obtendo dados de clima ...")
-      estacoes <- unique(c(dd$estacao_wu_sec, dd$codigo_estacao_wu))
-      cli <- list()
-      allvars.cli <- c("temp_min","temp_med","temp_max","umid_min","umid_med","umid_max",
-                       "pressao_min","pressao_med","pressao_max")
+      # Reading the names of the meterological stations for each city
+       
+      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+                       \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
+                       ")" , sep="")
+      city_table <- dbGetQuery(datasource,comando)
       
-      for (k in 1:length(estacoes)) {
-            cliwu <- getWU(stations = estacoes[k],var=allvars.cli
-                           ,datasource = datasource)
-            #message("estacao", k, "tem dimensao",nrow(cliwu))
-            if (!is.null(cliwu)){
-                  if (!missing(sefinal)) cliwu =  subset(cliwu,SE<=sefinal)
-            } 
-            if (nrow(cliwu)>0){
-                  cli[[k]] <- cliwu
-                  names(cli)[k]<-as.character(unique(cli[[k]]$estacao))      
-            }
+      estacoes <- unique(c(city_table$estacao_wu_sec, city_table$codigo_estacao_wu))
+      print("usando dados de clima das estacoes:")
+      print(estacoes)
+      
+      # Reading the meteorological data
+      print("Obtendo os dados de clima...")
+      varscli <- unique(pars_table$varcli)
+      cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday,datasource)
+      
+      # Reading Cases
+      print("Obtendo dados de notificação ...")
+      #casos <- getCases(cities, lastday = finalday, cid10 = cid10) %>%
+      #      mutate(inc = casos/pop*100000)
+      
+      # Reading tweets 
+      if(cid10 == "A90"){
+            print("Reading tweets...")
+            dT = getTweet(cities, lastday = finalday, cid10 = "A90", datasource)
       }
       
-      #names(cli) <-estacoes
-      estacoes.validas <- names(cli)
-      print(estacoes.validas)
-      alertas <- list()
-      for (i in 1:nlugares){ # para cada cidade ...
+      alerta <- list()
+       # para cada cidade ...
             
-            geocidade = dd$geocodigo[i]
-            lastdatewu = NA
+      x = cities[1]
+      # params
+      parcli.x <- city_table[city_table$municipio_geocodigo == x, c("codigo_estacao_wu", "estacao_wu_sec")]      
+      varcli.x <- pars_table$varcli[city_table$municipio_geocodigo == x]
+      
+      # escolhe a melhor serie meteorologica para a cidade, 
+      cli.x <- bestWU(series = list(cliwu[cliwu$estacao == parcli.x[[1]],],
+                                    cliwu[cliwu$estacao == parcli.x[[2]],]), var = varcli.x)
             
-            # escolhendo a melhor estacao meteorologica com base na temperatura:
-            estacao_sec = dd$estacao_wu_sec[i] # nome da estacao prioritaria
-            na_sec = 1; na_pri = 1 
-            if (estacao_sec %in% estacoes.validas){
-                  dadoscli_sec <- cli[[estacao_sec]] # temperatura
-                  
-                  na_sec = sum(is.na(dadoscli_sec$temp_min))/dim(dadoscli_sec)[1] # prop dados faltantes
-                  if (na_sec < 1)lastdate_sec <- dadoscli_sec$SE[max(which(is.na(dadoscli_sec$temp_min)==FALSE))]  # ultima data 
-                  estacao = estacao_sec
-            }
-            
-            estacao_pri = dd$codigo_estacao_wu[i] # nome da estacao substituta
-            if(estacao_pri %in% estacoes.validas){
-                  dadoscli_pri <- cli[[estacao_pri]] # temp na estacao substituta
-                  na_pri = sum(is.na(dadoscli_pri$temp_min))/dim(dadoscli_pri)[1] # prop dados faltantes
-                  if (na_pri < 1)lastdate_pri <- dadoscli_pri$SE[max(which(is.na(dadoscli_pri$temp_min)==FALSE))]  # ultima data        
-            }
-            
-            if(na_sec==1 & na_pri==1) message("WARNING: As duas estacoes met. da ", geocidade, " não tem dados de temperatura")
-            if(na_sec==1 & na_pri!=1) {estacao = estacao_pri; lastdatewu = lastdate_pri}
-            if(na_sec!=1 & na_pri==1) {estacao = estacao_sec; lastdatewu = lastdate_sec}      
-            if(na_sec!=1 & na_pri!=1){
-                  lastdatewu = ifelse(lastdate_sec>=lastdate_pri , lastdate_sec, lastdate_pri)
-                  estacao = ifelse(lastdate_sec>=lastdate_pri, estacao_sec, estacao_pri)
-            }
-            ##
-            print(paste("(Cidade ",i,"de",nlugares,")","Rodando alerta para ", geocidade, "usando estacao", estacao,"(ultima leitura:", lastdatewu,")"))
-            
-            # --------------- consulta dados do sinan
-            dC0 = getCases(city = geocidade, cid10 = cid10, datasource=datasource) 
-            
-            # --------------- consulta dados do tweet apenas se for dengue 
-            if(cid10 == "A90") dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) 
-            dW = cli[[estacao]]
-            
-            # cortando os dados para a janela temporal solicitada
-            if (!missing(sefinal)){
-                  dC0 <-subset(dC0, SE<=sefinal)
-                  if(cid10 == "A90") dT <- subset(dT, SE<=sefinal)
-            }
-            
-            # junta os dados
-            if(cid10 == "A90") {d <- mergedata(cases = dC0, climate = dW, tweet = dT)}
-            else{
-                  d <- mergedata(cases = dC0, climate = dW)
-                  d$tweet <- NA
-            }
-            
-            # ----------- interpolacao e extrapolação das variaveis climaticas
-            
-            vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
-            
-            for (j in vars.cli) {
-                  if (is.na(tail(d[,j])[1])) try(d[,j] <-nafill(d[,j], rule="arima"))  
-            }
-            
-            # parsi e' pars de uma unica cidade. Atualmente os limiares sao lidos do banco de dados
-            # E'preciso extrair no caso de region 
-            if (nlugares > 1) {
-                  d$nome_regional <- dd$nome_regional[dd$geocodigo==geocidade]
-                  parsi <- pars[[d$nome_regional[1]]]
-            } else {
-                  parsi <- pars
-            }
-            
-            # Limiares
-            parsi$preseas <- dd$limiar_preseason[i]
-            parsi$posseas <- dd$limiar_posseason[i]
-            parsi$inccrit <- dd$limiar_epidemico[i]
-            
-            if (!missing(sefinal)) d <- subset(d,SE<=sefinal)
-            # preenchendo potenciais missings
-            d$cidade[is.na(d$cidade)==TRUE] <- geocidade
-            d$nome[is.na(d$nome)==TRUE] <- na.omit(unique(d$nome))[1]
-            d$pop[is.na(d$pop)==TRUE] <- na.omit(unique(d$pop))[1]
-            
-            # se tiver ajuste de atraso pelo metodo tradicional, usar plnorm, senao pdig = 1 
-            if(adjustdelay == T){
-                  if(delaymethod=="fixedprob"){
-                        pdig <- rep(1, 20*7)[2:20]
-                        if(cid10=="A90") pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
-                        if(cid10=="A92.0") pdig <- plnorm(seq(7,20,by=7), parsi$pdigChik[1], parsi$pdigChik[2])
-                        #p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
-                        dC2 <- adjustIncidence(d, pdig = pdig, method = "fixedprob") # ajusta a incidencia
-                  }
-                  if(delaymethod=="bayesian") {
-                        dC2 <- adjustIncidence(d, method = "bayesian")
-                  }
-            }else{
-                  dC2 <- d
-                  dC2$tcasesmed <- dC2$casos
-                  dC2$tcasesICmin <- dC2$casos
-                  dC2$tcasesICmax <- dC2$casos
-            }
-            
-            
-            dC3 <- Rt(dC2, count = "tcasesmed", gtdist=GT$gtdist, meangt=GT$meangt, sdgt = GT$sdgt) # calcula Rt
-            
-            alerta <- fouralert(dC3, pars = parsi, crit = crit, pop=dd$pop[i], miss="last") # calcula alerta
-            nome = dd$nome[i]
-            nick <- gsub(" ", "", nome, fixed = TRUE)
-            #names(alerta) <- nick
-            N = dim(alerta$indices)[1]
-            print(paste("nivel do alerta de ",nome,":", alerta$indices$level)[N])
-            
-            if (nlugares > 1) {
-                  alertas[[i]]<-alerta
-                  names(alertas)[i]<-nick
-            } 
-            if (writedb == TRUE) {
-                  res <- write.alerta(alerta, write = "db")
-                  #write.csv(alerta,file=paste("memoria/", nick,hoje,".csv",sep="")) 
-            }
+      #cli.x[,varcli.x] <- nafill(varcli.x, rule = "arima") # aplica interpolacao 
+      
+      lastdatewu <- cli.x$SE[max(which(is.na(cli.x[,varcli.x])==FALSE))]
+      print(paste("Rodando alerta para ", x, "usando estacao", cli.x$estacao[1],"(ultima leitura:", lastdatewu,")"))
+      
+      cas.x <- casos %>% 
+            filter(cidade == x) %>%
+            Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) %>%
+            mutate(inc = casos/pop*100000) 
+      
+      # Joining all data
+      if(exists("dT")) {
+            ale <- join_all(list(cas.x,cli.x,dT),by="SE")
+      } else{
+            ale <- join_all(list(cas.x,cli.x),by="SE")
+            ale$tweets <- 0
       }
       
-      res = alerta
-      if(nlugares > 1) res = alertas
-      res
+      # Criteria
+      crit.x <- pars_table[pars_table$municipio_geocodigo==x,]
+      var.x <- 
+      setCriteria(rule = crit.x$codmodelo, values = y)
+      res <- fouralert(ale, crit = criteriaU)
+      
+            #for (i in 1:nlugares)
+            #estacoes_i = 
+      #varcli_i = city_table[city_table$municipio_geocodigo == cities[i], "varcli"]      
+      #bestWU(list(cliwu[,estacao == estacoes_i[1]], cliwu[,estacao==estacoes_i[2]]),var = varcli_i) 
+             
+      #       # escolhendo a melhor estacao meteorologica com base na temperatura:
+      #       estacao_sec = dd$estacao_wu_sec[i] # nome da estacao prioritaria
+      #       na_sec = 1; na_pri = 1 
+      #       if (estacao_sec %in% estacoes.validas){
+      #             dadoscli_sec <- cli[[estacao_sec]] # temperatura
+      #             
+      #             na_sec = sum(is.na(dadoscli_sec$temp_min))/dim(dadoscli_sec)[1] # prop dados faltantes
+      #             if (na_sec < 1)lastdate_sec <- dadoscli_sec$SE[max(which(is.na(dadoscli_sec$temp_min)==FALSE))]  # ultima data 
+      #             estacao = estacao_sec
+      #       }
+      #       
+      #       estacao_pri = dd$codigo_estacao_wu[i] # nome da estacao substituta
+      #       if(estacao_pri %in% estacoes.validas){
+      #             dadoscli_pri <- cli[[estacao_pri]] # temp na estacao substituta
+      #             na_pri = sum(is.na(dadoscli_pri$temp_min))/dim(dadoscli_pri)[1] # prop dados faltantes
+      #             if (na_pri < 1)lastdate_pri <- dadoscli_pri$SE[max(which(is.na(dadoscli_pri$temp_min)==FALSE))]  # ultima data        
+      #       }
+      #       
+      #       if(na_sec==1 & na_pri==1) message("WARNING: As duas estacoes met. da ", geocidade, " não tem dados de temperatura")
+      #       if(na_sec==1 & na_pri!=1) {estacao = estacao_pri; lastdatewu = lastdate_pri}
+      #       if(na_sec!=1 & na_pri==1) {estacao = estacao_sec; lastdatewu = lastdate_sec}      
+      #       if(na_sec!=1 & na_pri!=1){
+      #             lastdatewu = ifelse(lastdate_sec>=lastdate_pri , lastdate_sec, lastdate_pri)
+      #             estacao = ifelse(lastdate_sec>=lastdate_pri, estacao_sec, estacao_pri)
+      #       }
+      #       ##
+      #       print(paste("(Cidade ",i,"de",nlugares,")","Rodando alerta para ", geocidade, "usando estacao", estacao,"(ultima leitura:", lastdatewu,")"))
+      #       
+      #       # --------------- consulta dados do sinan
+      #       dC0 = getCases(city = geocidade, cid10 = cid10, datasource=datasource) 
+      #       
+      #       # --------------- consulta dados do tweet apenas se for dengue 
+      #       if(cid10 == "A90") dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) 
+      #       dW = cli[[estacao]]
+      #       
+      #       # cortando os dados para a janela temporal solicitada
+      #       if (!missing(sefinal)){
+      #             dC0 <-subset(dC0, SE<=sefinal)
+      #             if(cid10 == "A90") dT <- subset(dT, SE<=sefinal)
+      #       }
+      #       
+      #       # junta os dados
+      #       if(cid10 == "A90") {d <- mergedata(cases = dC0, climate = dW, tweet = dT)}
+      #       else{
+      #             d <- mergedata(cases = dC0, climate = dW)
+      #             d$tweet <- NA
+      #       }
+      #       
+      #       # ----------- interpolacao e extrapolação das variaveis climaticas
+      #       
+      #       vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
+      #       
+      #       for (j in vars.cli) {
+      #             if (is.na(tail(d[,j])[1])) try(d[,j] <-nafill(d[,j], rule="arima"))  
+      #       }
+      #       
+      #       # parsi e' pars de uma unica cidade. Atualmente os limiares sao lidos do banco de dados
+      #       # E'preciso extrair no caso de region 
+      #       if (nlugares > 1) {
+      #             d$nome_regional <- dd$nome_regional[dd$geocodigo==geocidade]
+      #             parsi <- pars[[d$nome_regional[1]]]
+      #       } else {
+      #             parsi <- pars
+      #       }
+      #       
+      #       # Limiares
+      #       parsi$preseas <- dd$limiar_preseason[i]
+      #       parsi$posseas <- dd$limiar_posseason[i]
+      #       parsi$inccrit <- dd$limiar_epidemico[i]
+      #       
+      #       if (!missing(sefinal)) d <- subset(d,SE<=sefinal)
+      #       # preenchendo potenciais missings
+      #       d$cidade[is.na(d$cidade)==TRUE] <- geocidade
+      #       d$nome[is.na(d$nome)==TRUE] <- na.omit(unique(d$nome))[1]
+      #       d$pop[is.na(d$pop)==TRUE] <- na.omit(unique(d$pop))[1]
+      #       
+      #       # se tiver ajuste de atraso pelo metodo tradicional, usar plnorm, senao pdig = 1 
+      #       if(adjustdelay == T){
+      #             if(delaymethod=="fixedprob"){
+      #                   pdig <- rep(1, 20*7)[2:20]
+      #                   if(cid10=="A90") pdig <- plnorm((1:20)*7, parsi$pdig[1], parsi$pdig[2])[2:20]
+      #                   if(cid10=="A92.0") pdig <- plnorm(seq(7,20,by=7), parsi$pdigChik[1], parsi$pdigChik[2])
+      #                   #p <- plnorm(seq(7,20,by=7), pars$pdig[1], pars$pdig[2])
+      #                   dC2 <- adjustIncidence(d, pdig = pdig, method = "fixedprob") # ajusta a incidencia
+      #             }
+      #             if(delaymethod=="bayesian") {
+      #                   dC2 <- adjustIncidence(d, method = "bayesian")
+      #             }
+      #       }else{
+      #             dC2 <- d
+      #             dC2$tcasesmed <- dC2$casos
+      #             dC2$tcasesICmin <- dC2$casos
+      #             dC2$tcasesICmax <- dC2$casos
+      #       }
+      #       
+      #       
+      #       dC3 <- Rt(dC2, count = "tcasesmed", gtdist=GT$gtdist, meangt=GT$meangt, sdgt = GT$sdgt) # calcula Rt
+      #       
+      #       alerta <- fouralert(dC3, pars = parsi, crit = crit, pop=dd$pop[i], miss="last") # calcula alerta
+      #       nome = dd$nome[i]
+      #       nick <- gsub(" ", "", nome, fixed = TRUE)
+      #       #names(alerta) <- nick
+      #       N = dim(alerta$indices)[1]
+      #       print(paste("nivel do alerta de ",nome,":", alerta$indices$level)[N])
+      #       
+      #       if (nlugares > 1) {
+      #             alertas[[i]]<-alerta
+      #             names(alertas)[i]<-nick
+      #       } 
+      #       if (writedb == TRUE) {
+      #             res <- write.alerta(alerta, write = "db")
+      #             #write.csv(alerta,file=paste("memoria/", nick,hoje,".csv",sep="")) 
+      #       }
+      # }
+      # 
+      # res = alerta
+      # if(nlugares > 1) res = alertas
+      # res
 }
 
 
