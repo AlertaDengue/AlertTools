@@ -179,9 +179,10 @@ fouralert <- function(obj, pars, crit, pop, miss="last"){
 #'sefinal=201704, delaymethod="fixedprob")
 #'tail(res$data)
 
-update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "normal", meangt=3, sdgt=1.2), cid10 = "A90", writedb = FALSE,
-                          datasource, sefinal,adjustdelay=T, delaymethod="fixedprob"){
+update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "normal", meangt=3, sdgt=1.2), 
+                          cid10 = "A90", writedb = FALSE, datasource, sefinal,adjustdelay=T, delaymethod="fixedprob"){
       
+     
       # Getting metadata from table regional_saude
       if(!missing (city)) { # if updating a single city
             if(nchar(city) == 6) city <- sevendigitgeocode(city) 
@@ -259,10 +260,10 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
             print(paste("(Cidade ",i,"de",nlugares,")","Rodando alerta para ", geocidade, "usando estacao", estacao,"(ultima leitura:", lastdatewu,")"))
             
             # --------------- consulta dados do sinan
-            dC0 = getCases(city = geocidade, cid10 = cid10, datasource=datasource) 
+            dC0 = getCases(city = geocidade, cid10 = cid10, lastday = SE2date(sefinal)$ini+6, datasource=datasource) 
             
             # --------------- consulta dados do tweet apenas se for dengue 
-            if(cid10 == "A90") dT = getTweet(city = geocidade, lastday = Sys.Date(),datasource=datasource) 
+            if(cid10 == "A90") dT = getTweet(city = geocidade, lastday = SE2date(sefinal)$ini+6,datasource=datasource) 
             dW = cli[[estacao]]
             
             # cortando os dados para a janela temporal solicitada
@@ -299,6 +300,8 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
             parsi$preseas <- dd$limiar_preseason[i]
             parsi$posseas <- dd$limiar_posseason[i]
             parsi$inccrit <- dd$limiar_epidemico[i]
+            parsi$tcrit <- dd$tcrit[i]
+            parsi$ucrit <- dd$ucrit[i]
                   
             if (!missing(sefinal)) d <- subset(d,SE<=sefinal)
             # preenchendo potenciais missings
@@ -316,7 +319,7 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
                         dC2 <- adjustIncidence(d, pdig = pdig, method = "fixedprob") # ajusta a incidencia
                   }
                   if(delaymethod=="bayesian") {
-                        dC2 <- adjustIncidence(d, method = "bayesian")
+                        dC2 <- adjustIncidence(d, method = "bayesian",lastSE = sefinal)
                   }
             }else{
                   dC2 <- d

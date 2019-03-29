@@ -343,16 +343,18 @@ dd
 #'@title Get delay data for one or more cities for delay analysis
 #'@param cities vector with geocodes
 #'@param cid10 disease code, Default is dengue. "A92.0" for chik, "A92.8" for zika
+#'@param lastday last day of reporting (digitacao)
 #'@param years vector with set of years for analysis. Default (NULL) is to get all years of data available.
 #'@param datasource valid connection to database
 #'@return list with d = data.frame with data.
 #'@examples
-#'dados <- getdelaydata(cities=3304557, years=c(2016, 2017), cid10="A92", datasource=con)  # Not run without connection
+#'dados <- getdelaydata(cities=3304557, years=c(2016, 2017), cid10="A92", lastday = "2017-06-05" ,datasource=con)  # Not run without connection
 
-getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
+getdelaydata <- function(cities, years = NULL, cid10 = "A90",  lastday = Sys.Date(), datasource){
       
       ncities = length(cities)
       nyears = length(years)
+      
       
       if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
       
@@ -374,14 +376,16 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", datasource){
             
             if (nyears == 0){# means that all years will be included in the analysis
                   sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
-                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo IN(", cid10command,")")
+                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo IN(", cid10command,") 
+                                     AND dt_digita <='", lastday,"'")
             } else { # filter some years
                   sql2 = paste("'", years[1], sep = "")
                   if(nyears > 1) for (i in 2:nyears) sql2 = paste(sql2, years[i], sep = "','")
                   sql2 <- paste(sql2, "'", sep = "")
                   
                   sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
-                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo IN(", cid10command, ") AND ano_notif IN (",sql2,")")      
+                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo IN(", cid10command, ") AND ano_notif IN (",sql2,") AND 
+                                     dt_digita <= '", lastday,"'")      
             }
             
             dd <- dbGetQuery(datasource,sqlselect)

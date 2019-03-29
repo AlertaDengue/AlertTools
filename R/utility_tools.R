@@ -524,7 +524,7 @@ write.parameters<-function(params, tab, senha){
 read.parameters<-function(city, region, state, datasource){
       
       vars  = " geocodigo, nome, nome_regional, id_regional, uf, populacao, codigo_estacao_wu, 
-                estacao_wu_sec,limiar_preseason, limiar_posseason, limiar_epidemico "
+                estacao_wu_sec,limiar_preseason, limiar_posseason, limiar_epidemico,varcli,tcrit,ucrit "
 
             # Getting metadata from table regional_saude
       if(!missing (city)) { # if updating a single city
