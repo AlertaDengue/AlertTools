@@ -177,10 +177,11 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
       varglobais <- dbGetQuery(datasource,sql2)
       
       # agregando casos por semana por cidade ---------------------------------------
-      casos = dd %>%
+      casos = dd %>% 
             mutate(SE = ano_notif*100+se_notif) %>%
-            group_by(municipio_geocodigo)%>%
-            count(SE)  
+            group_by(municipio_geocodigo) %>%
+            count(SE)
+      
       # criando serie 
       sem <-  expand.grid(municipio_geocodigo = cities, SE = seqSE(from = 201001, to = max(casos$SE))$SE)
       st <- full_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 

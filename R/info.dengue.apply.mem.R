@@ -48,7 +48,7 @@ info.dengue.apply.mem <- function(mun_list, start_year=0, end_year=as.integer(fo
                                   i.type.threshold=2, i.type.intensity=2, ...){
   
   require(mem, quietly=TRUE, warn.conflicts=FALSE)
-  require(plyr, quietly=TRUE, warn.conflicts=FALSE)
+  #require(plyr, quietly=TRUE, warn.conflicts=FALSE)
   require(data.table, quietly=TRUE, warn.conflicts=FALSE)
   
   # Read population table
@@ -84,7 +84,7 @@ info.dengue.apply.mem <- function(mun_list, start_year=0, end_year=as.integer(fo
     dfsimple <- df.inc[df.inc$SE > max(df.inc$SE[df.inc$SE<(effec_start_year+1)*100])-12 &
                          df.inc$SE < (effec_start_year+1)*100+41, c('municipio_geocodigo', 'SE', 'inc')]
     effec_start_year_lbl <- paste0(effec_start_year,'-',effec_start_year+1)
-    dfsimple <- rename(dfsimple, c('SE'=paste0('SE',effec_start_year_lbl), 'inc'=effec_start_year_lbl))
+    dfsimple <- plyr::rename(dfsimple, c('SE'=paste0('SE',effec_start_year_lbl), 'inc'=effec_start_year_lbl))
     seasons <- c(effec_start_year_lbl)
     for (i in (effec_start_year+1):end_year){
       if (max(df.inc$SE) >= (i+1)*100 + 41){
@@ -107,7 +107,7 @@ info.dengue.apply.mem <- function(mun_list, start_year=0, end_year=as.integer(fo
     thresholds.tab[,c('casos_pre', 'casos_pos', 'casos_muitoalta')] <- round(thresholds.tab[,c('casos_pre',
                                                                                                'casos_pos',
                                                                                                'casos_muitoalta')])
-    thresholds.tab <- rename(thresholds.tab, replace=c('veryhigh'='muitoalta'))
+    thresholds.tab <- plyr::rename(thresholds.tab, replace=c('veryhigh'='muitoalta'))
 
     thresholds.tab[!is.na(thresholds.tab$pre) & thresholds.tab$casos_pre < 5,
                    c('pre', 'pos', 'muitoalta', 'casos_pre', 'casos_pos', 'casos_muitoalta')] <- NA
@@ -128,7 +128,7 @@ info.dengue.apply.mem <- function(mun_list, start_year=0, end_year=as.integer(fo
     thresholds.table <- rbindlist(list(thresholds.table, thresholds.tab))
     
   }
-  thresholds.table <- rename(thresholds.table, replace=c('pre'='limiar_preseason', 'pos'='limiar_posseason',
+  thresholds.table <- plyr::rename(thresholds.table, replace=c('pre'='limiar_preseason', 'pos'='limiar_posseason',
                                                          'muitoalta'='limiar_epidemico'))
   
   if (write=='db'){

@@ -8,8 +8,8 @@ using MEM package https://cran.r-project.org/web/packages/mem/
                intensity thresholds
 "
 
-require(mem)
-require(plyr)
+#require(mem)
+#require(dplyr)
 #require(logging)
 
 # Initialize logger
@@ -35,7 +35,7 @@ bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
   suff <- paste(as.character(baseyear),as.character(baseyear+1), sep='-')
   newse <- paste0('SE',suff)
   newinc <- suff
-  df3 <- rename(df3, c('SE'=newse, 'inc'=newinc))
+  df3 <- plyr::rename(df3, c('SE'=newse, 'inc'=newinc))
   
   #loginfo('Function executed and exited with status 0', logger='dengue-mem.bindseason')
   return(df3)
@@ -82,7 +82,7 @@ applymem <- function(df.data, l.seasons, ...){
   epithresholds <- list()
   df.typ.real.curve <-data.frame() # Typical seasonal curve
   dfthresholds <- data.frame(municipio_geocodigoids)
-  dfthresholds <- rename(dfthresholds, c('municipio_geocodigoids'='municipio_geocodigo'))
+  dfthresholds <- plyr::rename(dfthresholds, c('municipio_geocodigoids'='municipio_geocodigo'))
   
   dfthresholds['pre'] <- NULL # Pre-epidemic threshold (at .95 confidence interval by default)
   dfthresholds['pos'] <- NULL # Post-epidemic threshold
@@ -104,7 +104,7 @@ applymem <- function(df.data, l.seasons, ...){
       prethreshold <- epitmp$pre.post.intervals[1,3]
       postthreshold <- epitmp$pre.post.intervals[2,3]
       epitmp$typ.real.curve <- epitmp$typ.curve 
-      typ.real.curve <- rename(data.frame(epitmp$typ.real.curve), c('X1'='baixo', 'X2'='mediano' ,'X3'='alto'))
+      typ.real.curve <- plyr::rename(data.frame(epitmp$typ.real.curve), c('X1'='baixo', 'X2'='mediano' ,'X3'='alto'))
       # Clean typical curve:
       typ.real.curve$mediano[is.na(typ.real.curve$mediano)] <- 0
       typ.real.curve$baixo[typ.real.curve$baixo < 0] <- 0
@@ -170,7 +170,7 @@ applymem <- function(df.data, l.seasons, ...){
 # dfsimple <- dfcomplete[dfcomplete$SE > max(dfcomplete$SE[dfcomplete$SE<201100])-12 &
 #                          dfcomplete$SE < 201141,
 #                        c('APS', 'SE', 'inc')]
-# dfsimple <- rename(dfsimple, c('SE'='SE2010-2011', 'inc'='inc2010-2011'))
+# dfsimple <- plyr::rename(dfsimple, c('SE'='SE2010-2011', 'inc'='inc2010-2011'))
 # seasons <- c('inc2010-2011')
 # for (i in 2011:2014){
 #   if (max(dfcomplete$SE) >= (i+1)*100 + 41){
