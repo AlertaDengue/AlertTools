@@ -47,13 +47,9 @@ is authomatic according to data quality. But it can also be provided manually (n
 }
 \examples{
 # Parameters for the model
-criteriaU = list(crity = c("umid_max > ucrit", 3, 1),
-crito = c("p1 > 0.95 & inc > preseas & temp_min >= tcrit", 3, 1),
-critr = c("inc > inccrit", 2, 2))
-pars.RJ <- NULL
-pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),ucrit=80, tcrit=22, legpos="bottomright")
+criteriaU = setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
 # Running the model:
-res <- update.alerta(city = 3549805, pars = pars.RJ[["Norte"]], crit = criteriaU, datasource = con,sefinal=201850)
+res <- update.alerta(city = c(3549805,3302205), crit = criteriaU, datasource = con,sefinal=201850)
 res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=T, datasource = con,
 sefinal=201704, delaymethod="fixedprob")
 tail(res$data)

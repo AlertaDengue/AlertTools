@@ -137,7 +137,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'@param datasource PostgreSQLConnection to project database . 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
-#'d <- getCases(cities = 3302205, lastday ="2018-03-10") # dengue
+#'d <- getCases(cities = 3300936) # dengue
 #'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'d <- getCases(cities = cid$municipio_geocodigo, datasource = con) 
@@ -188,9 +188,10 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
             arrange(municipio_geocodigo,SE) %>%
             mutate(localidade = 0) %>%  # para uso qdo tiver divisao submunicipal
             mutate(geocodigo = municipio_geocodigo) %>%
+            mutate(CID10 = cid10)%>%
             full_join(.,varglobais,"geocodigo") %>%
-            mutate(CID10 = cid10) %>%
-            select(SE, cidade = municipio_geocodigo,casos =n,localidade,nome,pop=populacao) 
+            select(SE, cidade = municipio_geocodigo,CID10, casos =n,localidade,nome,
+                   pop=populacao) 
       
       st$casos[is.na(st$casos)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
             

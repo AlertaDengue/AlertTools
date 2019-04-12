@@ -25,16 +25,17 @@ an epidemic scenario.
 }
 \examples{
 # Parameters of the alert model
-criteriaU = setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
+val = c(varcli ="temp_min", "clicrit"="22","limiar_preseason"="10","limiar_epidemico"="100")
+criteria = setCriteria(rule="Af",values=val)
 # Get, organize data 
-cas = getCases(city = 3304557, cid10 = "A90", datasource=con) \%>\% 
+cas = getCases(cities = 3304557, cid10 = "A90", datasource=con) \%>\% 
      Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) \%>\%
      mutate(inc = casos/pop*100000)
 cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) \%>\%
      mutate(temp_min = nafill(temp_min, rule = "arima")) 
 # Calculate alert      
-ale <- join_all(list(cas,cli),by="SE") 
-res <- fouralert(ale, crit = criteriaU)
+ale <- plyr::join_all(list(cas,cli),by="SE") 
+res <- fouralert(ale, crit = criteria)
 # Better visualization
 tail(write.alerta(res))
 }

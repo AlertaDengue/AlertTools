@@ -21,5 +21,15 @@ a plot
 Function to plot the output of
 }
 \examples{
- # See update.alerta function for an example
+#'criteriaU = setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
+# Get, organize data 
+cas = getCases(city = 3304557, cid10 = "A90", datasource=con) \%>\% 
+     Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) \%>\%
+     mutate(inc = casos/pop*100000)
+cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) \%>\%
+     mutate(temp_min = nafill(temp_min, rule = "arima")) 
+# Calculate alert      
+dados <- join_all(list(cas,cli),by="SE") 
+ale <- fouralert(dados, crit = criteriaU)
+plot.alerta(ale, var="casos")
 }

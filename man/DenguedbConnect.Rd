@@ -4,7 +4,10 @@
 \alias{DenguedbConnect}
 \title{Returns the connection to the database.}
 \usage{
-DenguedbConnect()
+DenguedbConnect(pass)
+}
+\arguments{
+\item{pass}{password}
 }
 \value{
 "PostgreSQLConnection" object

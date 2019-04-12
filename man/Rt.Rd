@@ -28,16 +28,15 @@ of cases. Uses formula 4.2 in Wallinga and Lispitch (2007). Confidence interval 
 ratio between two Poissons (see Luis Max documentation).
 }
 \examples{
-res = getCases(city = c(330455), withdivision = FALSE, datasource="data/sinan.rda") # Rio de Janeiro
+d <- getCases(cities = 3302205, lastday ="2018-03-10") # dengue
 # Rt original
-rt<-Rtoriginal(obj = res, count = "casos", meangt=3)
+rt<-Rtoriginal(obj = d, count = "casos", meangt=3)
 plot(rt$Rt, type="l", xlab = "weeks", ylab = "Rt")
-lines(rt$lwr,lty=3)
-lines(rt$upr,lty=3)
+lines(rt$lwr,lty=3); lines(rt$upr,lty=3)
 abline(h = 1, col = 2)
 # Rt delta and normal
-rtdelta<-Rt(obj = res, count = "casos", gtdist="delta", meangt=3)
-rtnorm<-Rt(obj = res, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
+rtdelta<-Rt(obj = d, count = "casos", gtdist="delta", meangt=3)
+rtnorm<-Rt(obj = d, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
 lines(rtdelta$Rt, col = 3)
 lines(rtdelta$lwr,lty = 3, col = 3)
 lines(rtdelta$upr,lty = 3, col = 3)

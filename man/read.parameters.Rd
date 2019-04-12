@@ -2,16 +2,14 @@
 % Please edit documentation in R/utility_tools.R
 \name{read.parameters}
 \alias{read.parameters}
-\title{Get city alert parameters.}
+\title{Get city-level alert parameters for the infodengue pipeline.}
 \usage{
-read.parameters(city, region, state, datasource)
+read.parameters(cities, cid10 = "A90", datasource = con)
 }
 \arguments{
-\item{city}{geocode}
+\item{cities}{cities' geocodes. Tip: find them using getCidades().}
 
-\item{region}{regional's name}
-
-\item{state}{state's name}
+\item{cid10}{Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"}
 
 \item{datasource}{SQL connection to the database}
 }
@@ -19,13 +17,15 @@ read.parameters(city, region, state, datasource)
 dataframe with all parameters
 }
 \description{
-Read the alert parameters for a set of  cities from the database, to be used in the update.alert. 
-Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_posseason",
-"limiar_epidemico, "estacao_wu_sec".
+Read the alert parameters for a set of cities from the database, to be used in the infodengue pipeline. 
+Currently, the parameters are: "limiar_preseason" (pre-season incidence threshold calculated using MEM), 
+"limiar_posseason" (pos-season incidence threshold), "limiar_epidemico"(epidemic threshold), "varcli" (name of the critical 
+meteorological variable), "clicrit" (critical value of the meteorological variable), "cid10",
+"codmodelo" (name of the heuristic decision model, see serCriteria()). These parameters are specified when the city is initiated 
+in the pipeline.
 }
 \examples{
-read.parameters(city = 3118601, datasource = con)
-read.parameters(region="Norte", state = "Rio de Janeiro", datasource = con)
-read.parameters(state = "Rio de Janeiro", datasource = con)
-read.parameters(datasource = con) #set no filter to get all cities
+read.parameters(cities = 3118601, cid10 = "A90")
+cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+read.parameters(cities = cid$municipio_geocodigo, cid10 = "A90")
 }

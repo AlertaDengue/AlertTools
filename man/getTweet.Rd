@@ -4,16 +4,14 @@
 \alias{getTweet}
 \title{Get Tweeter Data}
 \usage{
-getTweet(city, lastday = Sys.Date(), cid10 = "A90", datasource)
+getTweet(cities, lastday = Sys.Date(), cid10 = "A90", datasource = con)
 }
 \arguments{
-\item{city}{city's geocode.}
+\item{cities}{cities's geocode. Use getCidades()}
 
 \item{cid10}{default is A90 (dengue). If not dengue, returns NA}
 
-\item{datasource}{server or "data/tw.rda" if using test dataset. 
-Use the connection to the Postgresql server if using project data. See also DenguedbConnect
-to open the database connection.}
+\item{datasource}{Use the connection to the Postgresql server for using project data.}
 
 \item{finalday}{last day. Default is the last available.}
 }
@@ -25,8 +23,8 @@ Create weekly time series from tweeter data from server. The
 source of this data is the Observatorio da Dengue (UFMG).
 }
 \examples{
-res = getTweet(city = 3302205, lastday = "2014-03-01", datasource = con)
-res = getTweet(city = 230440, lastday = "2014-03-01", datasource = con)
-res <- getTweet(city = c(3302205,230440), datasource = con) #  two cities
+res = getTweet(cities = 3302205, lastday = "2014-03-01")
+cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+res <- getTweet(cities = cid$municipio_geocodigo) 
 tail(res)
 }

@@ -4,10 +4,10 @@
 \alias{getCases}
 \title{Get Case Data and aggregate per week and area}
 \usage{
-getCases(city, lastday = Sys.Date(), cid10 = "A90", datasource)
+getCases(cities, lastday = Sys.Date(), cid10 = "A90", datasource = con)
 }
 \arguments{
-\item{city}{city's geocode.}
+\item{cities}{cities' geocode.}
 
 \item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8",}
 
@@ -22,8 +22,9 @@ data.frame with the data aggregated per week according to disease onset date.
 Create weekly time series from case data from server. The source is the SINAN.
 }
 \examples{
-d <- getCases(city = 3302205, lastday ="2018-03-10", datasource = con) # dengue
-d <- getCases(city = 3304557, cid10="A92.0", datasource = con) # chikungunya, until last day available
-d <- getCases(city = c(3302205,230440), datasource = con) # dengue, two cities
+d <- getCases(cities = 3302205, lastday ="2018-03-10") # dengue
+d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
+cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+d <- getCases(cities = cid$municipio_geocodigo, datasource = con) 
 tail(d)
 }
