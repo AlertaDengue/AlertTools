@@ -2,17 +2,18 @@
 % Please edit documentation in R/adjust_incidence_functions.R
 \name{adjustIncidence}
 \alias{adjustIncidence}
-\title{Adjust incidence data correcting for the notification delay.}
+\title{Correct incidence data with notification delay (nowcasting).}
 \usage{
 adjustIncidence(obj, method = "fixedprob", pdig = plnorm((1:20) * 7, 2.5016,
-  1.1013), Dmax = 12, nyears = 3, datasource, lastSE = NA)
+  1.1013), Dmax = 12, nyears = 3, datasource = con, lastSE = NA)
 }
 \arguments{
 \item{obj}{data.frame with crude weekly cases (not adjusted). This data.frame comes from the getCases
 function (if withdivision = FALSE), of getCases followed by casesinlocality (if dataframe is available
 per bairro)}
 
-\item{method}{"fixedprob" for fixed delay prob per week; "bayesian" for the dynamic model}
+\item{method}{"fixedprob" for fixed delay prob per week; "bayesian" for the 
+dynamic model . If "none" just repeats case values}
 
 \item{pdig}{for the "fixedprob" method. It is a vector of probability of been typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
 The length of the vector corresponds to the maximum delay. After day, it is assumed that p = 1. The default
@@ -29,18 +30,18 @@ data.frame with pdig (proportion reported), median and 95percent confidence inte
 predicted cases-to-be-notified)
 }
 \description{
-Often, there is a delay between symptom onset and notification. This function 
-adjust the time series of reported cases by adding the cases that will be reported in the future.
-It requires knowing the probability of notification per week passed. This function assumes a stationary
-notification process, there is, no influence of covariates or any temporal inhomogeneity.
+This function estimate the time series of reported cases by adding the cases that will be reported in the future.
+Two methods were implemented, the "fixedprob" requires knowing the probability of notification per week passed. This function assumes a stationary
+notification process, there is, no influence of covariates or any temporal inhomogeneity.  The "bayesian"
+is dynamic.
 }
 \examples{
 # fixedprob
-res = getCases(city = 2305001, datasource=con) 
-head(res)
-resfit<-adjustIncidence(obj=res)
+d <- getCases(cities = 3302205) 
+head(d)
+resfit<-adjustIncidence(obj = d)
 tail(resfit)
 # bayesian
-resfit<-adjustIncidence(obj=res,method="bayesian",datasource=con)
+resfit<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
 tail(resfit)
 }

@@ -4,8 +4,9 @@
 \alias{plot.alerta}
 \title{Plot the time series of warnings.}
 \usage{
-\method{plot}{alerta}(obj, var, cores = c("#0D6B0D", "#C8D20F", "orange",
-  "red"), ini = 201001, fim = 202001, ylab = var, yrange)
+\method{plot}{alerta}(obj, geocodigo, var, cores = c("#0D6B0D", "#C8D20F",
+  "orange", "red"), ini = 201001, fim = 202001, ylab = var, yrange,
+  salvar = FALSE, datasource)
 }
 \arguments{
 \item{obj}{object created by the twoalert and fouralert functions.}
@@ -21,15 +22,9 @@ a plot
 Function to plot the output of
 }
 \examples{
-#'criteriaU = setCriteria(rule = "Af", val = c("tcrit"="22","preseas"="10","inccrit"="100"))
-# Get, organize data 
-cas = getCases(city = 3304557, cid10 = "A90", datasource=con) \%>\% 
-     Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) \%>\%
-     mutate(inc = casos/pop*100000)
-cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) \%>\%
-     mutate(temp_min = nafill(temp_min, rule = "arima")) 
-# Calculate alert      
-dados <- join_all(list(cas,cli),by="SE") 
-ale <- fouralert(dados, crit = criteriaU)
-plot.alerta(ale, var="casos")
+# Parameters for the model
+cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
+res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+finalday= "2018-08-12",nowcasting="none")
+plot.alerta(res, cidade = cidades$municipio_geocodigo[1], var="casos")
 }

@@ -4,7 +4,8 @@
 \alias{getdelaydata}
 \title{Get delay data for one or more cities for delay analysis}
 \usage{
-getdelaydata(cities, years = NULL, cid10 = "A90", datasource)
+getdelaydata(cities, years = NULL, cid10 = "A90", lastday = Sys.Date(),
+  datasource)
 }
 \arguments{
 \item{cities}{vector with geocodes}
@@ -12,6 +13,8 @@ getdelaydata(cities, years = NULL, cid10 = "A90", datasource)
 \item{years}{vector with set of years for analysis. Default (NULL) is to get all years of data available.}
 
 \item{cid10}{disease code, Default is dengue. "A92.0" for chik, "A92.8" for zika}
+
+\item{lastday}{last digitation day}
 
 \item{datasource}{valid connection to database}
 }
@@ -22,5 +25,5 @@ list with d = data.frame with data.
 Gets delay data for one or more cities. Internal function used in the delay fitting using inla.
 }
 \examples{
-dados <- getdelaydata(cities=3304557, years=c(2016, 2017), cid10="A92", datasource=con)  # Not run without connection
+dados <- getdelaydata(cities=3302205, years=c(2016, 2017), cid10="A92", datasource=con)  # Not run without connection
 }
