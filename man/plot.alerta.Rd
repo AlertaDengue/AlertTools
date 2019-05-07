@@ -26,5 +26,6 @@ Function to plot the output of
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
-plot.alerta(res, cidade = cidades$municipio_geocodigo[1], var="casos")
+restab <- tabela.historico(res)
+plot.alerta(restab, cidade = cidades$municipio_geocodigo[1], var="casos")
 }

@@ -354,62 +354,79 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
 
 #plot.alert --------------------------------------------------------------------
 #'@title Plot the time series of warnings.
-#'@description Function to plot the output of 
-#'@param obj object created by the twoalert and fouralert functions.
-#'@param var to be ploted in the graph, usually cases when available.  
+#'@description Function to plot the output of tabela.historico. 
+#'@param obj object created by tabela.historico()
+#'@param var variable to be plotted, usually "cases", or "p_inc100k". 
 #'@param cores colors corresponding to the levels 1, 2, 3, 4.
+#'@param ini first epidemiological week. If not stated, use the first one available
+#'@param fim last epidemiological week. If not stated, use the last one available 
 #'@return a plot
 #'@examples
 #' # Parameters for the model
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
-#'plot.alerta(res, cidade = cidades$municipio_geocodigo[1], var="casos")
+#'restab <- tabela.historico(res)
+#'plot.alerta(restab, geocodigo = cidades$municipio_geocodigo, var="casos")
 
-plot.alerta<-function(obj, geocodigo, var, cores = c("#0D6B0D","#C8D20F","orange","red"), 
-                      ini=201001, fim=202001, ylab=var, yrange, salvar = FALSE, datasource){
+plot.alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20F","orange","red"), 
+                      ini=201001, fim=202001, ylab=var, yrange, salvar = FALSE, 
+                      nome.fig = "grafico", datasource=con){
       
-      # --------- create data.frame for the plot ------------------#
-      data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
-      indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices
+      stopifnot(var %in% names(obj))
+      if(missing(geocodigo)) geocodigo <- unique(restab$municipio_geocodigo)
+      if(missing(ini))ini <- min(restab$SE)
+      if(missing(ini))fim <- max(restab$SE)
       
-      d <- data %>%
-            mutate(nivel = indices$level) %>%
-            filter(SE >= ini & SE <= fim)
-
+      d <- obj %>% filter(SE >= ini & SE <= fim)
+      
       # get the thresholds
-      pars_table <- read.parameters(cities = geocodigo, cid10 = d$CID10[1], datasource = datasource) 
+      pars_table <- read.parameters(cities = geocodigo, 
+                                    cid10 = d$CID10[1], datasource = datasource) 
+      #print(pars_table)
+      # para uma cidade, dados e parametros para o grafico
       
-      dd <- d %>% 
-            filter(cidade == geocodigo)            
-      
-      x <- 1:length(dd$SE)
-      ticks <- seq(1, length(dd$SE), length.out = 8)
-      
-      if(!missing(yrange)){
-            limy = yrange
-      } else {
-            limy = range(dd[,var])
+      plota <- function(geo, yrange){
+            
+            dd <- d %>% filter(municipio_geocodigo == geo)            
+            pars <- pars_table %>% filter(municipio_geocodigo == geo)
+            
+            x <- seq_along(dd$SE)
+            ticks <- seq(1, length(dd$SE), length.out = 8)
+            if(missing(yrange)) yrange = range(dd[,var], na.rm=TRUE)
+            
+            if(salvar == TRUE) png(paste(nome.fig,geo,"_",max(dd$SE),".png", sep = ""))
+            # grafico
+            par(mai=c(0,0,0,0),mar=c(4,4,0,4))
+            plot(x, dd[,var], xlab = "", ylab = var, type="l", ylim= yrange, axes=FALSE)
+            axis(1, at = ticks, labels = dd$SE[ticks], las=3, cex=0.8)
+            axis(2, las=2, cex=0.8)
+            
+            for (i in 1:4) {
+                  onde <- which(dd$nivel==i) 
+                  if (length(onde))
+                        segments(x[onde],0,x[onde],(dd[onde,var]),col=cores[i],lwd=3)
+            }
+            if(var == "casos") {
+                  abline(h=pars$limiar_preseason, lty=2, col="darkgreen")
+                  abline(h=pars$limiar_epidemico, lty=2, col="red")
+            }
+            if (var == "p_inc100k") {
+                  abline(h=pars$limiar_preseason/dd$pop[1]*100000, lty=2, col="darkgreen")
+                  abline(h=pars$limiar_epidemico/dd$pop[1]*100000, lty=2, col="red")
+            }
+            if(var == "temp_min" & pars$clicrit == "temp_min") abline(h = pars$clicrit, lty=2, col = "yellow")
+            if(var == "umid_max" & pars$clicrit == "umid_max") abline(h = pars$clicrit, lty=2, col = "yellow")
+            if(salvar == TRUE) dev.off()
       }
       
-      par(mai=c(0,0,0,0),mar=c(4,4,0,4))
-      plot(x, dd[,var], xlab = "", ylab = "incidência", type="l", ylim= limy, axes=FALSE)
-      axis(1, at = ticks, labels = dd$SE[ticks], las=3, cex=0.8)
-      axis(2, las=2, cex=0.8)
-      abline(h=obj$rules$preseas, lty=2, col="darkgreen")
-      abline(h=obj$rules$inccrit, lty=2, col="red")
-            
-      yrange <- range(data[,var])
-      # for (i in 1:obj$n) {
-      #             onde <- which(indices$level==i) 
-      #             if (length(onde))
-      #                   segments(x[onde],0,x[onde],(data[onde,var]),col=cores[i],lwd=3)
-      # 
-      # par(new=T)
-      # plot(data[,"casos"], col="white", type="l",axes=FALSE , xlab="", ylab="" ) #*coefs[2] + coefs[1]
-      #       axis(1, pos=0, lty=0, lab=FALSE)
-      #       axis(4, las=2, cex=0.6 ,col.axis="darkgrey")
-      #       mtext("casos",4, line=3,col="darkgrey", cex=0.7)
+      geocodigo %>% map(plota)
+      
+      #par(new=T)
+      #plot(dd[,var], col="white", type="l",axes=FALSE , xlab="", ylab="" ) #*coefs[2] + coefs[1]
+      #        axis(1, pos=0, lty=0, lab=FALSE)
+      #        axis(4, las=2, cex=0.6 ,col.axis="darkgrey")
+      #        mtext("casos",4, line=3,col="darkgrey", cex=0.7)
       #       }
 }
       
@@ -559,16 +576,14 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 #'@title Write the alert object into the database.
 #'@description Function to write the alert results into the database. 
 #'@param obj object created by the pipeline.
-#'@param write use "db" if data.frame should be inserted into the project database,
-#' or "no" (default) just to convert the pipeline output from list to table. 
 #'@return data.frame with the data to be written. 
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2013-01-10")
-#'restab <- tabela.historico(res, write = "db")
+#'restab <- tabela.historico(res)
 
-tabela.historico <- function(obj, write = "no", versao = Sys.Date()){
+tabela.historico <- function(obj, versao = Sys.Date()){
       
       # --------- create single data.frame ------------------#
       data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
@@ -596,51 +611,69 @@ tabela.historico <- function(obj, write = "no", versao = Sys.Date()){
                    
       # ---------if writing into historico_alerta table ---------# 
       # se tiver ja algum registro com mesmo geocodigo e SE, esse sera substituido pelo atualizado.
-      if(write == "db"){
-            cid10 = unique(d$CID10)
-            stopifnot(length(cid10)==1)
-            
-            # nomes das tabelas para salvar os historicos:
-            if(cid10=="A90") {tabela <-  "Historico_alerta"; constr.unico = "alertas_unicos"}
-            if(cid10=="A92.0") {tabela <-  "Historico_alerta_chik"; constr.unico = "alertas_unicos_chik"}
-            if(cid10=="A92.8") {tabela <-  "Historico_alerta_zika"; constr.unico = "alertas_unicos_zika"}
-            if(!(cid10 %in% c("A90", "A92.0", "A92.8"))) stop(paste("não sei onde salvar histórico para o agravo", cid10))
-            
-            print(paste("writing alerta into table", tabela))
-            
-            # ------ vars to write --------
-            dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
-                             "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
-                             "nivel","id","versao_modelo","municipio_nome")
-            
-            dados <- d %>% select(dcolumns)
-            
-            # ------ sql command -----
-            escreve_linha <- function(li){
-                  vetor <- dados[li,]
-                  varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
-                                      "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
-                                      "nivel","id","versao_modelo","municipio_nome")
-                  
-                  varnames.sql <- str_c(varnamesforsql, collapse = ",")
-                  sqlexcluded = str_c(paste(varnamesforsql,"=excluded.",varnamesforsql,sep=""),collapse=",") # excluidos, se duplicado
-                  
-                  linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"',", str_c(vetor[1,3:11], collapse=","),
-                                 ",",vetor[1,12],",'", as.character(vetor[1,13]),"','",as.character(vetor[1,14]),"'", sep="")
-                  linha = gsub("NA","NULL",linha)
-                  insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" (" ,varnames.sql,") VALUES (", linha, ")" , sep="")
-                  try(dbGetQuery(con, insert_sql))    
-                  insert_sql
-            }
-            
-            # escrevendo
-            1:nrow(dados) %>% map(escreve_linha)
-            
-            }
-      
-      
       d
 }
+
+#write.alerta --------------------------------------------------------------------
+#'@title Write historico.alerta into the database.
+#'@description Function to write the pipeline results into the database. Receives the object created by the function historico.alerta
+#'@param obj object created by historico.alerta()
+#'@return the same data.frame from the input
+#'@examples
+#' # Parameters for the model
+#'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
+#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+#'finalday= "2018-08-12",nowcasting="none")
+#'restab <- tabela.historico(res[1]) 
+#'write.alerta(restab[1:5,])
+
+write.alerta<-function(d, datasource = con){
+      
+      cid10 = unique(d$CID10)
+      stopifnot(length(cid10)==1)
+      
+      # nomes das tabelas para salvar os historicos:
+      if(cid10=="A90") {tabela <-  "Historico_alerta"; constr.unico = "alertas_unicos"}
+      if(cid10=="A92.0") {tabela <-  "Historico_alerta_chik"; constr.unico = "alertas_unicos_chik"}
+      if(cid10=="A92.8") {tabela <-  "Historico_alerta_zika"; constr.unico = "alertas_unicos_zika"}
+      if(!(cid10 %in% c("A90", "A92.0", "A92.8"))) stop(paste("não sei onde salvar histórico para o agravo", cid10))
+      
+      print(paste("writing alerta into table", tabela))
+      
+      # ------ vars to write --------
+      dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
+                    "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
+                    "nivel","id","versao_modelo","municipio_nome")
+      
+      dados <- d %>% select(dcolumns)
+      
+      # ------ sql command -----
+      varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
+                          "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
+                          "nivel","id","versao_modelo","municipio_nome")
+      
+      varnames.sql <- str_c(varnamesforsql, collapse = ",")
+      updates = str_c(paste(varnamesforsql,"=excluded.",varnamesforsql,sep=""),collapse=",") # excluidos, se duplicado
+      
+      
+      escreve_linha <- function(li){
+            vetor <- dados[li,]
+            linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"',", str_c(vetor[1,3:11], collapse=","),
+                          ",",vetor[1,12],",'", as.character(vetor[1,13]),"','",as.character(vetor[1,14]),"'", sep="")
+            linha = gsub("NA","NULL",linha)
+            insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" (" ,varnames.sql,") VALUES (", linha, ")ON CONFLICT ON CONSTRAINT ",constr.unico,"  
+                                     DO UPDATE SET ",updates, sep="")
+            try(dbGetQuery(datasource, insert_sql))    
+            insert_sql
+      }
+      
+      # escrevendo
+      1:nrow(d) %>% map(escreve_linha)
+      print("done")
+}
+
+
+
 
 
 #write.alertaRio --------------------------------------------------------------------
