@@ -363,25 +363,24 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
 #'@param naps subset of vector 0:9 corresponding to the id of the APS. Default is all of them.
 #'@param datasource it is the name of the sql connection.
 #'@param se last epidemiological week (format = 201401) 
+#'@param dataini "notific" if use notification date to calculate incidence or "sinpri" if uses date of first symptoms
 #'@param cid10 default is A90 (dengue). Chik = A920.
 #'@param delaymethod atribbute of adjuntincidence. "fixedprob" or "bayesian"
 #'@param verbose FALSE
 #'@return list with an alert object for each APS.
 #'@examples
-#'params <- list(pdigChik = c(2.5016,1.1013), tcrit=22, inccrit=100, preseas = 14.15, posseas = 18)
-#'criter <- list(
-#'crity = c("temp_min > tcrit | (temp_min < tcrit & inc > preseas)", 3, 0),
-#'crito = c("p1 > 0.9 & inc > preseas", 2, 2),
-#'critr = c("inc > inccrit", 1, 2)
-#')
-#'ini = Sys.time()
-#'alerio2 <- alertaRio(naps = 0, pars=params, cid = "A920", crit = criter, datasource=con, se=201804,
+#'params <- list(pdigChik = c(2.687797, 1.362566), tcrit=22, inccrit=100, preseas = 14.15, posseas = 18)
+#'criter = list(
+#'      crity = c("temp_min > tcrit & casos > 0", 3, 1),
+#'      crito = c("p1 > 0.95 & temp_min >= tcrit", 3, 1),
+#'      critr = c("inc > inccrit & casos > 5", 2, 2))
+#'alerionot <- alertaRio(pars=params, cid = "A920", crit = criter, datasource=con, se=201918,
 #'delaymethod="fixedprob",verbose=FALSE)
-#'Sys.time()-ini
+#'aleriosinpri <- alertaRio(pars=params, cid = "A920", crit = criter, datasource=con, se=201918,
+#'delaymethod="fixedprob",verbose=FALSE,dataini = "sinpri")
 
-#'names(alerio2)
-
-alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", verbose = TRUE, delaymethod = "fixedprob"){
+alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", verbose = TRUE, delaymethod = "fixedprob",
+                      dataini = "notific"){
       
       message("obtendo dados de clima e tweets ...")
       if(cid10 == "A90") tw = getTweet(city = 3304557, cid10="A90", datasource = datasource) 
@@ -409,12 +408,12 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
       names(res) <- APS
       for (i in 1:length(APS)){
             message(paste("rodando", APS[i],"..."))
-            cas = getCasesinRio(APSid = naps[i], cid10 = cid10, datasource=datasource)
+            cas = getCasesinRio(APSid = naps[i], cid10 = cid10, dataini = dataini, datasource=datasource)
             d <- merge(cas, cli.SBRJ, by.x = "SE", by.y = "SE")
             
             # dados de tweet so existem para dengue
-            if (cid10=="A90") d <- merge(d, tw, by.x = "SE", by.y = "SE")
-            else d$tweet <- NA
+            if (cid10=="A90") {d <- merge(d, tw, by.x = "SE", by.y = "SE")
+            } else d$tweet <- NA
             # interpolacao e extrapolação do clima
             if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))   
             # delay model
@@ -754,7 +753,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
 #'@return data.frame with the data to be written. 
 #'@examples
 #'alerio2 <- alertaRio(naps = c(1,2), datasource=con)
-#'res <- write.alertaRio(alerio2, write="db")
+#'resRionot <- write.alertaRio(alerionot, write="no")
 #'tail(res)
 
 write.alertaRio<-function(obj, write = "no", version = Sys.Date()){

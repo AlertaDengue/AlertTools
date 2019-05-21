@@ -295,17 +295,19 @@ read.cases <- function(start_year, end_year, con, mun_list=NULL){
 #'@param APSid 0(APS1), 1 (APS2.1), 2 (APS2.2), 3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4),
 #', 7(APS5.1), 8(APS5.2), 9(APS5.3)  
 #'@param cid10 cid 10 disease code. A90 = dengue (default) , A920 = chikungunia
+#'@param dataini "notific" if use notification date to calculate incidence or "sinpri" if uses date of first symptoms 
 #'@param lastday end date of the time series
 #'@return data.frame with the data aggregated per health district and week
 #'@examples
 #'dC = getCasesinRio(APSid = 9, datasource = con) # Rio de Janeiro
-#'tail(dC)
+#'# Chikungunya:
 #'dC1 = getCasesinRio(APSid = 0, cid10 = "A920", datasource = con) # Rio de Janeiro
+#'dC1s = getCasesinRio(APSid = 0, cid10 = "A920", dataini = "sinpri", datasource = con) # Rio de Janeiro
 #'tail(dC1)
 
-getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
+getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",dataini = "notific",
                           datasource) {
-      
+      require(lubridate)
       sqldate <- paste("'", lastday, "'", sep = "")
       #dealing with synonimous cid
       if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
@@ -317,7 +319,7 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
       if(!(APSid %in% 0:9))stop("APS desconhecida ou ausente. Especificar: 0(APS1), 1 (APS2.1), 2 (APS2.2), 
                                     3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4) 7(APS5.1), 8(APS5.2), 9(APS5.3) ")
       
-      sqlquery = paste("SELECT n.dt_notific, n.ano_notif, se_notif, l.id, l.nome
+      sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.dt_sin_pri, se_sin_pri, se_notif, l.id, l.nome
       FROM  \"Municipio\".\"Notificacao\" AS n 
       INNER JOIN \"Municipio\".\"Bairro\" AS b 
       ON n.bairro_nome = b.nome 
@@ -328,14 +330,17 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
       
       d <- dbGetQuery(datasource,sqlquery)
       d$SEM_NOT <- d$ano_notif*100+d$se_notif 
-      d$SEM_NOT <- data2SE(d$dt_notific, format = "%Y-%m-%d")
-            
+      #d$SEM_NOT <- data2SE(d$dt_notific, format = "%Y-%m-%d")
+      d$SEM_INI <- year(d$dt_sin_pri)*100+d$se_sin_pri 
+      
       #Cria Serie temporal de casos
       #sem <- seqSE(from = min(d$SEM_NOT), to = max(d$SEM_NOT))$SE
       sem <- seqSE(from = 201001, to = data2SE(lastday,format="%Y-%m-%d"))$SE
       nsem <- length(sem)
       st <- data.frame(SE = sem, casos = 0)
-      for(i in 1:nsem) st$casos[i] <- sum(d$SEM_NOT == st$SE[i])
+      if(dataini=="notific") for(i in 1:nsem) st$casos[i] <- sum(d$SEM_NOT == st$SE[i])
+      if(dataini=="sinpri") for(i in 1:nsem) st$casos[i] <- sum(d$SEM_INI == st$SE[i])
+      print(paste("calculating incidence using", dataini))
       st$nome <- "Rio de Janeiro"
       # agrega informacao de populacao da APS
       
