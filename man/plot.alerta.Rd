@@ -4,28 +4,33 @@
 \alias{plot.alerta}
 \title{Plot the time series of warnings.}
 \usage{
-\method{plot}{alerta}(obj, geocodigo, var, cores = c("#0D6B0D", "#C8D20F",
-  "orange", "red"), ini = 201001, fim = 202001, ylab = var, yrange,
-  salvar = FALSE, datasource)
+\method{plot}{alerta}(obj, geocodigo, var = "casos",
+  cores = c("#0D6B0D", "#C8D20F", "orange", "red"), ini = 201001,
+  fim = 202001, ylab = var, yrange, salvar = FALSE,
+  nome.fig = "grafico", datasource = con)
 }
 \arguments{
-\item{obj}{object created by the twoalert and fouralert functions.}
+\item{obj}{object created by tabela.historico()}
 
-\item{var}{to be ploted in the graph, usually cases when available.}
+\item{var}{variable to be plotted, usually "cases", or "p_inc100k".}
 
 \item{cores}{colors corresponding to the levels 1, 2, 3, 4.}
+
+\item{ini}{first epidemiological week. If not stated, use the first one available}
+
+\item{fim}{last epidemiological week. If not stated, use the last one available}
 }
 \value{
 a plot
 }
 \description{
-Function to plot the output of
+Function to plot the output of tabela.historico.
 }
 \examples{
 # Parameters for the model
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
 restab <- tabela.historico(res)
-plot.alerta(restab, cidade = cidades$municipio_geocodigo[1], var="casos")
+plot.alerta(restab, geocodigo = cidades$municipio_geocodigo, var="casos")
 }

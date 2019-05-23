@@ -209,7 +209,7 @@ pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
       cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday,datasource)
       
       # Reading Cases
-      #print("Obtendo dados de notificação ...")
+      #print("Obtendo dados de notificacao ...")
       
       casos <- getCases(cities, lastday = finalday, cid10 = cid10) %>%
             mutate(inc = casos/pop*100000)
@@ -314,7 +314,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
       cli.SBGL = getWU(stations = 'SBGL', datasource=datasource)
       
       if (verbose){
-            message("As ultimas datas no banco são:")
+            message("As ultimas datas no banco sao:")
             print(paste("Ultimos registros de dengue:",lastDBdate("sinan", city=330455,datasource=datasource)))
             #print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=330455,datasource=datasource)))
             
@@ -339,7 +339,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
             # dados de tweet so existem para dengue
             if (cid10=="A90") d <- merge(d, tw, by.x = "SE", by.y = "SE")
             else d$tweet <- NA
-            # interpolacao e extrapolação do clima
+            # interpolacao e extrapolacao do clima
             if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))   
             # delay model
             casfit<-adjustIncidence(obj=d, pdig = p,method = delaymethod)
@@ -484,7 +484,7 @@ map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
       coords[1,1] <- -43.19
       coords[2,2] <- -22.945
       #text(coords,label=mapa@data$COD_AP_SMS,cex=0.6)
-      legend("bottom",fill=cores,c("atividade baixa","condições favoraveis transmissão","transmissão sustentada","atividade alta"),bty="n",cex=0.6)
+      legend("bottom",fill=cores,c("atividade baixa","condicoes favoraveis transmissao","transmissao sustentada","atividade alta"),bty="n",cex=0.6)
       par(cex.main=0.7)
       title(paste0( "Mapa MRJ por APs \n"," Semana ",substr(ultima_se,5,6)," de ",
                     substr(ultima_se,1,4)),line=-1)

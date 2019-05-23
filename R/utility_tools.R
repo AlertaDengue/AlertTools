@@ -111,12 +111,12 @@ episem <- function(x, format="%Y-%m-%d", separa='', retorna='YW') {
 
 lastepiweek <- function(ano){
       
-      # Calcula o valor da última semana do ano
+      # Calcula o valor da ultima semana do ano
       
       diafim <- as.Date(paste(ano,'12','31',sep='-')) #Ultimo dia do ano
       diasem <- as.numeric(format(diafim,"%w"))       #dia semana do ultimo dia
       
-      ewd <- ifelse (diasem < 3, diafim - diasem - 1, diafim + 6 - diasem) # Obtém a data do último sábado
+      ewd <- ifelse (diasem < 3, diafim - diasem - 1, diafim + 6 - diasem) # Obtem a data do ultimo sabado
       ewd <- as.Date(ewd,origin = '1970-01-01') # ultima semana epi do ano
       
       return(episem(ewd,retorna='W'))
@@ -343,7 +343,7 @@ temp.predict <- function(v, plotar = FALSE){
       
       if(Nna > 0){
             
-            # Para saber os coeficientes da parte ARIMA através de critérios de seleção automática:
+            # Para saber os coeficientes da parte ARIMA atraves de criterios de selecao automatica:
             c.a<-auto.arima(x,max.p=5,max.q=5,max.P=5,max.Q=5)$arma
             # Modelo considerando a sazonalidade, e a parte ARIMA sugerida anteriormente:
             modelo.sarima<-arima(na.approx(v),order=c.a[c(1,6,2)],seasonal=list(order=c(c.a[3],1,c.a[4]),period=52))
@@ -389,13 +389,13 @@ getRegionais <- function(uf, sortedby = "a", datasource=con){
                   where uf = '", uf, "'", sep="")
       
       d = dbGetQuery(datasource, sqlquery)    
-      if (nrow(d) == 0) stop(paste("Banco de dados não tem regionais para o estado ", uf))
+      if (nrow(d) == 0) stop(paste("Banco de dados nao tem regionais para o estado ", uf))
       
       if(sortedby == 'a') out <- sort(unique(d$nome_regional)) 
       if(sortedby == 'id') {
             out <- unique(d[order(d$id_regional),"nome_regional"])
             if (any(is.na(d$id_regional))) {
-                  warning("getRegionais: código das regionais não encontrado, trocando argummento para sortedby = 'a'")
+                  warning("getRegionais: codigo das regionais nao encontrado, trocando argummento para sortedby = 'a'")
                   out <- sort(unique(d$nome_regional))
             }
             }

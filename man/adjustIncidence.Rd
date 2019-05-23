@@ -4,8 +4,9 @@
 \alias{adjustIncidence}
 \title{Correct incidence data with notification delay (nowcasting).}
 \usage{
-adjustIncidence(obj, method = "fixedprob", pdig = plnorm((1:20) * 7, 2.5016,
-  1.1013), Dmax = 12, nyears = 3, datasource = con, lastSE = NA)
+adjustIncidence(obj, method = "fixedprob", pdig = plnorm((1:20) * 7,
+  2.5016, 1.1013), Dmax = 12, nyears = 3, datasource = con,
+  lastSE = NA)
 }
 \arguments{
 \item{obj}{data.frame with crude weekly cases (not adjusted). This data.frame comes from the getCases

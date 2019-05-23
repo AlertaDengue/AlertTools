@@ -4,12 +4,16 @@
 \alias{getCases}
 \title{Get Case Data and aggregate per week and area}
 \usage{
-getCases(cities, lastday = Sys.Date(), cid10 = "A90", datasource = con)
+getCases(cities, lastday = Sys.Date(), cid10 = "A90",
+  dataini = "notific", datasource = con)
 }
 \arguments{
 \item{cities}{cities' geocode.}
 
 \item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8",}
+
+\item{dataini}{"notific" if data aggregated by notification date or "sinpri" if data aggregated
+if aggregated by date of first symptoms}
 
 \item{datasource}{PostgreSQLConnection to project database .}
 

@@ -5,8 +5,8 @@
 \title{Computes the effective reproductive number using alternative 
 distributions for the generation interval.}
 \usage{
-Rt(obj, count = "casos", gtdist, meangt, sdgt, CI = "beta", alpha = 0.95,
-  a0 = 2, b0 = 3)
+Rt(obj, count = "casos", gtdist, meangt, sdgt, CI = "beta",
+  alpha = 0.95, a0 = 2, b0 = 3)
 }
 \arguments{
 \item{meangt}{if gtdist = "delta" it is the exact period between primary and 

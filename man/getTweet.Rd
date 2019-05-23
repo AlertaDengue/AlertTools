@@ -4,7 +4,8 @@
 \alias{getTweet}
 \title{Get Tweeter Data}
 \usage{
-getTweet(cities, lastday = Sys.Date(), cid10 = "A90", datasource = con)
+getTweet(cities, lastday = Sys.Date(), cid10 = "A90",
+  datasource = con)
 }
 \arguments{
 \item{cities}{cities's geocode. Use getCidades()}

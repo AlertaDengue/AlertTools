@@ -72,7 +72,7 @@ bestWU <- function(series,var){
       lastdate <- sapply(series, function(x,v=var) x$SE[max(which(is.na(x[,v])==FALSE))])
       
       if(all(propNA ==1)) {
-            message("WARNING: As duas estacoes met. não tem dados de temperatura")
+            message("WARNING: Both stations without data")
             return(NULL)}
             else {return(series[[which.max(lastdate)[1]]])}
 }
@@ -133,6 +133,8 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'@title Get Case Data and aggregate per week and area
 #'@param cities cities' geocode.
 #'@param finalday last day. Default is the last available.
+#'@param dataini "notific" if data aggregated by notification date or "sinpri" if data aggregated
+#' if aggregated by date of first symptoms
 #'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8", 
 #'@param datasource PostgreSQLConnection to project database . 
 #'@return data.frame with the data aggregated per week according to disease onset date.
@@ -143,12 +145,13 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'d <- getCases(cities = cid$municipio_geocodigo, datasource = con) 
 #'tail(d)
 
-getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con) {
+getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific",
+                     datasource=con) {
       
       stopifnot(class(cities) %in% c("integer","numeric")) 
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
       
-      #dealing with synonimous cid ----------------------------------------------
+      # dealing with synonimous cid ----------------------------------------------
       if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
             if (cid10 %in% c("A92", "A920","A92.0")) { # chik
                   cid <-c("A92", "A920","A92.0")
@@ -177,10 +180,21 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
       varglobais <- dbGetQuery(datasource,sql2)
       
       # agregando casos por semana por cidade ---------------------------------------
-      casos = dd %>% 
-            mutate(SE = ano_notif*100+se_notif) %>%
-            group_by(municipio_geocodigo) %>%
-            count(SE)
+      if(dataini == "notific"){
+            message("case aggregated by notification date")
+            casos = dd %>% 
+                  mutate(SE = ano_notif*100+se_notif) %>%
+                  group_by(municipio_geocodigo) %>%
+                  count(SE)
+      }
+      if(dataini == "sinpri"){
+            message("case aggregated by symptoms date")
+            casos = dd %>% 
+                  mutate(ano_sinpri = lubridate::year(dt_sin_pri),
+                        SE = ano_sinpri*100+se_sin_pri) %>%
+                  group_by(municipio_geocodigo) %>%
+                  count(SE)
+      }
       
       # criando serie 
       sem <-  expand.grid(municipio_geocodigo = cities, SE = seqSE(from = 201001, to = max(casos$SE))$SE)
