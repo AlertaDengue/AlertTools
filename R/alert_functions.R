@@ -204,12 +204,13 @@ pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
       print(estacoes)
       
       # Reading the meteorological data
-      print("Obtendo os dados de clima...")
+      #print('Obtendo os dados de clima...')
       varscli <- unique(pars_table$varcli)
       cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday,datasource)
       
       # Reading Cases
-      print("Obtendo dados de notificação ...")
+      #print("Obtendo dados de notificação ...")
+      
       casos <- getCases(cities, lastday = finalday, cid10 = cid10) %>%
             mutate(inc = casos/pop*100000)
       
