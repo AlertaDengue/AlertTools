@@ -68,7 +68,8 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'@param crit criteria for the alert colors. See setCriteria()
 #'@param miss how missing data is treated. "last" if last value is repeated. 
 #'It is currently the only option
-#'@return list containing the data, the alert indices, and the rules used to define the indices.  
+#'@return returns an object of class "alerta" containing four elements: the data, 
+#'the alert indices, and the rules used to define the indices.  
 #'@examples
 #' # Parameters of the alert model
 #'val = c(varcli ="temp_min", "clicrit"="22","limiar_preseason"="10","limiar_epidemico"="100")
@@ -81,9 +82,9 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'      mutate(temp_min = nafill(temp_min, rule = "arima")) 
 #'# Calculate alert      
 #'ale <- plyr::join_all(list(cas,cli),by="SE") 
-#'res <- fouralert(ale, crit = criteria)
+#'resf <- fouralert(ale, crit = criteria)
 #'# Better visualization
-#'tail(write.alerta(res))
+#'tail(write.alerta(resf))
 
 
 fouralert <- function(obj, crit, miss="last"){
@@ -157,7 +158,9 @@ fouralert <- function(obj, crit, miss="last"){
       indices <- delayturnoff(level=4)
       indices <- delayturnoff(level=3)
       indices <- delayturnoff(level=2)
-      return(list(data=obj, indices=indices, crit = crit, n=4))      
+      ale <- list(data=obj, indices=indices, crit = crit, n=4)
+      class(ale)<-"alerta" 
+      return(ale)      
 }
 
 #pipe.infodengue ---------------------------------------------------------------------
@@ -178,7 +181,9 @@ fouralert <- function(obj, crit, miss="last"){
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
-#'restab <- write.alerta(res)
+#'class(res)
+#'class(res[[1]])
+#'restab <- tabela.historico(res)
 
 pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con){
