@@ -9,7 +9,8 @@ pipe.infodengue(cities, cid10 = "A90", finalday = Sys.Date(),
   datasource = con)
 }
 \arguments{
-\item{cities}{geocodes of the cities.}
+\item{cities}{In general, a vector of 7-digit geocodes. If it is a data.frame containing geocodes
+and all parameters, these will replace the database's parameters.}
 
 \item{cid10}{default is A90 (dengue). Chik = A92.0, Zika = A92.8}
 
@@ -29,11 +30,4 @@ last lag weeks with conditions = TRUE.
 }
 \description{
 wrap of functions used by Infodengue.
-}
-\examples{
-# Parameters for the model
-cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
-finalday= "2018-08-12",nowcasting="none")
-restab <- write.alerta(res)
 }

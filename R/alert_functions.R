@@ -166,7 +166,8 @@ fouralert <- function(obj, crit, miss="last"){
 #pipe.infodengue ---------------------------------------------------------------------
 #'@title pipeline used by infodengue 
 #'@description wrap of functions used by Infodengue.
-#'@param cities geocodes of the cities. 
+#'@param cities In general, a vector of 7-digit geocodes. If it is a data.frame containing geocodes
+#' and all parameters, these will replace the database's parameters. 
 #'@param cid10 default is A90 (dengue). Chik = A92.0, Zika = A92.8
 #'@param narule how to treat missing climate data. Do nothing (default), "zero" fills 
 #'with zeros, "linear" for linear interpolation, "arima" for inter and extrapolation.
@@ -177,19 +178,38 @@ fouralert <- function(obj, crit, miss="last"){
 #'@return data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE.
 #'@examples
-#' # Parameters for the model
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'class(res)
 #'class(res[[1]])
 #'restab <- tabela.historico(res)
+#'
+#'User's parameters
+#'dd <- read.parameters(cities = c(3300159,3302403)) %>% mutate(limiar_epidemico = 100)
+#'res <- pipe.infodengue(cities = dd, cid10 = "A90", 
+#'finalday= "2018-08-12",nowcasting="none")
+#'
 
 pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con){
       
-      # Reading parameters for each city
-      pars_table <- read.parameters(cities = cities, cid10 = cid10, datasource) 
+      # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
+      if (class(cities) %in% c("integer","numeric")) {
+            pars_table <- read.parameters(cities = cities, cid10 = cid10, datasource)
+            message("reading parameters from database")
+      } else {
+            if(all(c("municipio_geocodigo","limiar_preseason",
+                     "limiar_posseason","limiar_epidemico",
+                     "varcli","clicrit","cid10","codmodelo") %in% names(cities))) {
+                  message("using user's provided parameters")
+            
+                  pars_table <- cities
+            }
+            else({message("don't know how to run the pipeline for these inputs")
+                 return(NULL)}
+                 )
+      }
       
       # number of cities 
       nlugares <- nrow(pars_table)
@@ -198,7 +218,7 @@ pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
       print(cidades)      
       
       # Reading the names of the meterological stations for each city
-      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      sqlcity = paste("'", str_c(cidades, collapse = "','"),"'", sep="")
       comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
                        \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
                        ")" , sep="")
@@ -216,13 +236,13 @@ pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
       # Reading Cases
       #print("Obtendo dados de notificacao ...")
       
-      casos <- getCases(cities, lastday = finalday, cid10 = cid10) %>%
+      casos <- getCases(cidades, lastday = finalday, cid10 = cid10) %>%
             mutate(inc = casos/pop*100000)
       
       # Reading tweets 
       if(cid10 == "A90"){
             print("Reading tweets...")
-            dT = getTweet(cities, lastday = finalday, cid10 = "A90", datasource)
+            dT = getTweet(cidades, lastday = finalday, cid10 = "A90", datasource)
       }
       
       res <- list()
@@ -271,7 +291,7 @@ pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
             y
       }      
       
-      res <- lapply(cities, calc.alerta) %>% setNames(cities) # antes o nome era character, agora e o geocodigo
+      res <- lapply(cidades, calc.alerta) %>% setNames(cidades) # antes o nome era character, agora e o geocodigo
       #       nick <- gsub(" ", "", nome, fixed = TRUE)
       #       #names(alerta) <- nick
       

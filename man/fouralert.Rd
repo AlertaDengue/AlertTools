@@ -15,7 +15,8 @@ fouralert(obj, crit, miss = "last")
 It is currently the only option}
 }
 \value{
-list containing the data, the alert indices, and the rules used to define the indices.
+returns an object of class "alerta" containing four elements: the data, 
+the alert indices, and the rules used to define the indices.
 }
 \description{
 Yellow is raised when environmental conditions required for
@@ -35,7 +36,7 @@ cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) \%>\%
      mutate(temp_min = nafill(temp_min, rule = "arima")) 
 # Calculate alert      
 ale <- plyr::join_all(list(cas,cli),by="SE") 
-res <- fouralert(ale, crit = criteria)
+resf <- fouralert(ale, crit = criteria)
 # Better visualization
-tail(write.alerta(res))
+tail(write.alerta(resf))
 }
