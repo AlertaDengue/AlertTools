@@ -353,7 +353,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
 }
 
 
-#plot.alert --------------------------------------------------------------------
+#plot.alerta --------------------------------------------------------------------
 #'@title Plot the time series of warnings.
 #'@description Function to plot the output of tabela.historico. 
 #'@param obj object created by tabela.historico()

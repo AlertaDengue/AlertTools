@@ -4,19 +4,12 @@
 \alias{info.dengue.apply.mem}
 \title{Function to apply MEM algorithm to generate pre-epidemic, post-epidemic, and high activity thresholds
 to municipalities covered by InfoDengue project}
-\usage{
-info.dengue.apply.mem(mun_list, start_year = 0,
-  end_year = as.integer(format(Sys.Date(), "\%Y")) - 1, write = "no",
-  con, passwd = NULL, i.n.max = 0, limiar.preseason = 0.95,
-  limiar.epidemico = 0.95, i.type.curve = 2, i.type.threshold = 2,
-  i.type.intensity = 2, ...)
-}
 \arguments{
-\item{mun_list}{Vector of municipalities geocode. Default: NULL (i.e., all municipalites)}
-
 \item{start_year}{Historical data starting year to consider. Default: 0 (i.e., as old as possible)}
 
 \item{end_year}{Historical data final year to consider. Default: previous year from Sys.Date()}
+
+\item{mun_list}{Vector of municipalities geocode. Default: NULL (i.e., all municipalites)}
 
 \item{write}{Whether results should be saved into project's database. Default: 'no'
 'no' return data.table without writing in database.
@@ -36,29 +29,45 @@ This value is passed to i.level.threshold parameter in \code{memmodel}, from MEM
 \item{limiar.epidemico}{Level of confidence interval to calculate high activity during epidemic region. Default: 0.95.
 This value is passed to i.level.intensity parameter in \code{memmodel}, from MEM package.}
 
+\item{mincases.pre}{minimum number of cases to launch a preseason alert. Default: 5}
+
+\item{mincases.epi}{minimum number of cases to launch an epidemic alert. Default: 10}
+
 \item{...}{Optional arguments passed to \code{memmodel}, from MEM package.}
 }
 \value{
-Function \code{info.dengue.apply.mem} will return a data.table object with results by municipality:
-\item{thresholds.table}{A data.table object with results for each municipality geocode, with columns
-municipio_geocodigo, ano_inicio, ano_fim, limiar_preseason, limiar_posseason, limiar_epidemico}
+Function \code{info.dengue.apply.mem} will return a list with thresholds calculated by mem, by simple percentile and the
+choice used in the infodengue model, by municipality: 
+ \describe{
+ \item{mem: threshold values calculated by mem}{municipio_geocodigo = geocode, inc_preseason = preseason incidence threshold, inc_posseason = 
+ pos-season incidence threshold, inc_epidemico = high incidence threshold, inicio and inicio.ic = estimated begining of the season
+ duracao, duracao.ic = season duration. ano_inicio and ano_fim used for calculation.} 
+ \item{percentiles: threshold values calculated as percentiles (incidence)}{quant_pre = preseason incidence threshold,
+ quant_pos = posseason incidence threshold, quant_epidemico = epidemic incidence threshold.} 
+ \item{min_threshold_inc:}{pre-defined minimum threshold.} 
+ \item{threshold: values used by Infodengue}{MEM's values if cases > min.cases, percentiles otherwise: limiar_preseason, limiar_posseason, 
+ limiar_epidemico.}    
+   }
 }
 \description{
 Function \code{info.dengue.apply.mem} uses MEM package to generate activity thresholds.
 Apply MEM algorithm discarding seasons below local pre-epidemic threshold.
-For each Municipality, pre-epidemic (limiar_preseason) threshold has a minimum set at 5 cases.
-If calculated value falls below that, it is set to 5, with high activity (limiar_epidemico) set to 10 cases.
+For each municipality, pre-epidemic (limiar_preseason) threshold has a minimum set at 5 cases.
+If calculated value falls below that, it is set to 5, with high activity (limiar_epidemico) set 
+to either the 90% quantile or 10, whichever is the greatest. The thresholds are given both in number of cases or
+as incidence. The alert model uses incidence.
 }
 \examples{
-Generate thresholds for Rio de Janeiro, Curitiba and Vitoria, using the whole history.
+Generate thresholds for Rio de Janeiro, Curitiba and Vitoria, using the whole history. 
 Return object instead of writing to data base:
 mun_list <- c(3304557, 4106902, 3205309)
-mun_list <- c(3205309)
-cid <- getCidades(uf = "Minas Gerais", datasource=cond)
-info.dengue.apply.mem(con=cond, passwd=password, start_year=0, mun_list=cid$municipio_geocodigo, write='db')
+mun_list <- getCidades(uf = "Espírito Santo", datasource=con)$municipio_geocodigo
+thres <- info.dengue.apply.mem(mun_list=mun_list,database=con)
 
-thresholds.table <- info.dengue.apply.mem(con=cond, passwd=password, start_year=0, mun_list=mun_list)
+A nice way to visualize the calculated thresholds
+plot(thres)
 
-Write to database instead of returning object:
-info.dengue.apply.mem(con=cond, passwd=password, start_year=0, mun_list=mun_list, write='db')
+Write to database instead of returning object requires password:
+thres <- info.dengue.apply.mem(con=cond, passwd=password, start_year=0, mun_list=mun_list, write='db')
+
 }
