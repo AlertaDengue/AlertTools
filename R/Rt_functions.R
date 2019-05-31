@@ -64,7 +64,7 @@ Rtoriginal<-function(obj, count = "casos", meangt, CI = "beta", alpha = .95, a0 
 #'ratio between two Poissons (see Luis Max documentation). 
 #'@title Computes the effective reproductive number using alternative 
 #'distributions for the generation interval.
-#'@param object with the format of getcases. A data.frame with variables "casos" and "SE".
+#'@param object a data.frame with variables "casos" and "SE", ideally from getCases().
 #'@param meangt if gtdist = "delta" it is the exact period between primary and 
 #'secondary infections). If gtdist = "normal", it is the mean generation time.
 #'@param sdgt if gtdist = "normal", it is the standard deviation of the generation time 
@@ -142,5 +142,67 @@ betaconf <- function(alpha = .95, x, n, a = 1, b = 1, CP = "FALSE"){
 
 
 # R = theta/(1-theta)
-ll <- function(x) x/(1-x)
+ll <- function(x) {x/(1-x)}
+
+
+################# 
+# Function for parameter in Extrinsic Incubation Period
+lambdaEIP<-function(T,v=4.3,beta0=7.9,betat=-0.21,Tbar=0) v/exp(beta0+betat*(T-Tbar))  
+
+# Function for parameter in Intrinsic Incubation Period
+lambdaIIP<-function(v=16,beta0=1.78) v/exp(beta0) 
+
+
+#evalGenTimeDist -----------------------------------------------------------------------
+
+#' @description  Function to produce matrix of generation time distribution
+#' @param x : 
+#' @param a : vector of 4 parameters for 4 gamma distributions
+#' @param  b : vector of 4 parameters for 4 gamma distributions
+#' @param serT : Temperature series
+#' @param tt : time series
+#' @param GT.max : maximum number of weeks to consider for generation time
+#' @param Tmax 
+#' @return matrix with generation time distributions per week, one row per week, one column per SE. 
+#' @example 
+#' cas = getCases(cities = 3304557, cid10 = "A90", datasource=con)  
+#'cli = getWU(stations = 'SBGL', vars=c("temp_min"), datasource=con) %>%
+#'      mutate(temp_min = nafill(temp_min, rule = "arima")) 
+#'ale <- plyr::join_all(list(cas,cli),by="SE")
+#'maxcores <- detectCores()  # paralelizacao
+#'system.time(gt <- mcmapply(evalGenTimeDist, 1:nrow(cli), MoreArgs=list(serT=cli$temp_min, tt=1:nrow(cli)), mc.cores=8))   
+
+evalGenTimeDist <- function(x=1, a=c(16, 4.3, 1, 1), b=c(1/2.69821, 1/0.4623722, 1, 1), serT, tt,
+                            GT.max = 10, Tmax) {
+      Tmax = length(serT)
+      mxx <- int_sum_gamma_T(1, a, b, Temp=serT[x:(Tmax+GT.max+1)], t=tt[x:(Tmax+GT.max+1)], max=GT.max, unitscale=7)
+      mxx$pdf
+      class(mmx$pdf) <- "generationtime"
+}
+
+
+updateGenTimeDist <- function(cities, cid10 = "A90", datasource = con, x=1, a=c(16, 4.3, 1, 1), b=c(1/2.69821, 1/0.4623722, 1, 1),
+                              GT.max = 10, Tmax, ...){
+      pars_table <- read.parameters(cities = cities, cid10 = cid10, datasource)
+      
+      # Reading the names of the meterological stations for each city
+      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+                       \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
+                       ")" , sep="")
+      city_table <- dbGetQuery(datasource,comando)
+      
+      estacoes <- unique(c(city_table$estacao_wu_sec, city_table$codigo_estacao_wu))
+      print("usando dados de clima das estacoes:")
+      print(estacoes)
+      
+      # Reading the meteorological data
+      #print('Obtendo os dados de clima...')
+      cliwu <- getWU(stations = estacoes, vars = temp_med, finalday = finalday,datasource)
+      
+      
+      
+      map(mcmapply(evalGenTimeDist, MoreArgs=list(serT=cli$temp_min, tt=1:nrow(cli)), mc.cores=8))
+}
+
 

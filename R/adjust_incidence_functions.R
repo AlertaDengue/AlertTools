@@ -352,7 +352,7 @@ dd
 #'@param datasource valid connection to database
 #'@return list with d = data.frame with data.
 #'@examples
-#'dados <- getdelaydata(cities=3302205, years=c(2016, 2017), cid10="A92", datasource=con)  # Not run without connection
+#'dados <- getdelaydata(cities=3304557, years=c(2017, 2018), cid10="A92", datasource=con)  # Not run without connection
 
 getdelaydata <- function(cities, years = NULL, cid10 = "A90", lastday = Sys.Date(), datasource){
       
@@ -419,7 +419,7 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", lastday = Sys.Date
 #'@return list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
 #'are internal objects used for plotting. Author Leo Bastos
 #'@examples
-#'dados <- getdelaydata(cities=2305001, datasource=con)
+#'dados <- getdelaydata(cities=3304557, datasource=con)
 #'res = delaycalc(dados)  
 #'head(res$d)  # data
 #'head(res$delay.tbl)  # running matrix
