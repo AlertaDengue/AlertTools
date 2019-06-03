@@ -145,7 +145,7 @@ betaconf <- function(alpha = .95, x, n, a = 1, b = 1, CP = "FALSE"){
 ll <- function(x) {x/(1-x)}
 
 
-################# 
+################# NEW
 # Function for parameter in Extrinsic Incubation Period
 lambdaEIP<-function(T,v=4.3,beta0=7.9,betat=-0.21,Tbar=0) v/exp(beta0+betat*(T-Tbar))  
 
@@ -170,7 +170,7 @@ lambdaIIP<-function(v=16,beta0=1.78) v/exp(beta0)
 #'      mutate(temp_min = nafill(temp_min, rule = "arima")) 
 #'ale <- plyr::join_all(list(cas,cli),by="SE")
 #'maxcores <- detectCores()  # paralelizacao
-#'system.time(gt <- mcmapply(evalGenTimeDist, 1:nrow(cli), MoreArgs=list(serT=cli$temp_min, tt=1:nrow(cli)), mc.cores=8))   
+#'system.time(gt <- mcmapply(evalGenTimeDist, 1:nrow(cli), MoreArgs=list(serT=cli$temp_min, tt=1:nrow(cli)), mc.cores=1))   
 
 evalGenTimeDist <- function(x=1, a=c(16, 4.3, 1, 1), b=c(1/2.69821, 1/0.4623722, 1, 1), serT, tt,
                             GT.max = 10, Tmax) {

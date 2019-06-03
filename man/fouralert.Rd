@@ -32,11 +32,11 @@ criteria = setCriteria(rule="Af",values=val)
 cas = getCases(cities = 3304557, cid10 = "A90", datasource=con) \%>\% 
      Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) \%>\%
      mutate(inc = casos/pop*100000)
-cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) \%>\%
+cli = getWU(stations = 'SBGL', vars=c("temp_min"), datasource=con) \%>\%
      mutate(temp_min = nafill(temp_min, rule = "arima")) 
 # Calculate alert      
 ale <- plyr::join_all(list(cas,cli),by="SE") 
 resf <- fouralert(ale, crit = criteria)
 # Better visualization
-tail(write.alerta(resf))
+tail(tabela.historico(resf))
 }

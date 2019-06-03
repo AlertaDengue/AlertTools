@@ -37,7 +37,7 @@ The second function to be used in the delay fitting process using inla. Calculat
 of cases reported per week with a given delay. Also removes data with notification delay greater than truncdays.
 }
 \examples{
-dados <- getdelaydata(cities=2305001, datasource=con)
+dados <- getdelaydata(cities=3304557, datasource=con)
 res = delaycalc(dados)  
 head(res$d)  # data
 head(res$delay.tbl)  # running matrix

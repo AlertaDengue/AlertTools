@@ -31,3 +31,16 @@ last lag weeks with conditions = TRUE.
 \description{
 wrap of functions used by Infodengue.
 }
+\examples{
+cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
+res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+finalday= "2018-08-12",nowcasting="none")
+class(res)
+class(res[[1]])
+head(tabela.historico(res))
+# User's parameters
+dd <- read.parameters(cities = c(3300159,3302403)) \%>\% mutate(limiar_epidemico = 100)
+res <- pipe.infodengue(cities = dd, cid10 = "A90", 
+finalday= "2018-08-12",nowcasting="none")
+
+}

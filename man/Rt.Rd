@@ -17,7 +17,7 @@ distribution.}
 
 \item{CI}{Model used to compute the confidence interval. Possible choice: "beta".}
 
-\item{object}{with the format of getcases. A data.frame with variables "casos" and "SE".}
+\item{object}{a data.frame with variables "casos" and "SE", ideally from getCases().}
 }
 \value{
 data.frame with estimated Rt and confidence intervals.

@@ -45,11 +45,11 @@
 #' Generate thresholds for Rio de Janeiro, Curitiba and Vitoria, using the whole history. 
 #' Return object instead of writing to data base:
 #' mun_list <- c(3304557, 4106902, 3205309)
-#' mun_list <- getCidades(uf = "Rio de Janeiro", datasource=con)$municipio_geocodigo
-#' thres1 <- infodengue_apply_mem(mun_list=mun_list,database=con)
+#' mun_list <- getCidades(uf = "Ceará", datasource=con)$municipio_geocodigo
+#' thresCE <- infodengue_apply_mem(mun_list=mun_list,database=con)
 #' 
 #' A nice way to visualize the calculated thresholds
-#' plot(thres1)
+#' plot(thresCE) 
 #' 
 #' Write to database instead of returning object requires password:
 #' thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10], write='db')
@@ -169,15 +169,16 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
 # title("PR")
 # dev.off()
 plot.infomem <- function(obj,...){
-      plot(obj$mem$inc_epidemico, axes=FALSE,xlab="",ylab="red thresholds",pch=16, ylim=c(0,max(obj$mem$inc_epidemico,
+      ordem <- order(obj$min_threshold_inc$populacao)
+      plot(obj$mem$inc_epidemico[ordem], axes=FALSE,xlab="",ylab="red thresholds",pch=16, ylim=c(0,max(obj$mem$inc_epidemico,
                                                                                                 obj$percentiles$quant_epidemico,
                                                                                                 obj$min_threshold_inc$mininc_epi,
                                                                                                 obj$thresholds$limiar_epidemico,na.rm=TRUE)))
       axis(2)
-      axis(1,at = 1:nrow(obj$mem), labels = obj$mem$municipio_geocodigo,las=2,cex.axis=0.6)
-      points(obj$percentiles$quant_epidemico, pch="*")
-      points(obj$min_threshold_inc$mininc_epi, pch="+")
-      lines(obj$thresholds$limiar_epidemico, type="h")
+      axis(1,at = 1:nrow(obj$mem), labels = obj$mem$municipio_geocodigo[ordem],las=2,cex.axis=0.6)
+      points(obj$percentiles$quant_epidemico[ordem], pch="*")
+      points(obj$min_threshold_inc$mininc_epi[ordem], pch="+")
+      lines(obj$thresholds$limiar_epidemico[ordem], type="h")
       legend("topright",legend = c("mem","percentile","minimum","infodengue"), pch = c('o','*','+','|'),cex=0.8)
-      
+      #abline(h=10, col =2)
 }

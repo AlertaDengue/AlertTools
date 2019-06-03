@@ -78,13 +78,13 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'cas = getCases(cities = 3304557, cid10 = "A90", datasource=con) %>% 
 #'      Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) %>%
 #'      mutate(inc = casos/pop*100000)
-#'cli = getWU(stations = 'SBVT', vars=c("temp_min"), datasource=con) %>%
+#'cli = getWU(stations = 'SBGL', vars=c("temp_min"), datasource=con) %>%
 #'      mutate(temp_min = nafill(temp_min, rule = "arima")) 
 #'# Calculate alert      
 #'ale <- plyr::join_all(list(cas,cli),by="SE") 
 #'resf <- fouralert(ale, crit = criteria)
 #'# Better visualization
-#'tail(write.alerta(resf))
+#'tail(tabela.historico(resf))
 
 
 fouralert <- function(obj, crit, miss="last"){
@@ -183,9 +183,8 @@ fouralert <- function(obj, crit, miss="last"){
 #'finalday= "2018-08-12",nowcasting="none")
 #'class(res)
 #'class(res[[1]])
-#'restab <- tabela.historico(res)
-#'
-#'User's parameters
+#'head(tabela.historico(res))
+#'# User's parameters
 #'dd <- read.parameters(cities = c(3300159,3302403)) %>% mutate(limiar_epidemico = 100)
 #'res <- pipe.infodengue(cities = dd, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
@@ -612,8 +611,14 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 tabela.historico <- function(obj, versao = Sys.Date()){
       
       # --------- create single data.frame ------------------#
-      data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
-      indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices
+      # if object created by pipe.infodengue():
+      if(class(obj)=="list" & class(obj[[1]])=="alerta"){
+            data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
+            indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices      
+      } else if (class(obj)=="alerta"){ #if object created directly by fouralert()
+            data <- obj$data
+            indices <- obj$indices
+      }
       
       # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
       gera_id <- function(x) paste(data$cidade[x], data$Localidade_id[x], data$SE[x], 
@@ -624,11 +629,11 @@ tabela.historico <- function(obj, versao = Sys.Date()){
       d<- data %>%
             rename(municipio_geocodigo = cidade,
                    municipio_nome = nome,
-                   p_inc100k =inc,
-                   casos_est = tcasesmed,
-                   casos_est_min = tcasesICmin,
-                   casos_est_max = tcasesICmax) %>%
-            mutate(p_rt1 = ifelse(is.na(p1),0,p1),
+                   p_inc100k =inc) %>%
+            mutate(casos_est = ifelse(has_name(.,"tcasesmed"),tcasesmed,NA),
+                   casos_est_min = ifelse(has_name(.,"tcasesICmin"),tcasesICmin,NA),
+                   casos_est_max = ifelse(has_name(.,"tcasesICmax"),tcasesICmax,NA),
+                   p_rt1 = ifelse(is.na(p1),0,p1),
                    Localidade_id  = ifelse(is.na(localidade),0,localidade),
                    data_iniSE = SE2date(SE)$ini,
                    nivel = indices$level,
