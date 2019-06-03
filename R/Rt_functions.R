@@ -153,8 +153,63 @@ lambdaEIP<-function(T,v=4.3,beta0=7.9,betat=-0.21,Tbar=0) v/exp(beta0+betat*(T-T
 lambdaIIP<-function(v=16,beta0=1.78) v/exp(beta0) 
 
 
-#evalGenTimeDist -----------------------------------------------------------------------
+#GenTimeDist -----------------------------------------------------------------------
+#' @title Calculates temperature dependent generation time distribution
+#' @description  Function to produce matrix of generation time distribution that depends on temperature.
+#' For details, see the reference Codeco et al (2018).
+#' @param serTemp : Temperature series
+#' @param GT.max : maximum number of weeks to consider for generation time
+#' @param cid10 "A90" for dengue (default), "A92": chikungunya, "A92.8": zika. 
+#' @param smooth "sinusoidal" (default) or "raw"  
+#' @return matrix with generation time distributions per week, one row per week, one column per SE. 
+#' @references Codeco et al (2018) https://doi.org/10.1016/j.epidem.2018.05.011
+#' @examples 
+#'cli = getWU(stations = 'SBGL', vars=c("temp_med"), datasource=con) %>%
+#'      mutate(temp_min = nafill(temp_med, rule = "arima")) 
+#'gt <- GenTimeDist(cli$temp_med[1:50], smooth = "loess")
+#'contour(gt, ylab="time", xlab="generation time (week)")
 
+GenTimeDist <- function(serTemp, cid10 = "A90", GT.max = 10, smooth = "sinusoidal", nc = 1){
+      
+      # disease-specific parameters --------------------
+      if (cid10 == "A90"){ # dengue
+            par_a=c(16, 4.3, 1, 1)
+            par_b=c(1/2.69821, 1/0.4623722, 1, 1)
+            } else if (cid10 == "A92") {
+                  message("no generation time parameters for chikungunya, using dengue's")
+                  par_a=c(16, 4.3, 1, 1)
+                  par_b=c(1/2.69821, 1/0.4623722, 1, 1)
+            } else if (cid10 == "A92.8"){
+                  message("no generation time parameters for zika, using dengue's")
+                  par_a=c(16, 4.3, 1, 1)
+                  par_b=c(1/2.69821, 1/0.4623722, 1, 1)
+            }
+      
+      Tmax = length(serTemp)
+      tt = 1:Tmax
+      
+      # raw temperature data or smoothed data?
+      if(smooth == "sinusoidal"){
+            mod <- lm(serTemp ~ sin(2*pi/52*tt)+cos(2*pi/52*tt))
+            serie <- predict(mod)
+      } else {
+            serie <- serTemp
+      }
+      
+      # function calculates the distribution in a given week x
+      evalGenTimeDist <- function(x, serT=serie, a=par_a, b=par_b) {
+            mxx <- int_sum_gamma_T(1, a, b, Temp=serT[x:(Tmax+GT.max+1)], t=tt[x:(Tmax+GT.max+1)], max=GT.max, unitscale=7)
+            mxx$pdf
+      }
+      # for all weeks...
+      gt <- parallel::mcmapply(evalGenTimeDist, tt, mc.cores=nc)
+      class(gt) <- "generationtime"
+      gt
+}
+
+
+
+#evalGenTimeDist --Not good yet-------------------------------------------------------------
 #' @description  Function to produce matrix of generation time distribution
 #' @param x : 
 #' @param a : vector of 4 parameters for 4 gamma distributions
@@ -165,44 +220,33 @@ lambdaIIP<-function(v=16,beta0=1.78) v/exp(beta0)
 #' @param Tmax 
 #' @return matrix with generation time distributions per week, one row per week, one column per SE. 
 #' @example 
-#' cas = getCases(cities = 3304557, cid10 = "A90", datasource=con)  
 #'cli = getWU(stations = 'SBGL', vars=c("temp_min"), datasource=con) %>%
 #'      mutate(temp_min = nafill(temp_min, rule = "arima")) 
-#'ale <- plyr::join_all(list(cas,cli),by="SE")
 #'maxcores <- detectCores()  # paralelizacao
 #'system.time(gt <- mcmapply(evalGenTimeDist, 1:nrow(cli), MoreArgs=list(serT=cli$temp_min, tt=1:nrow(cli)), mc.cores=1))   
 
-evalGenTimeDist <- function(x=1, a=c(16, 4.3, 1, 1), b=c(1/2.69821, 1/0.4623722, 1, 1), serT, tt,
-                            GT.max = 10, Tmax) {
-      Tmax = length(serT)
-      mxx <- int_sum_gamma_T(1, a, b, Temp=serT[x:(Tmax+GT.max+1)], t=tt[x:(Tmax+GT.max+1)], max=GT.max, unitscale=7)
-      mxx$pdf
-      class(mmx$pdf) <- "generationtime"
-}
-
-
-updateGenTimeDist <- function(cities, cid10 = "A90", datasource = con, x=1, a=c(16, 4.3, 1, 1), b=c(1/2.69821, 1/0.4623722, 1, 1),
-                              GT.max = 10, Tmax, ...){
-      pars_table <- read.parameters(cities = cities, cid10 = cid10, datasource)
-      
-      # Reading the names of the meterological stations for each city
-      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
-      comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
-                       \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
-                       ")" , sep="")
-      city_table <- dbGetQuery(datasource,comando)
-      
-      estacoes <- unique(c(city_table$estacao_wu_sec, city_table$codigo_estacao_wu))
-      print("usando dados de clima das estacoes:")
-      print(estacoes)
-      
-      # Reading the meteorological data
-      #print('Obtendo os dados de clima...')
-      cliwu <- getWU(stations = estacoes, vars = temp_med, finalday = finalday,datasource)
-      
-      
-      
-      map(mcmapply(evalGenTimeDist, MoreArgs=list(serT=cli$temp_min, tt=1:nrow(cli)), mc.cores=8))
-}
+# calcGenTimeDist <- function(cities, cid10 = "A90", datasource = con, x=1, a=c(16, 4.3, 1, 1), b=c(1/2.69821, 1/0.4623722, 1, 1),
+#                               GT.max = 10, Tmax, ...){
+#       pars_table <- read.parameters(cities = cities, cid10 = cid10, datasource)
+#       
+#       # Reading the names of the meterological stations for each city
+#       sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+#       comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+#                        \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
+#                        ")" , sep="")
+#       city_table <- dbGetQuery(datasource,comando)
+#       
+#       estacoes <- unique(c(city_table$estacao_wu_sec, city_table$codigo_estacao_wu))
+#       print("usando dados de clima das estacoes:")
+#       print(estacoes)
+#       
+#       # Reading the meteorological data
+#       #print('Obtendo os dados de clima...')
+#       cliwu <- getWU(stations = estacoes, vars = temp_med, finalday = finalday,datasource)
+#       
+#       
+#       
+#       map(mcmapply(evalGenTimeDist, MoreArgs=list(serT=cli$temp_min, tt=1:nrow(cli)), mc.cores=8))
+# }
 
 
