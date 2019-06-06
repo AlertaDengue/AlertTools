@@ -32,16 +32,16 @@ setCriteria <- function(rule=NULL, values=NULL,
       
       if(rule[1] == "Af"){
                   criteria <- list(
-                  crity = c("temp_min > clicrit & casos > 0", 3, 2),
-                  crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2),
-                  critr = c("inc > limiar_epidemico & casos > 5", 2, 2)
+                  crity = c("temp_min > clicrit & casos > 0", 3, 3), #3,2
+                  crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
+                  critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
             )
              
        } else if (rule[1] == "Aw"){
                    criteria = list(
-                   crity = c("umid_max > clicrit & casos > 0", 3, 2),
-                   crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2),
-                   critr = c("inc > limiar_epidemico & casos > 5", 2, 2)
+                   crity = c("umid_max > clicrit & casos > 0", 3, 2), #3,2
+                   crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
+                   critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
              )
        } else {
             criteria<-lapply(1:3, function(x) c(rule[[x]], delays[[x]]))
