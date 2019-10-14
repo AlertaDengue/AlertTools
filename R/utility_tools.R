@@ -3,6 +3,30 @@
 # Claudia Codeco 2015
 # -----------------------------------------------------------
 
+
+# epiYear ---------------------------------------------------------------------
+#'@description Find to which epidemiological year belongs a given epidemiological week. 
+#'@title Define Epidemiological Year
+#'@param se numeric vector with epidemiological weeks to be converted
+#'@param cut epidemiological week that separates consecutive epidemiological years. Default = 41
+#'@return vector of epidemiological years. 
+#'@examples
+#'epiYear(se = 201012)
+#'epiYear(se = 201012:201522)
+
+epiYear <- function(se, cut = 41){
+  
+  d <- tibble(se = se)
+  d %>%
+    mutate(year = round(se/100),
+           eweek = se - year*100,
+           eyear = case_when(
+             eweek < cut ~ year - 1,  # if se < cut, eYear = previous calendar Year
+             TRUE ~ year              # if se >= cut, eYear = current calendar Year  
+           )) 
+} 
+
+
 # data2SE ---------------------------------------------------------------------
 #'@description Find to which epidemiological week belongs a given day. Uses episem function 
 #'(formula generated data).

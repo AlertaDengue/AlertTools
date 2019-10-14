@@ -516,6 +516,7 @@ fitDelay.inla <- function(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar 
       
       if(!all(c("d","delay.tbl","delay.week") %in% names(obj))) stop("fitDeday.inla: argument obj seems wrong")
       require(INLA)
+      INLA:::inla.dynload.workaround()
       message("fitting..")
       # creating a continuous sequence of weeks within the study period (#aqui da para otimizar)
       delay.week <- paste0("d",0:Dmax)

@@ -142,7 +142,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'d <- getCases(cities = 3300936) # dengue
 #'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
-#'d <- getCases(cities = cid$municipio_geocodigo, datasource = con) 
+#'d <- getCases(cities = cid$municipio_geocodigo, datasource = con, dataini = "sinpri") 
 #'tail(d)
 
 getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific",
@@ -197,7 +197,7 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
       }
       
       # criando serie 
-      sem <-  expand.grid(municipio_geocodigo = cities, SE = seqSE(from = 201001, to = max(casos$SE))$SE)
+      sem <-  expand.grid(municipio_geocodigo = cities, SE = seqSE(from = 201001, to = max(casos$SE, na.rm=TRUE))$SE)
       st <- full_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 
             arrange(municipio_geocodigo,SE) %>%
             mutate(localidade = 0) %>%  # para uso qdo tiver divisao submunicipal
