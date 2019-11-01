@@ -9,6 +9,7 @@ Description: Set of functions to get data from the Alerta Dengue server,
     organize into time series, correct the notification data, calculate alert
     indices. Also includes utility functions to create reports and maps.
 License: CCO
+Encoding: UTF-8
 Imports:
     foreign,
     RPostgreSQL,
