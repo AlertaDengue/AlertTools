@@ -67,7 +67,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
                   }
             }
             return(df)      
-      }else{message("estação(ões) ", stations, " não existem no banco de dados")
+      }else{message("estacao(oes) ", stations, " nao existem no banco de dados")
             return(NULL)}
 }
 

@@ -249,7 +249,7 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
                   if (na_pri < 1)lastdate_pri <- dadoscli_pri$SE[max(which(is.na(dadoscli_pri$temp_min)==FALSE))]  # ultima data        
             }
             
-            if(na_sec==1 & na_pri==1) message("WARNING: As duas estacoes met. da ", geocidade, " não tem dados de temperatura")
+            if(na_sec==1 & na_pri==1) message("WARNING: As duas estacoes met da ", geocidade, " nao tem dados de temperatura")
             if(na_sec==1 & na_pri!=1) {estacao = estacao_pri; lastdatewu = lastdate_pri}
             if(na_sec!=1 & na_pri==1) {estacao = estacao_sec; lastdatewu = lastdate_sec}      
             if(na_sec!=1 & na_pri!=1){
@@ -279,7 +279,7 @@ update.alerta <- function(city, region, state, pars, crit, GT = list(gtdist = "n
                   d$tweet <- NA
             }
             
-            # ----------- interpolacao e extrapolação das variaveis climaticas
+            # ----------- interpolacao e extrapolacao das variaveis climaticas
             
             vars.cli <-which(names(d)%in%allvars.cli) # posicao das variaveis climaticas em d
             
@@ -389,7 +389,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
       cli.SBGL = getWU(stations = 'SBGL', datasource=datasource)
       
       if (verbose){
-            message("As ultimas datas no banco são:")
+            message("As ultimas datas no banco sao:")
             print(paste("Ultimos registros de dengue:",lastDBdate("sinan", city=330455,datasource=datasource)))
             #print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=330455,datasource=datasource)))
             
@@ -414,7 +414,7 @@ alertaRio <- function(naps = 0:9, pars, crit, datasource, se, cid10 = "A90", ver
             # dados de tweet so existem para dengue
             if (cid10=="A90") {d <- merge(d, tw, by.x = "SE", by.y = "SE")
             } else d$tweet <- NA
-            # interpolacao e extrapolação do clima
+            # interpolacao e extrapolacao do clima
             if (is.na(tail(d$temp_min)[1])) try(d$temp_min <-nafill(d$temp_min, rule="arima"))   
             # delay model
             casfit<-adjustIncidence(obj=d, pdig = p,method = delaymethod)
@@ -461,7 +461,7 @@ plot.alerta<-function(obj, var, cores = c("#0D6B0D","#C8D20F","orange","red"),
       }
       
       if (obj$n == 2 | obj$n == 4){
-            plot(x, data[,var], xlab = "", ylab = "incidência", type="l", ylim= limy, axes=FALSE)
+            plot(x, data[,var], xlab = "", ylab = "incidencia", type="l", ylim= limy, axes=FALSE)
             axis(1, at = ticks, labels = data$SE[ticks], las=3, cex=0.8)
             axis(2, las=2, cex=0.8)
             abline(h=obj$rules$preseas, lty=2, col="darkgreen")
@@ -534,7 +534,8 @@ map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
       coords[1,1] <- -43.19
       coords[2,2] <- -22.945
       #text(coords,label=mapa@data$COD_AP_SMS,cex=0.6)
-      legend("bottom",fill=cores,c("atividade baixa","condições favoraveis transmissão","transmissão sustentada","atividade alta"),bty="n",cex=0.6)
+      legend("bottom",fill=cores,c("atividade baixa","condicoes favoraveis transmissao",
+                                   "transmissao sustentada","atividade alta"),bty="n",cex=0.6)
       par(cex.main=0.7)
       title(paste0( "Mapa MRJ por APs \n"," Semana ",substr(ultima_se,5,6)," de ",
                     substr(ultima_se,1,4)),line=-1)
@@ -638,7 +639,7 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 #'cli = getWU(stations = 'SBFZ', vars=c("temp_min", "umid_min"), datasource=con)
 #'cas = getCases(city = 2304400, cid10="A92.0",datasource=con)
 #' # Organizing the data
-#'casfit<-adjustIncidence(obj=cas, method="bayesian")
+#'casfit<-adjustIncidence(obj=cas, method="fixedprob")
 #'casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
 #'d<- mergedata(cases = casr, tweet = tw, climate = cli)
 #' # Parameters of the alert model (usually set up in the globalconfig and config files)
@@ -653,7 +654,7 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 #'ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteriaU, pop = 1000000)
 #'ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
 #' # For a more useful output
-#'res <- write.alerta(ale)
+#'res <- write.alerta(ale, write="db")
 #'tail(res)
 
 write.alerta<-function(obj, write = "no", version = Sys.Date()){
@@ -674,6 +675,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       d$casos_est_min <- data$tcasesICmin
       d$casos_est_max <- data$tcasesICmax
       d$casos <- data$casos
+      d$tweet <- data$tweet
       d$municipio_geocodigo <- na.omit(unique(data$cidade)) # com 7 digitos
       d$p_rt1 <- data$p1
       d$p_rt1[is.na(d$p_rt1)] <- 0
@@ -691,7 +693,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
                              versaojulian, sep="")
       }
       
-      d$tweet <- data$tweet
+      
       if("temp_min" %in% names(data)) d$temp_min <- data$temp_min
       if("umid_min" %in% names(data)) d$umid_min <- data$umid_min
       if("temp_med" %in% names(data)) d$temp_med <- data$temp_med
@@ -702,10 +704,10 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
             # se tiver ja algum registro com mesmo geocodigo e SE, esse sera substituido pelo atualizado.
             print(paste("saving alerta table for ",cid10))
             
-            varnames <- "(\"SE\", \"data_iniSE\", casos_est, casos_est_min, casos_est_max, casos,
+            varnames <- "(\"SE\", \"data_iniSE\", casos_est, casos_est_min, casos_est_max, casos,tweet,
             municipio_geocodigo,p_rt1,p_inc100k,\"Localidade_id\",nivel,versao_modelo,id)"
             
-            sepvarnames <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
+            sepvarnames <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max","tweet",
                              "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
                              "nivel","versao_modelo","id")
             
