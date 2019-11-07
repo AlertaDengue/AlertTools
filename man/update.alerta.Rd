@@ -4,8 +4,8 @@
 \alias{update.alerta}
 \title{Define conditions to issue a 4 level alert Green-Yellow-Orange-Red for any city or region.}
 \usage{
-\method{update}{alerta}(city, region, state, pars, crit, GT = list(gtdist =
-  "normal", meangt = 3, sdgt = 1.2), cid10 = "A90", writedb = FALSE,
+\method{update}{alerta}(city, region, state, pars, crit, GT = list(gtdist
+  = "normal", meangt = 3, sdgt = 1.2), cid10 = "A90", writedb = FALSE,
   datasource, sefinal, adjustdelay = T, delaymethod = "fixedprob")
 }
 \arguments{

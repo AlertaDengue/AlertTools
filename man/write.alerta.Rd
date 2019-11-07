@@ -26,7 +26,7 @@ tw = getTweet(city = 2304400, datasource = con)
 cli = getWU(stations = 'SBFZ', vars=c("temp_min", "umid_min"), datasource=con)
 cas = getCases(city = 2304400, cid10="A92.0",datasource=con)
 # Organizing the data
-casfit<-adjustIncidence(obj=cas, method="bayesian")
+casfit<-adjustIncidence(obj=cas, method="fixedprob")
 casr<-Rt(obj = casfit, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
 d<- mergedata(cases = casr, tweet = tw, climate = cli)
 # Parameters of the alert model (usually set up in the globalconfig and config files)
@@ -41,6 +41,6 @@ posseas = 7.67878514885295, legpos="bottomright")
 ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteriaU, pop = 1000000)
 ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
 # For a more useful output
-res <- write.alerta(ale)
+res <- write.alerta(ale, write="no")
 tail(res)
 }

@@ -20,6 +20,6 @@ Function to write the alert results into the database.
 }
 \examples{
 alerio2 <- alertaRio(naps = c(1,2), datasource=con)
-res <- write.alertaRio(alerio2, write="db")
+resRionot <- write.alertaRio(alerionot, write="no")
 tail(res)
 }

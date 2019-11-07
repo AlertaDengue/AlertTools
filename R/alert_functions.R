@@ -691,11 +691,11 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       
       # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
       d$id <- NA
-      #for (i in 1:dim(d)[1]) {
-      #      versaojulian <- as.character(julian(as.Date(d$versao_modelo[i])))
-      #      d$id[i] <- paste(d$municipio_geocodigo[i], d$Localidade_id[i], d$SE[i], 
-      #                       versaojulian, sep="")
-      #}
+      for (i in 1:dim(d)[1]) {
+            versaojulian <- as.character(julian(as.Date(d$versao_modelo[i])))
+            d$id[i] <- paste(d$municipio_geocodigo[i], d$Localidade_id[i], d$SE[i], 
+                             versaojulian, sep="")
+      }
       
       
       #if("temp_min" %in% names(data)) d$temp_min <- data$temp_min

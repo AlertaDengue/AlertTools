@@ -6,8 +6,8 @@
 \usage{
 map.Rio(obj, cores = c("green", "yellow", "orange", "red"), data,
   datasource = con,
-  shapefile = "../report/Rio_de_Janeiro/shape/CAPS_SMS.shp", filename = "",
-  dir, resol = 200)
+  shapefile = "../report/Rio_de_Janeiro/shape/CAPS_SMS.shp",
+  filename = "", dir, resol = 200)
 }
 \arguments{
 \item{obj}{object created by the twoalert and fouralert functions.}
