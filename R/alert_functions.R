@@ -654,7 +654,7 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 #'ale <- fouralert(d, pars = pars.RJ[["Norte"]], crit = criteriaU, pop = 1000000)
 #'ale <- fouralert(d, pars = pars.ES[["Central"]], crit = criteriaU, pop = 1000000)
 #' # For a more useful output
-#'res <- write.alerta(ale, write="db")
+#'res <- write.alerta(ale, write="no")
 #'tail(res)
 
 write.alerta<-function(obj, write = "no", version = Sys.Date()){
@@ -676,7 +676,11 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       d$casos_est_max <- data$tcasesICmax
       d$casos <- data$casos
       d$tweet <- data$tweet
+      d$pop <- data$pop
+      d$tempmin <- ifelse("temp_min" %in% names(data), data$temp_min, rep(NA,nrow(d)))
+      d$umidmax <- ifelse("umid_max" %in% names(data), data$umid_max, rep(NA, nrow(d)))
       d$municipio_geocodigo <- na.omit(unique(data$cidade)) # com 7 digitos
+      d$Rt <- data$Rt
       d$p_rt1 <- data$p1
       d$p_rt1[is.na(d$p_rt1)] <- 0
       d$p_inc100k <- data$inc
@@ -687,28 +691,28 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       
       # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
       d$id <- NA
-      for (i in 1:dim(d)[1]) {
-            versaojulian <- as.character(julian(as.Date(d$versao_modelo[i])))
-            d$id[i] <- paste(d$municipio_geocodigo[i], d$Localidade_id[i], d$SE[i], 
-                             versaojulian, sep="")
-      }
+      #for (i in 1:dim(d)[1]) {
+      #      versaojulian <- as.character(julian(as.Date(d$versao_modelo[i])))
+      #      d$id[i] <- paste(d$municipio_geocodigo[i], d$Localidade_id[i], d$SE[i], 
+      #                       versaojulian, sep="")
+      #}
       
       
-      if("temp_min" %in% names(data)) d$temp_min <- data$temp_min
-      if("umid_min" %in% names(data)) d$umid_min <- data$umid_min
-      if("temp_med" %in% names(data)) d$temp_med <- data$temp_med
-      if("umid_med" %in% names(data)) d$umid_med <- data$umid_med
-      if("temp_max" %in% names(data)) d$temp_max <- data$temp_max
-      if("umid_max" %in% names(data)) d$umid_max <- data$umid_max
+      #if("temp_min" %in% names(data)) d$temp_min <- data$temp_min
+#      if("umid_min" %in% names(data)) d$umid_min <- data$umid_min
+      #if("temp_med" %in% names(data)) d$temp_med <- data$temp_med
+      #if("umid_med" %in% names(data)) d$umid_med <- data$umid_med
+      #if("temp_max" %in% names(data)) d$temp_max <- data$temp_max
+      #if("umid_max" %in% names(data)) d$umid_max <- data$umid_max
       if(write == "db"){
             # se tiver ja algum registro com mesmo geocodigo e SE, esse sera substituido pelo atualizado.
             print(paste("saving alerta table for ",cid10))
             
             varnames <- "(\"SE\", \"data_iniSE\", casos_est, casos_est_min, casos_est_max, casos,tweet,
-            municipio_geocodigo,p_rt1,p_inc100k,\"Localidade_id\",nivel,versao_modelo,id)"
+            tempmin, umidmax, municipio_geocodigo, \"Rt\", p_rt1,pop, p_inc100k,\"Localidade_id\",nivel,versao_modelo,id)"
             
             sepvarnames <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max","tweet",
-                             "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
+                             "tempmin","umidmax","casos","municipio_geocodigo","Rt", "p_rt1","p_inc100k","\"Localidade_id\"",
                              "nivel","versao_modelo","id")
             
             # nomes das tabelas para salvar os historicos:
@@ -718,10 +722,10 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
             if(!(cid10 %in% c("A90", "A92.0", "A92.8"))) stop(paste("não sei onde salvar histórico para o agravo", cid10))
            
                 updates <- paste(sepvarnames[1],"=excluded.",sepvarnames[1],sep="")
-            for(i in 2:13) updates <- paste(updates, paste(sepvarnames[i],"=excluded.",
+            for(i in 2:17) updates <- paste(updates, paste(sepvarnames[i],"=excluded.",
                                                            sepvarnames[i],sep=""),sep=",") 
             
-            stringvars = c(2,12)            
+            stringvars = c(2,16)            
             for (li in 1:dim(d)[1]){
                   linha = as.character(d[li,1])
                   for (i in 2:length(sepvarnames)) {
