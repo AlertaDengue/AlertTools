@@ -680,6 +680,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       d$tempmin <- ifelse("temp_min" %in% names(data), data$temp_min, rep(NA,nrow(d)))
       d$umidmax <- ifelse("umid_max" %in% names(data), data$umid_max, rep(NA, nrow(d)))
       d$municipio_geocodigo <- na.omit(unique(data$cidade)) # com 7 digitos
+      d$municipio_nome <- data$nome
       d$Rt <- data$Rt
       d$p_rt1 <- data$p1
       d$p_rt1[is.na(d$p_rt1)] <- 0
@@ -709,12 +710,16 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
             print(paste("saving alerta table for ",cid10))
             
             varnames <- "(\"SE\", \"data_iniSE\", casos_est, casos_est_min, casos_est_max, casos,tweet,
-            tempmin, umidmax, municipio_geocodigo, \"Rt\", p_rt1,pop, p_inc100k,\"Localidade_id\",nivel,versao_modelo,id)"
+            tempmin, umidmax, municipio_geocodigo, \"Rt\", p_rt1,pop, p_inc100k,\"Localidade_id\",nivel,
+            versao_modelo,id)"
             
             sepvarnames <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
-                             "casos","tweet","tempmin","umidmax","municipio_geocodigo","Rt", "p_rt1","pop",
+                             "casos","tweet","tempmin","umidmax","municipio_geocodigo","\"Rt\"", "p_rt1","pop",
                              "p_inc100k","\"Localidade_id\"","nivel","versao_modelo","id")
-            
+           
+             sepvarnamesR <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
+                             "casos","tweet","tempmin","umidmax","municipio_geocodigo","Rt", "p_rt1","pop",
+                             "p_inc100k","Localidade_id","nivel","versao_modelo","id")
             # nomes das tabelas para salvar os historicos:
             if(cid10=="A90") {tabela <-  "Historico_alerta"; constr.unico = "alertas_unicos"}
             if(cid10=="A92.0") {tabela <-  "Historico_alerta_chik"; constr.unico = "alertas_unicos_chik"}
@@ -725,10 +730,10 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
             for(i in 2:18) updates <- paste(updates, paste(sepvarnames[i],"=excluded.",
                                                            sepvarnames[i],sep=""),sep=",") 
             
-            stringvars = c(2,17)            
+            stringvars = c("data_iniSE","versao_modelo")            
             for (li in 1:dim(d)[1]){
-                  linha = as.character(d[li,1])
-                  for (i in 2:length(sepvarnames)) {
+                  linha = as.character(d[li,sepvarnamesR[1]])
+                  for (i in sepvarnamesR[2:18]) {
                         if (i %in% stringvars & !is.na(as.character(d[li,i]))) {
                               value = paste("'", as.character(d[li,i]), "'", sep="")
                               linha = paste(linha, value, sep=",")
