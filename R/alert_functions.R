@@ -711,9 +711,9 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
             varnames <- "(\"SE\", \"data_iniSE\", casos_est, casos_est_min, casos_est_max, casos,tweet,
             tempmin, umidmax, municipio_geocodigo, \"Rt\", p_rt1,pop, p_inc100k,\"Localidade_id\",nivel,versao_modelo,id)"
             
-            sepvarnames <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max","casos","tweet",
-                             "tempmin","umidmax","municipio_geocodigo","Rt", "p_rt1","p_inc100k","\"Localidade_id\"",
-                             "nivel","versao_modelo","id")
+            sepvarnames <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
+                             "casos","tweet","tempmin","umidmax","municipio_geocodigo","Rt", "p_rt1","pop",
+                             "p_inc100k","\"Localidade_id\"","nivel","versao_modelo","id")
             
             # nomes das tabelas para salvar os historicos:
             if(cid10=="A90") {tabela <-  "Historico_alerta"; constr.unico = "alertas_unicos"}
@@ -722,10 +722,10 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
             if(!(cid10 %in% c("A90", "A92.0", "A92.8"))) stop(paste("não sei onde salvar histórico para o agravo", cid10))
            
                 updates <- paste(sepvarnames[1],"=excluded.",sepvarnames[1],sep="")
-            for(i in 2:17) updates <- paste(updates, paste(sepvarnames[i],"=excluded.",
+            for(i in 2:18) updates <- paste(updates, paste(sepvarnames[i],"=excluded.",
                                                            sepvarnames[i],sep=""),sep=",") 
             
-            stringvars = c(2,16)            
+            stringvars = c(2,17)            
             for (li in 1:dim(d)[1]){
                   linha = as.character(d[li,1])
                   for (i in 2:length(sepvarnames)) {
