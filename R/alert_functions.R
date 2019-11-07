@@ -711,8 +711,8 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
             varnames <- "(\"SE\", \"data_iniSE\", casos_est, casos_est_min, casos_est_max, casos,tweet,
             tempmin, umidmax, municipio_geocodigo, \"Rt\", p_rt1,pop, p_inc100k,\"Localidade_id\",nivel,versao_modelo,id)"
             
-            sepvarnames <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max","tweet",
-                             "tempmin","umidmax","casos","municipio_geocodigo","Rt", "p_rt1","p_inc100k","\"Localidade_id\"",
+            sepvarnames <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max","casos","tweet",
+                             "tempmin","umidmax","municipio_geocodigo","Rt", "p_rt1","p_inc100k","\"Localidade_id\"",
                              "nivel","versao_modelo","id")
             
             # nomes das tabelas para salvar os historicos:
