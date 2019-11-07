@@ -682,6 +682,7 @@ write.alerta<-function(obj, write = "no", version = Sys.Date()){
       d$municipio_geocodigo <- na.omit(unique(data$cidade)) # com 7 digitos
       d$municipio_nome <- data$nome
       d$Rt <- data$Rt
+      d$Rt[is.na(d$Rt)] <- 0
       d$p_rt1 <- data$p1
       d$p_rt1[is.na(d$p_rt1)] <- 0
       d$p_inc100k <- data$inc
