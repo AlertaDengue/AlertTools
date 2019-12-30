@@ -42,6 +42,9 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   le = length(obj$casos) 
   lse = length(obj$SE) 
   
+  # checking if only one locality
+  
+  
   obj$tcasesICmin <- obj$casos
   obj$tcasesmed <- obj$casos
   obj$tcasesICmax <- obj$casos

@@ -1,82 +1,177 @@
 setwd("../..")
 
 ## testando conexão com o banco 
-con <-DenguedbConnect()
-test_that("sql connection exists", {
-      expect_equal(class(con)[1], "PostgreSQLConnection")
+#con <-DenguedbConnect()  #
+#test_that("sql connection exists", {
+#      expect_equal(class(con)[1], "PostgreSQLConnection")
+#})
+
+geoc = c(3302403, 3205200) # cidade para teste
+
+# =====================================
+## Testing function getCases
+#======================================
+# args:cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific",
+#datasource=con
+
+# common use
+dC0 = getCases(cities = geoc, datasource=con)
+
+test_that("getCases: produces required input error messages", {
+      expect_error(getCases(cities = "Rio"),"cities should be a vector of numeric geocodes")
+      #expect_error(getCases(cities=222222), "one or more cities not found")
+      #expect_error_getCases(cities = c(3302403, 999999), "one or more cities not found")
+      #expect_error(getCases(cities = 3302403, cid10 = "A99"),"cid10 unknown")
+      #expect_error(getCases(cities = 3302403, cid10 = "dengue"),"cid10 should be a code, p.e. A92")
+      #expect_error(getCases(cities = 3302403, lastday = "20-12-2019"),"check lastday's format") 
+      #expect_error(getCases(cities = 3302403, lastday = "1980-12-01"),"lastday should be 2010-01-01 or more recent")
+      #expect_error(getCases(cities = 3302403, dataini = "abc"),"check dataini argument, it seems incorrect")
 })
 
-geoc = 330240 # cidade para teste
 
-####======================================
-# Testing function getCases
-####======================================
-dC0 = getCases(city = geoc, datasource=con)
-test_that("output getCases has the required columns", {
-#  expect_true(all(c("bairro", "SE", "casos") %in% names(dC0)))
-  expect_true(all(c("localidade", "SE", "casos","nome","pop") %in% names(dC0)))
+test_that("getcases: produce required warnings",{
+      #expect_message(getCases(cities = 3302403, lastday = "2050-12-31"),"this date is greater than the lastday, returning the most recent data available")       
 })
+
+test_that("getcases: produce required output",{
+      expect_named(dC0, c("SE","cidade","CID10","casos","localidade","nome","pop"),ignore.order = TRUE)
+      classes <- sapply(dC0,class)
+      expect_equal(sapply(dC0,class), c("SE"="numeric","cidade"="numeric",
+                                        "CID10"="character","casos"="numeric",
+                                        "localidade"="numeric","nome"="character",
+                                        "pop"="numeric"))
+      expect_equal(sum(sapply(dC0, anyNA)),0)  # no NAs
+      
+})
+
+## =====================================
+# Testing getWU function
+#  =====================================
+# args: vars = "temp_min", finalday = Sys.Date(), datasource=con
+sta <- c('SBAF','SBRJ')
+wuvars <- c("temp_min","temp_max","temp_med","umid_min","umid_med","umid_max",
+                  "pressao_min","pressao_med","pressao_max")
+
+dW01 = getWU(stations = sta, vars = wuvars, datasource=con) #default var is temp_min
+
+test_that("getWU: produces required input error messages", {
+      #expect_error(getWU(stations = 'SBGL', lastday = "20-12-2019"),"check lastday's format") 
+      #expect_error(getWU(stations = 'SBGL', lastday = "1980-12-01"),"lastday should be 2010-01-01 or more recent")
+})
+
+test_that("output of getWU has the required columns.", {
+      expect_named(dW01, c("estacao","SE", wuvars),ignore.order = TRUE)
+      expect_equal(sapply(dW01,class), c("estacao"="character",SE="numeric", 
+                                         "temp_min"="numeric","temp_med"="numeric","temp_max"="numeric",
+                                         "umid_min"="numeric","umid_med"="numeric","umid_max"="numeric",
+                                         "pressao_min"="numeric","pressao_med"="numeric","pressao_max"="numeric"))
+      expect_equal(sum(sapply(dW01[,c("estacao","SE")], anyNA)),0)  # no NAs
+})
+
+## ======================================
+# Test getCasesinRio
+
+dRJ = getCasesinRio(APSid = 9, datasource = con) # Rio de Janeiro
+
+test_that("output of getCasesinRio has the required columns.", {
+      expect_named(dRJ, c("SE","casos","nome","cidade","pop","CID10",
+                          "localidade","localidadeid"),ignore.order = TRUE)
+      expect_equal(sapply(dRJ,class), c(SE="numeric",casos="numeric",nome="character",
+                                        cidade="numeric",pop="integer",CID10="character",
+                                        localidade="character",localidadeid="integer"))
+      expect_equal(sum(sapply(dRJ, anyNA)),0)  # no NAs
+})
+
+
 
 ### =====================================
 # Testing the adjustIncidence function 
 ### =====================================
-dC1<-adjustIncidence(obj=dC0)
+# args: obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
+# Dmax=12, nyears = 3, datasource = con, lastSE=NA
 
-test_that("output of adjustIncidence has the required columns.", {
-  expect_true(all(c("localidade", "SE", "casos", "pdig", "tcasesICmin", 
-                    "tcasesmed", "tcasesICmax") %in% names(dC1)))
+geoc = 3302403
+dC1 <- getCases(geoc) %>% 
+      adjustIncidence(., method = "fixedprob")
+
+dC2 <- getCases(geoc) %>% 
+      adjustIncidence(., method = "bayesian")
+
+#dRJ <- getCasesinRio(APSid = 8, datasource = con)
+#dC1 <- dRJ %>% 
+#      adjustIncidence(.)
+
+test_that("adjustIncidence: produce required output",{
+      required_output = c("casos","tcasesICmin","tcasesmed","tcasesICmax") 
+      # fixedprob
+      expect_true(all(required_output %in% names(dC1)))
+      expect_equal(sum(sapply(dC1[,required_output], anyNA)),0)  # no NAs
+      # bayesian
+      expect_true(all(required_output %in% names(dC2)))
+      expect_equal(sum(sapply(dC2[,required_output], anyNA)),0)  # no NAs
+      
 })
 
-
-### =====================================
-# Testing the bayesiann adjust incidence functions 
-### =====================================
-q0 <- getdelaydata(cities=geoc, years=2016:2017, datasource=con)
-q1 <- getdelaydata(cities=330455, years=2017, datasource=con)
-
-res0 = delaycalc(q0)
-test_that("delayCalc: runnoff matrix contains all valid cases", {
-      expect_true(sum(res0$delay.tbl$Notifications) == nrow(q0))
+test_that("adjustIncidence: produce valid estimates",{
+      # fixed prob
+      expect_true(min(dC1$tcasesICmin) >= 0)
+      expect_true(min(dC1$tcasesICmax) >= 0)
+      expect_true(min(dC1$tcasesmed) >= 0)
+      # bayesian
+      expect_true(min(dC2$tcasesICmin) >= 0)
+      expect_true(min(dC2$tcasesICmax) >= 0)
+      expect_true(min(dC2$tcasesmed) >= 0)
 })
+
+# Testing the internal bayesian adjust incidence functions 
+### =====================================
+#q0 <- getdelaydata(cities=geoc, years=2016:2017, datasource=con)
+#q1 <- getdelaydata(cities=330455, years=2017, datasource=con)
+
+#res0 = delaycalc(q0)
+#test_that("delayCalc: runnoff matrix contains all valid cases", {
+#      expect_true(sum(res0$delay.tbl$Notifications) == nrow(q0))
+#})
 
 # incluir teste se a sequencia de semanas epidemiologicas esta correta
 
-out0<-fitDelay.inla(res0)
-delay <- prob.inc(out0, plotar = F)
+#out0<-fitDelay.inla(res0)
+#delay <- prob.inc(out0, plotar = F)
 
-test_that("prob.inc: returns a matrix", {
-      expect_true(class(delay) == "matrix")
-})
+#test_that("prob.inc: returns a matrix", {
+#      expect_true(class(delay) == "matrix")
+#})
 
-test_that("prob.inc: returns a non-empty matrix", {
-      expect_true(all(is.na(delay)) == FALSE)
-})
+#test_that("prob.inc: returns a non-empty matrix", {
+#      expect_true(all(is.na(delay)) == FALSE)
+#})
 
-rm(q0, q1, out0, delay)
-
-# Using the adjustIncidence to call the bayesian delay functions
-dC1<-adjustIncidence(obj=dC0, method = "bayesian")
-
-test_that("output of adjustIncidence has the required columns.", {
-      expect_true(all(c("localidade", "SE", "casos", "pdig", "tcasesICmin", 
-                        "tcasesmed", "tcasesICmax") %in% names(dC1)))
-})
 
 ### =====================
 # Testing Rt functions
 ### =====================
+# Rt com dist normal sem temp dep
+# args: count = "casos", gtdist, meangt, sdgt, CI = "beta", alpha = .95, a0 = 2 , b0 = 3
 # different ways to run it
-dC11<-Rt(obj = dC0, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
-dC12<-Rt(obj = dC1, count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
+dC00 <- dC0 %>% 
+      Rt(., count = "casos", gtdist="normal", meangt=3, sdgt = 1)
+dC10<-dC1 %>% 
+      Rt(., count = "tcasesmed", gtdist="normal", meangt=3, sdgt = 1)
 
 test_that("output of Rt has the required columns.", {
-  expect_true(all(c("localidade", "SE", "casos", "Rt", "lwr", "upr", "p1") %in% names(dC11)))
-  expect_true(all(c("localidade", "SE", "casos", "Rt", "lwr", "upr", "p1") %in% names(dC12)))
+  expect_true(all(c("SE", "casos", "Rt", "lwr", "upr") %in% names(dC00)))
+  expect_true(all(c("SE", "casos", "Rt", "lwr", "upr") %in% names(dC10)))
 })
 
-
-test_that("Rt is always zero or positive.", {
-      expect_true(min(dC11$Rt>0, na.rm=TRUE) >= 0)
+test_that("Rt: produce valid estimates",{
+      # casos
+      expect_true(min(dC00$Rt, na.rm=TRUE) >= 0)
+      expect_true(min(dC00$lwr, na.rm=TRUE) >= 0)
+      expect_true(min(dC00$upr, na.rm=TRUE) >= 0)
+      # casosest
+      expect_true(min(dC10$Rt, na.rm=TRUE) >= 0)
+      expect_true(min(dC10$lwr, na.rm=TRUE) >= 0)
+      expect_true(min(dC10$upr, na.rm=TRUE) >= 0)
 })
 
 # ----------------------
@@ -88,38 +183,6 @@ test_that("output of getTweet has the required columns.", {
   expect_true(all(c("cidade", "SE", "tweet") %in% names(dT01)))
 })
 
-
-# ----------------------
-# Testing getWU function
-# ----------------------
-dW01 = getWU(stations = 'SBAF', datasource=con) #default var is temp_min
-
-test_that("output of getWU has the required columns.", {
-  expect_true(all(c("SE", "estacao","temp_min") %in% names(dW01)))
-})
-
-dW02 = getWU(stations = 'SBAF', vars=c("temp_min","temp_max"), datasource=con)
-test_that("output of getWU has the required columns.", {
-      expect_true(all(c("SE", "estacao","temp_min","temp_max") %in% names(dW02)))
-})
-
-#testando mais de uma estacao que existe
-dW03 = getWU(stations = c('SBAF', "SBRJ"), vars=c("temp_min","temp_max"), datasource=con)
-test_that("output of getWU has the solicited stations.", {
-      expect_true(all(c('SBAF', "SBRJ") %in% as.character(unique(dW03$estacao))))
-})
-
-#testando uma estacao que nao existe e outra q existe
-dW04 = getWU(stations = c('ABCD', "SBRJ"), vars=c("temp_min","temp_max"), datasource=con)
-test_that("output of getWU has the solicited stations.", {
-      expect_true(all(c("SBRJ") %in% as.character(unique(dW04$estacao))))
-})
-
-#testando uma estacao que nao existe 
-dW05 = getWU(stations = c('ABCD'), vars=c("temp_min","temp_max"), datasource=con)
-test_that("output of getWU should be NULL pq estacao nao existe.", {
-      expect_null(dW05)
-})
 
 # ---------------------
 # Testing mergedata 

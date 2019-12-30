@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_timeseries.R
 \name{bestWU}
 \alias{bestWU}
-\title{Chooses the most updated meteorological data for a city from a set of choices}
+\title{Chooses the most updated meteorological data for a city from a set of two choices}
 \usage{
 bestWU(series, var)
 }

@@ -19,11 +19,23 @@
 
 getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource=con) {
       
-      if (!all(nchar(stations) == 4)) stop("'stations' should be a vector of 4 digit station names")
-      nsta = length(stations)
-      
-      # reading data from database
+      # validade climate variables
+      wuvars <- c("temp_min","temp_max","temp_med","umid_min","umid_med","umid_max",
+                  "pressao_min","pressao_med","pressao_max")
+      if(any(!(vars %in% wuvars))) stop("wu climate variable(s) unknown or mispecified")
+
+      # check if all stations exist
       sqlstations = paste("'", str_c(stations, collapse = "','"),"'", sep="")
+      checkStationComm <- paste("SELECT estacao_id, nome FROM \"Municipio\".\"Estacao_wu\" WHERE  estacao_id IN (", sqlstations, ")",sep="")
+      stanames <- dbGetQuery(datasource,checkStationComm)
+      
+      if(nrow(stanames)==0) stop("'stations' unknown. Check their names.")
+      notfoundsta <- stations[!(stations %in% stanames$estacao_id)]
+      if(length(notfoundsta) > 0) warning(paste("station",notfoundsta, "does not exist in the database."))
+      
+      # Geting the data from the available stations
+      message(paste("are the wu stations used", cat(stanames$nome)))
+      sqlstations = paste("'", str_c(stanames$estacao_id, collapse = "','"),"'", sep="")
       
       comando <- paste("SELECT * from \"Municipio\".\"Clima_wu\" WHERE 
                         \"Estacao_wu_estacao_id\" IN  (", sqlstations, ") AND 
@@ -31,7 +43,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
       
       d <- dbGetQuery(datasource,comando) 
       
-      # agregando vars climaticas por semana
+      # agregando vars climaticas por semana (ignora NAs)
       d1 = d %>% 
             mutate(estacao = Estacao_wu_estacao_id) %>% 
             mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) %>% # creating column SE
@@ -51,7 +63,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
 #bestWU -----------------------------------------------------------------
 #'@description Receives a set of meteorological data and return the most complete for
 #' a given city.If both are good, the first is returned.
-#'@title Chooses the most updated meteorological data for a city from a set of choices
+#'@title Chooses the most updated meteorological data for a city from a set of two choices
 #'@param series list of the competing time series.
 #'See examples.
 #'@param var name of the meteorological variable 
@@ -66,6 +78,7 @@ bestWU <- function(series,var){
       
       if(missing(var))stop("bestWU: please specify a valid meteorological variable")
       if(class(series)!="list") stop("bestWU: WU data must be in a list")
+      
       # prop missing data
       propNA <- sapply(series,function(x,v=var) sum(is.na(x[,v]))/nrow(x))
       # last date with data
@@ -132,7 +145,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'@description Create weekly time series from case data from server. The source is the SINAN. 
 #'@title Get Case Data and aggregate per week and area
 #'@param cities cities' geocode.
-#'@param finalday last day. Default is the last available.
+#'@param lastday last day. Default is the last available. Format: "yyyy-mm-dd"
 #'@param dataini "notific" if data aggregated by notification date or "sinpri" if data aggregated
 #' if aggregated by date of first symptoms
 #'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8", 
@@ -148,7 +161,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific",
                      datasource=con) {
       
-      stopifnot(class(cities) %in% c("integer","numeric")) 
+      assert_that(class(cities) %in% c("integer","numeric"), msg = "cities should be a vector of numeric geocodes") 
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
       
       # dealing with synonimous cid ----------------------------------------------
@@ -173,7 +186,8 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
                          ") AND cid10_codigo IN(", sqlcid,")", sep="")
             
       dd <- dbGetQuery(datasource,comando)
-      if(nrow(dd)==0)stop(paste("getCases did not find cid10" , cid10, "for city", city))
+      
+      if(nrow(dd)==0)stop("getCases found no data")
             
       # pegando nome da cidade e populacao -----------------------------------------
       sql2 <- paste("SELECT nome,populacao,geocodigo from \"Dengue_global\".\"Municipio\" WHERE geocodigo IN(", sqlcity,")") 
@@ -218,12 +232,18 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
 
 # read.cases --------------------------------------------------------------
 #' @title Function to extract case count for covered municipalities
-#' @description Function \code{read.cases} extract notification data from database and aggregate by epiweek. Used by mem.
-#' @name read.cases
+#' @description Function \code{read.cases} extract notification data from database 
+#' and aggregate by epiweek. Used by mem.
+#' @param start_year first year of the time series
+#' @param end_year last year of the time series
+#' @param datasource Infodengue connection
+#' @param mun_list vector with the municipalities' 7 digit geocodes 
 #' @keywords internal
 #' @author Marcelo F C Gomes
+#' @examples
+#' dd <- read.cases(2010, 2018, mun_list = 3302403)
 
-read.cases <- function(start_year, end_year, con, mun_list=NULL){
+read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
       sqlquery = paste0("SELECT dt_notific, se_notif, ano_notif, c.municipio_geocodigo
                         FROM  \"Municipio\".\"Notificacao\" as c
                         INNER JOIN \"Dengue_global\".regional_saude as f
@@ -238,9 +258,10 @@ read.cases <- function(start_year, end_year, con, mun_list=NULL){
                                " AND c.municipio_geocodigo IN (", mun_list_txt,"));" )
       }
       
-      # In the database we have each single notification. So we'll have to aggregate later on
-      # We'll use an object name "weekly" from the start since we'll overwrite it with the aggregate later.
-      df.cases.weekly <- dbGetQuery(conn = con, sqlquery, stringsAsFactors=FALSE)
+      # In the database we have each single notification. So we'll have to aggregate 
+      #later on We'll use an object name "weekly" from the start since we'll overwrite
+      #it with the aggregate later.
+      df.cases.weekly <- dbGetQuery(conn = datasource, sqlquery, stringsAsFactors=FALSE)
       
       # Auxiliary function to correctly generate SE in the format YYYYWW from columns
       # notification week (WW) and current year. Since dates in the begining(end) of an year
@@ -294,14 +315,13 @@ read.cases <- function(start_year, end_year, con, mun_list=NULL){
 }
 
 
-
-
 # getCasesinRio --------------------------------------------------------------
 #'@description Get time series of cases per APS in Rio de Janeiro (special case) 
 #'@title Get cases from an APS in Rio de Janeiro and aggregate them into weekly time series. 
 #'@param APSid 0(APS1), 1 (APS2.1), 2 (APS2.2), 3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4),
 #', 7(APS5.1), 8(APS5.2), 9(APS5.3)  
 #'@param cid10 cid 10 disease code. A90 = dengue (default) , A920 = chikungunia
+#'@param dataini "sinpri" or "notific"(default)
 #'@param lastday end date of the time series
 #'@return data.frame with the data aggregated per health district and week
 #'@examples
@@ -310,8 +330,8 @@ read.cases <- function(start_year, end_year, con, mun_list=NULL){
 #'dC1 = getCasesinRio(APSid = 0, cid10 = "A920", datasource = con) # Rio de Janeiro
 #'tail(dC1)
 
-getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
-                          datasource) {
+getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="notific",
+                          datasource = con) {
       
       sqldate <- paste("'", lastday, "'", sep = "")
       #dealing with synonimous cid
@@ -324,7 +344,8 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
       if(!(APSid %in% 0:9))stop("APS desconhecida ou ausente. Especificar: 0(APS1), 1 (APS2.1), 2 (APS2.2), 
                                     3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4) 7(APS5.1), 8(APS5.2), 9(APS5.3) ")
       
-      sqlquery = paste("SELECT n.dt_notific, n.ano_notif, se_notif, l.id, l.nome
+      # query dados
+      sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.se_sin_pri, n.dt_sin_pri, se_notif, l.id, l.nome
       FROM  \"Municipio\".\"Notificacao\" AS n 
       INNER JOIN \"Municipio\".\"Bairro\" AS b 
       ON n.bairro_nome = b.nome 
@@ -334,32 +355,49 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90",
                        "AND n.cid10_codigo = ", sqlcid)
       
       d <- dbGetQuery(datasource,sqlquery)
-      d$SEM_NOT <- d$ano_notif*100+d$se_notif 
-      d$SEM_NOT <- data2SE(d$dt_notific, format = "%Y-%m-%d")
-            
-      #Cria Serie temporal de casos
-      #sem <- seqSE(from = min(d$SEM_NOT), to = max(d$SEM_NOT))$SE
-      sem <- seqSE(from = 201001, to = data2SE(lastday,format="%Y-%m-%d"))$SE
-      nsem <- length(sem)
-      st <- data.frame(SE = sem, casos = 0)
-      for(i in 1:nsem) st$casos[i] <- sum(d$SEM_NOT == st$SE[i])
-      st$nome <- "Rio de Janeiro"
-      # agrega informacao de populacao da APS
       
-      pop = NA
+      # query pop from table Municipio.localidade (only has data for Rio)
       sql2 <- paste("SELECT nome,id,populacao from \"Municipio\".\"Localidade\" WHERE id =", APSid) 
-      varglobais <- dbGetQuery(datasource,sql2)
-      st$cidade <- 3304557
-      st$pop <- varglobais$populacao     
-      st$CID10 <- cid10
-      st$localidade <- varglobais$nome
-      st$localidadeid <- varglobais$id
+      pop <- dbGetQuery(datasource,sql2)
+      
+      # agregando casos por semana por cidade ---------------------------------------
+      if(dataini == "notific"){
+            message("case aggregated by notification date")
+            casos = d %>% 
+                  mutate(SE = ano_notif*100+se_notif) %>%
+                  group_by(id, nome) %>%
+                  count(SE)
+      }
+      if(dataini == "sinpri"){
+            message("case aggregated by symptoms date")
+            casos = d %>% 
+                  mutate(ano_sinpri = lubridate::year(dt_sin_pri),
+                         SE = ano_sinpri*100+se_sin_pri) %>%
+                  group_by(id, nome) %>%
+                  count(SE)
+      }
+      
+      
+      # criando serie temporal
+      sem <-  expand.grid(id = casos$id,SE = seqSE(from = 201001, 
+                        to = max(casos$SE, na.rm=TRUE))$SE)
+      st <- full_join(sem,casos,by = c("id", "SE")) %>% 
+            arrange(id,SE) %>%
+            left_join(.,pop[,c("id","populacao")],"id") %>%
+            rename(localidade = nome,
+                   localidadeid = id,
+                   casos = n) %>%
+            mutate(cidade = 3304557,
+                   nome = "Rio de Janeiro",
+                   casos = replace_na(casos, 0),
+                   CID10 = cid10) 
+            
       st  
 }
 
 
 
-# mergedata --------------------------------------------------------------
+# mergedata (deprecated)  -------------------------------------------
 #'@description Merge cases, tweets and climate data for the alert  
 #'@title Merge cases, tweets and climate data.
 #'@param cases data.frame with aggregated cases by locality (or city)

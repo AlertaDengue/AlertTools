@@ -18,7 +18,8 @@ Imports:
     knitr,
     survival,
     forecast,
-    tidyverse
+    tidyverse,
+    assertthat
 Suggests:
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1

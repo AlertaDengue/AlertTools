@@ -10,14 +10,14 @@ getCases(cities, lastday = Sys.Date(), cid10 = "A90",
 \arguments{
 \item{cities}{cities' geocode.}
 
+\item{lastday}{last day. Default is the last available. Format: "yyyy-mm-dd"}
+
 \item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8",}
 
 \item{dataini}{"notific" if data aggregated by notification date or "sinpri" if data aggregated
 if aggregated by date of first symptoms}
 
 \item{datasource}{PostgreSQLConnection to project database .}
-
-\item{finalday}{last day. Default is the last available.}
 }
 \value{
 data.frame with the data aggregated per week according to disease onset date.
@@ -29,6 +29,6 @@ Create weekly time series from case data from server. The source is the SINAN.
 d <- getCases(cities = 3300936) # dengue
 d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
-d <- getCases(cities = cid$municipio_geocodigo, datasource = con) 
+d <- getCases(cities = cid$municipio_geocodigo, datasource = con, dataini = "sinpri") 
 tail(d)
 }

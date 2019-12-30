@@ -28,6 +28,6 @@ Calculate the generation time for cities or from meteorological stations
 }
 \examples{
 cid <- getCidades(uf="Rio de Janeiro")$municipio_geocodigo
-gt <- applyGenTimeDist(stations = "SBGL", cid10 = "A90", ini = 102016, end = 102018)
-gt <- applyGenTimeDist(stations = "SBGL", cid10 = "A90")
+gt <- applyGenTimeDist(stations = c("SBGL","SBJR"), cid10 = "A90")
+system.time(gt <- applyGenTimeDist(cities = cid, cid10 = "A90"))
 }

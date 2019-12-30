@@ -4,10 +4,23 @@
 \alias{read.cases}
 \title{Function to extract case count for covered municipalities}
 \usage{
-read.cases(start_year, end_year, con, mun_list = NULL)
+read.cases(start_year, end_year, datasource = con, mun_list = NULL)
+}
+\arguments{
+\item{start_year}{first year of the time series}
+
+\item{end_year}{last year of the time series}
+
+\item{datasource}{Infodengue connection}
+
+\item{mun_list}{vector with the municipalities' 7 digit geocodes}
 }
 \description{
-Function \code{read.cases} extract notification data from database and aggregate by epiweek. Used by mem.
+Function \code{read.cases} extract notification data from database 
+and aggregate by epiweek. Used by mem.
+}
+\examples{
+dd <- read.cases(2010, 2018, mun_list = 3302403)
 }
 \author{
 Marcelo F C Gomes
