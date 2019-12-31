@@ -173,7 +173,7 @@ SE2date <- function(se){
 #'@param to first week in format 201401
 #'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works from 2010 to 2020.
 #'@examples
-#'seqSE(201802, 201910)
+#'seqSE(201802, 202010)
 
 
 seqSE <- function(from, to){
@@ -188,7 +188,8 @@ seqSE <- function(from, to){
       
       if (to > SE$SE[N]){
             to <- SE$SE[N]
-            warning(paste("This function only works from 2010 to 2019. Last SE set to", to))
+            warning(paste("This function only works from 2010 to
+                          ",max(SE$Ano),". Last returned date is", to))
       }
       
       SE[which(SE$SE==from):which(SE$SE==to),]
