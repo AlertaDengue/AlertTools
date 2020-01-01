@@ -29,7 +29,7 @@
 setCriteria <- function(rule=NULL, values=NULL, 
                         delays = list(delayy = c(0,0), delayo = c(0,0), delayr = c(0,0))){
       
-      
+      ##
       if(rule[1] == "Af"){
                   criteria <- list(
                   crity = c("temp_min > clicrit & casos > 0", 3, 3), #3,2
