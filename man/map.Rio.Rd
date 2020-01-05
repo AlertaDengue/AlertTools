@@ -29,5 +29,8 @@ a map
 Function to plot a map of the alert
 }
 \examples{
-map.Rio(alerio)
+params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
+criter <- setCriteria(rule="Af", values = params)
+alerio2 <- alertaRio(naps = 0:2, crit = criter, se=201804, delaymethod="fixedprob")
+map.Rio(alerio2)
 }

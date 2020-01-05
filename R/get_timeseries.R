@@ -109,7 +109,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
       
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
       
-      # get tweets on dengue ---------------------------------------------
+      # get tweets on dengue 
       if (cid10 == "A90"){ 
             
             sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
@@ -125,7 +125,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
       tots = tapply(tw$numero,tw$Municipio_geocodigo,sum)
       if (any(tots==0)) message(paste("cidade(s)",cities[which(tots==0)],"nunca tweetou sobre dengue"))
       
-      # Counting number of tweets per SE and city -----------------
+      # Counting number of tweets per SE and city 
       tw <- tw %>%  # 
             mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) # creating column SE
       
@@ -164,7 +164,7 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
       assert_that(class(cities) %in% c("integer","numeric"), msg = "cities should be a vector of numeric geocodes") 
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
       
-      # dealing with synonimous cid ----------------------------------------------
+      # dealing with synonimous cid 
       if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
             if (cid10 %in% c("A92", "A920","A92.0")) { # chik
                   cid <-c("A92", "A920","A92.0")
@@ -177,7 +177,7 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
       }
       if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
     
-       # reading notification data form the database ----------------------------
+       # reading notification data form the database 
       sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
       sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
       
@@ -189,11 +189,11 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
       
       if(nrow(dd)==0)stop("getCases found no data")
             
-      # pegando nome da cidade e populacao -----------------------------------------
+      # pegando nome da cidade e populacao 
       sql2 <- paste("SELECT nome,populacao,geocodigo from \"Dengue_global\".\"Municipio\" WHERE geocodigo IN(", sqlcity,")") 
       varglobais <- dbGetQuery(datasource,sql2)
       
-      # agregando casos por semana por cidade ---------------------------------------
+      # agregando casos por semana por cidade 
       if(dataini == "notific"){
             message("case aggregated by notification date")
             casos = dd %>% 
@@ -325,73 +325,89 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
 #'@param lastday end date of the time series
 #'@return data.frame with the data aggregated per health district and week
 #'@examples
-#'dC = getCasesinRio(APSid = 9, datasource = con) # Rio de Janeiro
+#'dC = getCasesinRio(APSid = 0:9, datasource = con) # Rio de Janeiro
 #'tail(dC)
-#'dC1 = getCasesinRio(APSid = 0, cid10 = "A920", datasource = con) # Rio de Janeiro
+#'dC1 = getCasesinRio(APSid = 0, cid10 = "A90", datasource = con) # Rio de Janeiro
 #'tail(dC1)
 
 getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="notific",
                           datasource = con) {
       
-      sqldate <- paste("'", lastday, "'", sep = "")
+      
       #dealing with synonimous cid
       if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
       if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"}  # chik
       if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- "A92.8"} #zika
       if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
-      sqlcid <- paste("'", cid10, "'", sep = "")
+
       
-      if(!(APSid %in% 0:9))stop("APS desconhecida ou ausente. Especificar: 0(APS1), 1 (APS2.1), 2 (APS2.2), 
+      assert_that(all(APSid %in% 0:9), msg ="APS desconhecida ou ausente. Especificar: 0(APS1), 1 (APS2.1), 2 (APS2.2), 
                                     3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4) 7(APS5.1), 8(APS5.2), 9(APS5.3) ")
       
       # query dados
+      sqlcid <- paste("'", cid10, "'", sep = "")
+      sqldate <- paste("'", lastday, "'", sep = "")
+      sqlaps = paste("'", str_c(APSid, collapse = "','"),"'", sep="")
+      
       sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.se_sin_pri, n.dt_sin_pri, se_notif, l.id, l.nome
       FROM  \"Municipio\".\"Notificacao\" AS n 
       INNER JOIN \"Municipio\".\"Bairro\" AS b 
       ON n.bairro_nome = b.nome 
       INNER JOIN \"Municipio\".\"Localidade\" AS l 
       ON b.\"Localidade_id\" = l.id 
-      WHERE n.municipio_geocodigo = 3304557 AND l.id = ",APSid, "AND dt_digita <= ",sqldate, 
+      WHERE n.municipio_geocodigo = 3304557 AND l.id IN(",sqlaps, ") AND dt_digita <= ",sqldate, 
                        "AND n.cid10_codigo = ", sqlcid)
       
       d <- dbGetQuery(datasource,sqlquery)
       
       # query pop from table Municipio.localidade (only has data for Rio)
-      sql2 <- paste("SELECT nome,id,populacao from \"Municipio\".\"Localidade\" WHERE id =", APSid) 
+      sql2 <- paste("SELECT nome,id,populacao from \"Municipio\".\"Localidade\" WHERE id IN(", sqlaps, ")") 
       pop <- dbGetQuery(datasource,sql2)
       
-      # agregando casos por semana por cidade ---------------------------------------
+      # agregando casos por semana por cidade 
       if(dataini == "notific"){
             message("case aggregated by notification date")
             casos = d %>% 
                   mutate(SE = ano_notif*100+se_notif) %>%
-                  group_by(id, nome) %>%
-                  count(SE)
+                  group_by(id,SE) %>%
+                  summarise(casos = n(),
+                            localidade = unique(nome))
       }
+      
       if(dataini == "sinpri"){
             message("case aggregated by symptoms date")
             casos = d %>% 
                   mutate(ano_sinpri = lubridate::year(dt_sin_pri),
                          SE = ano_sinpri*100+se_sin_pri) %>%
-                  group_by(id, nome) %>%
-                  count(SE)
+                  summarise(casos = n(),
+                            localidade = unique(nome))
       }
       
       
       # criando serie temporal
-      sem <-  expand.grid(id = casos$id,SE = seqSE(from = 201001, 
+      sem <-  expand.grid(id = unique(casos$id), SE = seqSE(from = 201001, 
                         to = max(casos$SE, na.rm=TRUE))$SE)
       st <- full_join(sem,casos,by = c("id", "SE")) %>% 
             arrange(id,SE) %>%
             left_join(.,pop[,c("id","populacao")],"id") %>%
-            rename(localidade = nome,
-                   localidadeid = id,
-                   casos = n) %>%
+            rename(localidadeid = id) %>%
             mutate(cidade = 3304557,
                    nome = "Rio de Janeiro",
                    casos = replace_na(casos, 0),
-                   CID10 = cid10) 
-            
+                   CID10 = cid10) %>% 
+            mutate(localidade = case_when(is.na(localidade) & localidadeid == 0 ~ "A.P. 1.0",
+                                          is.na(localidade) & localidadeid == 1 ~ "A.P. 2.1",
+                                          is.na(localidade) & localidadeid == 2 ~ "A.P. 2.2",
+                                          is.na(localidade) & localidadeid == 3 ~ "A.P. 3.1",
+                                          is.na(localidade) & localidadeid == 4 ~ "A.P. 3.2",
+                                          is.na(localidade) & localidadeid == 5 ~ "A.P. 3.3",
+                                          is.na(localidade) & localidadeid == 6 ~ "A.P. 4.0",
+                                          is.na(localidade) & localidadeid == 7 ~ "A.P. 5.1",
+                                          is.na(localidade) & localidadeid == 8 ~ "A.P. 5.2",
+                                          is.na(localidade) & localidadeid == 9 ~ "A.P. 5.3",
+                                                                TRUE ~ localidade))
+      
+      assert_that(anyNA(st) == FALSE, msg = "getCasesinRio contains NA. This is unexpected.")       
       st  
 }
 

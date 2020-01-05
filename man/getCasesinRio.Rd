@@ -24,8 +24,8 @@ data.frame with the data aggregated per health district and week
 Get time series of cases per APS in Rio de Janeiro (special case)
 }
 \examples{
-dC = getCasesinRio(APSid = 9, datasource = con) # Rio de Janeiro
+dC = getCasesinRio(APSid = 0:9, datasource = con) # Rio de Janeiro
 tail(dC)
-dC1 = getCasesinRio(APSid = 0, cid10 = "A920", datasource = con) # Rio de Janeiro
+dC1 = getCasesinRio(APSid = 0, cid10 = "A90", datasource = con) # Rio de Janeiro
 tail(dC1)
 }

@@ -4,13 +4,12 @@
 \alias{alertaRio}
 \title{4 level alert Green-Yellow-Orange-Red for Rio de Janeiro.}
 \usage{
-alertaRio(naps = 0:9, pars, crit, datasource, se, cid10 = "A90",
-  verbose = TRUE, delaymethod = "fixedprob")
+alertaRio(naps = 0:9, crit, datasource = con, se, cid10 = "A90",
+  delaymethod = "fixedprob", narule = "arima", pdig = c(2.5016,
+  1.1013))
 }
 \arguments{
 \item{naps}{subset of vector 0:9 corresponding to the id of the APS. Default is all of them.}
-
-\item{pars}{parameters of the alert.}
 
 \item{datasource}{it is the name of the sql connection.}
 
@@ -18,9 +17,14 @@ alertaRio(naps = 0:9, pars, crit, datasource, se, cid10 = "A90",
 
 \item{cid10}{default is A90 (dengue). Chik = A920.}
 
-\item{verbose}{FALSE}
-
 \item{delaymethod}{atribbute of adjuntincidence. "fixedprob" or "bayesian"}
+
+\item{narule}{how to fill climate missing data (arima is the only option)}
+
+\item{pdig}{parameters for adjustIncidence = "fixedprob"
+(requires writing permission).}
+
+\item{pars}{parameters of the alert.}
 }
 \value{
 list with an alert object for each APS.
@@ -32,15 +36,8 @@ indicates evidence of sustained transmission, red indicates evidence of
 an epidemic scenario.
 }
 \examples{
-params <- list(pdigChik = c(2.5016,1.1013), tcrit=22, inccrit=100, preseas = 14.15, posseas = 18)
-criter <- list(
-crity = c("temp_min > tcrit | (temp_min < tcrit & inc > preseas)", 3, 0),
-crito = c("p1 > 0.9 & inc > preseas", 2, 2),
-critr = c("inc > inccrit", 1, 2)
-)
-ini = Sys.time()
-alerio2 <- alertaRio(naps = 0, pars=params, cid = "A920", crit = criter, datasource=con, se=201804,
-delaymethod="fixedprob",verbose=FALSE)
-Sys.time()-ini
+params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
+criter <- setCriteria(rule="Af", values = params)
+alerio2 <- alertaRio(naps = 0:2, crit = criter, se=201804, delaymethod="fixedprob")
 names(alerio2)
 }

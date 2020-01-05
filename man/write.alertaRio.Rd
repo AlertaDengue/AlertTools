@@ -19,7 +19,9 @@ data.frame with the data to be written.
 Function to write the alert results into the database.
 }
 \examples{
-alerio2 <- alertaRio(naps = c(1,2), datasource=con)
-res <- write.alertaRio(alerio2, write="db")
+params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
+criter <- setCriteria(rule="Af", values = params)
+alerio2 <- alertaRio(naps = c(1,2), crit = criter, datasource=con, se = 201201)
+res <- write.alertaRio(alerio2, write="no")
 tail(res)
 }

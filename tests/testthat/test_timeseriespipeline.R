@@ -9,7 +9,7 @@ setwd("../..")
 geoc = c(3302403, 3205200) # cidade para teste
 
 # =====================================
-## Testing function getCases
+## Testing function getCases ==========
 #======================================
 # args:cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific",
 #datasource=con
@@ -44,8 +44,27 @@ test_that("getcases: produce required output",{
       
 })
 
+## 
+# test getCasesinRio ===================
+## 
+# common use
+dC = getCasesinRio(APSid = 0:1, datasource = con)
+
+test_that("getCasesinRio: produce required output",{
+      expect_named(dC, c("localidadeid","SE","casos","localidade","populacao",   
+                          "cidade","nome","CID10"),ignore.order = TRUE)
+      expect_equal(sapply(dC,class), c("localidadeid"="integer","SE"="numeric",
+                                       "casos"="numeric","localidade"="character",
+                                       "populacao"="integer", "cidade"="numeric",
+                                       "nome"="character","CID10"="character"))
+      expect_equal(sum(sapply(dC, anyNA)),0)  # no NAs
+      
+})
+
+
+
 ## =====================================
-# Testing getWU function
+# Testing getWU function ===============
 #  =====================================
 # args: vars = "temp_min", finalday = Sys.Date(), datasource=con
 sta <- c('SBAF','SBRJ')
@@ -177,11 +196,11 @@ test_that("Rt: produce valid estimates",{
 # ----------------------
 # Testing getTweet function
 # ----------------------
-dT01 = getTweet(city = geoc, lastday = Sys.Date(), datasource = con) 
+#dT01 = getTweet(city = geoc, lastday = Sys.Date(), datasource = con) 
 
-test_that("output of getTweet has the required columns.", {
-  expect_true(all(c("cidade", "SE", "tweet") %in% names(dT01)))
-})
+#test_that("output of getTweet has the required columns.", {
+#  expect_true(all(c("cidade", "SE", "tweet") %in% names(dT01)))
+#})
 
 
 # ---------------------

@@ -4,7 +4,7 @@
 \alias{fouralert}
 \title{Define conditions to issue a four level alert Green-Yellow-Orange-Red.}
 \usage{
-fouralert(obj, crit, miss = "last")
+fouralert(obj, crit, miss = "last", dy = 4)
 }
 \arguments{
 \item{obj}{dataset with data to feed the alert, containing the variables specified in crit.}
@@ -13,6 +13,9 @@ fouralert(obj, crit, miss = "last")
 
 \item{miss}{how missing data is treated. "last" if last value is repeated. 
 It is currently the only option}
+
+\item{dy}{if inc > 0, and rt was orange or red at least once in the past 
+dy weeks -> level yellow. Default: dy=4}
 }
 \value{
 returns an object of class "alerta" containing four elements: the data, 
@@ -38,5 +41,5 @@ cli = getWU(stations = 'SBGL', vars=c("temp_min"), datasource=con) \%>\%
 ale <- plyr::join_all(list(cas,cli),by="SE") 
 resf <- fouralert(ale, crit = criteria)
 # Better visualization
-tail(tabela.historico(resf))
+tail(tabela.historico(resf),n=3)
 }

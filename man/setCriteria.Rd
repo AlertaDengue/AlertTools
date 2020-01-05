@@ -33,6 +33,7 @@ critr = "inc > 100 & casos > 10")
 mydelay = list(delayy = c(3,1), delayo = c(3,1), delayr = c(2,2))
 setCriteria(rule = myrule, delays = mydelay)
 Defining values
-val = c(varcli ="temp_min", "clicrit"="22","limiar_preseason"="10","limiar_epidemico"="100")
+val = c(varcli ="temp_min", "limiar_preseason"="10",
+"limiar_epidemico"="100", "clicrit"="22")
 setCriteria(rule="Af",values=val)
 }
