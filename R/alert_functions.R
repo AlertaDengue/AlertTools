@@ -314,7 +314,7 @@ pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
       #       nick <- gsub(" ", "", nome, fixed = TRUE)
       #       #names(alerta) <- nick
       
-      if (writedb == TRUE) write.alerta(alerta, write = "db")
+      if (writedb == TRUE) write.alerta(alerta)
       
       res
 }
