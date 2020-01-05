@@ -91,7 +91,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
   for (mun_chunck in mun_list){
         
     # Read historical cases table
-    df.inc <- read.cases(start_year, end_year, mun_list=mun_chunck,con=con)
+    df.inc <- read.cases(start_year, end_year, mun_list=mun_chunck)
     effec_start_year <- min(round(df.inc$SE/100))
     # Build incidence
     df.inc <- merge.data.frame(df.inc, df.pop, by='municipio_geocodigo')
