@@ -152,6 +152,7 @@ lastepiweek <- function(ano){
 # SE2date ---------------------------------------------------------------------
 #'@description Return the first day of the Epidemiological Week
 #'@title Return the first day of the Epidemiological Week
+#'@export
 #'@param SE string vector with dates to be converted, format 201420
 #'@return data.frame with SE and first day.
 #'@examples
@@ -408,33 +409,47 @@ temp.predict <- function(v, plotar = FALSE){
 #'@title get list of regionais. 
 #'@export
 #'@param uf full name of the state.
+#'@param cities cities' geocodes
 #'@param sortedby the options are: 'a' alphabetically, 'id' regional id number, if available 
 #'@param database name of the database
 #'@return vector with names of the regionais.
 #'@examples
 #'getRegionais(uf="Rio de Janeiro")
+#'getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro")
 #'getRegionais(uf="Rio de Janeiro", sortedby = 'id')
 
-getRegionais <- function(uf, sortedby = "a", datasource=con){
+getRegionais <- function(cities = NULL, uf, sortedby = "a", datasource=con, complete = FALSE){
       
-      sqlquery = paste("SELECT nome_regional, id_regional, uf 
+      assert_that(!missing(uf), msg = "getRegionais: please specify uf. Ex. uf = \"Ceará\" ")
+      
+      sqlquery = paste("SELECT municipio_geocodigo, nome_regional, id_regional, uf 
                   FROM \"Dengue_global\".\"Municipio\" 
                   INNER JOIN \"Dengue_global\".regional_saude
                   ON municipio_geocodigo = geocodigo
                   where uf = '", uf, "'", sep="")
       
       d = dbGetQuery(datasource, sqlquery)    
-      if (nrow(d) == 0) stop(paste("Banco de dados nao tem regionais para o estado ", uf))
+      assert_that(nrow(d) > 0, msg = (paste("getRegionais: Database does not have the health areas for ", uf)))
       
-      if(sortedby == 'a') out <- sort(unique(d$nome_regional)) 
-      if(sortedby == 'id') {
-            out <- unique(d[order(d$id_regional),"nome_regional"])
-            if (any(is.na(d$id_regional))) {
-                  warning("getRegionais: codigo das regionais nao encontrado, trocando argummento para sortedby = 'a'")
-                  out <- sort(unique(d$nome_regional))
+      if(!is.null(cities)) {
+            d <- d %>% filter(municipio_geocodigo %in% cities)
+            assert_that(nrow(d) == length(cities), msg = (paste("getRegionais: Database does not have 
+                                                                the health districts for all listed cities in", uf)))
+            return(d$nome_regional)
+            
+      } else{
+            if(sortedby == 'a') out <- sort(unique(d$nome_regional)) 
+            if(sortedby == 'id') {
+                  out <- unique(d[order(d$id_regional),"nome_regional"])
+                  if (any(is.na(d$id_regional))) {
+                        warning("getRegionais: codigo das regionais nao encontrado, trocando argummento para sortedby = 'a'")
+                        out <- sort(unique(d$nome_regional))
+                  }
+                  
             }
-            }
-      out
+            return(out)
+      }
+      
 }
 
 
