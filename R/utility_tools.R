@@ -6,7 +6,8 @@
 
 # epiYear ---------------------------------------------------------------------
 #'@description Find to which epidemiological year belongs a given epidemiological week. 
-#'@title Define Epidemiological Year
+#'@title Define Epidemiological Year.
+#'@export
 #'@param se numeric vector with epidemiological weeks to be converted
 #'@param cut epidemiological week that separates consecutive epidemiological years. Default = 41
 #'@return vector of epidemiological years. 
@@ -30,7 +31,8 @@ epiYear <- function(se, cut = 41){
 # data2SE ---------------------------------------------------------------------
 #'@description Find to which epidemiological week belongs a given day. Uses episem function 
 #'(formula generated data).
-#'@title Define Epidemiological Week
+#'@title Define Epidemiological Week.
+#'@export
 #'@param date string vector with dates to be converted
 #'@param format date format
 #'@return data.frame with the epidemiological weeks. 
@@ -51,7 +53,8 @@ data2SE <- function(days, format = "%d/%m/%Y"){
 # episem ---------------------------------------------------------------------
 #' @description Find to which epidemiological week belongs a given day 
 #' @author Oswaldo Cruz
-#' @title Define Epidemiological Week
+#' @title Define Epidemiological Week.
+#' @export
 #' @param date date to be converted (class Date)
 #' @param separa symbol between year and week
 #' @param retorna What should be return, if epidemiological year and week ('YW'), epi. year only ('Y') or epi. week only ('W').
@@ -168,7 +171,8 @@ SE2date <- function(se){
 
 # seqSE ---------------------------------------------------------------------
 #'@description Creates a sequence of epidemiological weeks and respective initial and final days
-#'@title Sequence of epidemiological weeks
+#'@title Sequence of epidemiological weeks.
+#'@export
 #'@param from first week in format 201401
 #'@param to first week in format 201401
 #'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works from 2010 to 2020.
@@ -199,6 +203,7 @@ seqSE <- function(from, to){
 # lastDBdate ---------------------------------------------------------------------
 #'@description  Useful to check if the database is up-to-date. 
 #'@title Returns the most recent date present in the database table. 
+#'@export
 #'@param tab table in the database. Either (sinan, clima_wu, tweet ou historico). 
 #'@param city city geocode, if empty, whole dataset is considered. Not implemented yet.
 #'@param station wu station.
@@ -268,7 +273,8 @@ lastDBdate <- function(tab, city = NULL, station = NULL, datasource){
 
 # DenguedbConnect ---------------------------------------------------------------------
 #'@description  Opens a connection to the Project database. 
-#'@title Returns the connection to the database. 
+#'@title Returns the connection to the database.
+#'@export 
 #'@param pass password
 #'@return "PostgreSQLConnection" object   
 #'@examples
@@ -292,6 +298,7 @@ DenguedbConnect <- function(pass){
 #'@description  calculates the verification digit of brazilian municipalities. Required 
 #'to convert 6 digits to 7 digits geocodes. 
 #'@title convert 6 to 7 digits geocodes. 
+#'@export
 #'@return 7 digits municipality geocode.   
 #'@examples
 #'sevendigitgeocode(330455)
@@ -319,6 +326,7 @@ sevendigitgeocode <- function(dig){
 # nafill ------------------------------------
 #'@description  collection of imputation procedures 
 #'@title methods to substitute NAs. Use the function na.approx from package zoo. 
+#'@export
 #'@param v vector with missing elements.
 #'@param rule rule for filling the missing cells. "zero" just fills them with 0; "linear"
 #' interpolate using zoo::na.approx. In this case, the tails are not filled. If "arima", then it interpolates using
@@ -352,6 +360,7 @@ nafill <- function(v, rule, maxgap = 4, verbose = F){
 # temp.predict ------------------------------------
 #'@description  function for extrapolating temperature using arima  
 #'@title Fit arima to fill in missing data at the end of temperature time series. 
+#'@export
 #'@param v vector with temperature data.
 #'@return vector with replaced NA.
 #'@examples
@@ -397,6 +406,7 @@ temp.predict <- function(v, plotar = FALSE){
 # getRegionais ------------------------------------
 #'@description  consult database to get list of regionais 
 #'@title get list of regionais. 
+#'@export
 #'@param uf full name of the state.
 #'@param sortedby the options are: 'a' alphabetically, 'id' regional id number, if available 
 #'@param database name of the database
@@ -431,6 +441,7 @@ getRegionais <- function(uf, sortedby = "a", datasource=con){
 # getCidades ------------------------------------
 #'@description  consult database to get list of cities 
 #'@title get list of cities. 
+#'@export
 #'@param uf full name of the state.
 #'@param regional full name of the regional.
 #'@param datasource name of the database
@@ -467,6 +478,7 @@ getCidades <- function(regional, uf, datasource=con){
 #'Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_posseason",
 #'"limiar_epidemico, "estacao_wu_sec".  City must be already in the regionais table.
 #'@title City's parameterization. 
+#'@export
 #'@param params vector of the names of the params to be inserted in the table. Default: params = c("codigo_estacao_wu", 
 #'"limiar_preseason", "limiar_posseason","limiar_epidemico, "estacao_wu_sec"). It can be a subset of the default. 
 #'@param tab data.frame with the values for each city. It must have a column named "municipio_geocodigo",
@@ -542,7 +554,8 @@ write.parameters<-function(params, tab, senha){
 #'meteorological variable), "clicrit" (critical value of the meteorological variable), "cid10",
 #'"codmodelo" (name of the heuristic decision model, see serCriteria()). These parameters are specified when the city is initiated 
 #'in the pipeline.
-#'@title Get city-level alert parameters for the infodengue pipeline. 
+#'@title Get city-level alert parameters for the infodengue pipeline.
+#'@export 
 #'@param cities cities' geocodes. Tip: find them using getCidades(). 
 #'@param cid10 Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"
 #'@param datasource SQL connection to the database
@@ -573,6 +586,7 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
 #'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 
 #'the delay model and write.parameters
 #'@title Initial setup of a new city in the alerta system.
+#'@export
 #'@param city geocode of the city. Mandatory 
 #'@param id_regional numerical id of the 'Regional da saude'
 #'@param regional name of the 'Regional da saude'

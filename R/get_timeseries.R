@@ -5,6 +5,7 @@
 # GetWU --------------------------------------------------------
 #'@description Create weekly time series from meteorological station data in server taking the mean of the daily values.
 #'@title Get Climate Data
+#'@export
 #'@param stations station code (4 digits).
 #'@param vars vector with meteorological variables. Available variables: "temp_min" (default), 
 #'"temp_max","temp_med","data_dia","umid_min","umid_med","umid_max","pressao_min","pressao_med","pressao_max"
@@ -63,6 +64,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
 #bestWU -----------------------------------------------------------------
 #'@description Receives a set of meteorological data and return the most complete for
 #' a given city.If both are good, the first is returned.
+#'@export
 #'@title Chooses the most updated meteorological data for a city from a set of two choices
 #'@param series list of the competing time series.
 #'See examples.
@@ -94,6 +96,7 @@ bestWU <- function(series,var){
 #'@description Create weekly time series from tweeter data from server. The 
 #'source of this data is the Observatorio da Dengue (UFMG).
 #'@title Get Tweeter Data
+#'@export
 #'@param cities cities's geocode. Use getCidades()
 #'@param cid10 default is A90 (dengue). If not dengue, returns NA
 #'@param finalday last day. Default is the last available.
@@ -144,6 +147,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 # GetCases --------------------------------------------------------------
 #'@description Create weekly time series from case data from server. The source is the SINAN. 
 #'@title Get Case Data and aggregate per week and area
+#'@export
 #'@param cities cities' geocode.
 #'@param lastday last day. Default is the last available. Format: "yyyy-mm-dd"
 #'@param dataini "notific" if data aggregated by notification date or "sinpri" if data aggregated
@@ -317,6 +321,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
 # getCasesinRio --------------------------------------------------------------
 #'@description Get time series of cases per APS in Rio de Janeiro (special case) 
 #'@title Get cases from an APS in Rio de Janeiro and aggregate them into weekly time series. 
+#'@export
 #'@param APSid 0(APS1), 1 (APS2.1), 2 (APS2.2), 3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4),
 #', 7(APS5.1), 8(APS5.2), 9(APS5.3)  
 #'@param cid10 cid 10 disease code. A90 = dengue (default) , A920 = chikungunia

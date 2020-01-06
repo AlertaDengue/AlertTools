@@ -39,7 +39,7 @@ geraMapa(alerta, subset, se, cores = c("green", "yellow", "orange",
 a map
 }
 \description{
-Function to plot a map of the alert
+Function to plot a map of the alert.
 }
 \examples{
 # Parameters for the model

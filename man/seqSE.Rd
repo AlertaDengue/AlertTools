@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_tools.R
 \name{seqSE}
 \alias{seqSE}
-\title{Sequence of epidemiological weeks}
+\title{Sequence of epidemiological weeks.}
 \usage{
 seqSE(from, to)
 }

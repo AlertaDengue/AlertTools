@@ -203,25 +203,5 @@ test_that("Rt: produce valid estimates",{
 #})
 
 
-# ---------------------
-# Testing mergedata 
-d0<- mergedata(cases = dC1,tweet = dT01, climate = dW02)
-d1<- mergedata(tweet = dT01, climate = dW02)
-d2<- mergedata(cases = dC1, climate = dW02)
-d3<- mergedata(cases = dC1, tweet = dT01)
-
-test_that("output of merging is a non empty data.frame.", {
-  expect_gt(dim(d0)[1], 0)
-  expect_gt(dim(d1)[1], 0)
-  expect_gt(dim(d2)[1], 0)
-  expect_gt(dim(d3)[1], 0)
-})
-
-test_that("output has the minimum set of columns.", {
-      expect_true(all(c("cidade", "SE", "estacao","tweet","casos") %in% names(d0)))
-      expect_true(all(c("cidade", "SE", "estacao","tweet") %in% names(d1)))
-      expect_true(all(c("cidade", "SE", "estacao","casos") %in% names(d2)))
-      expect_true(all(c("cidade", "SE", "tweet","casos") %in% names(d3)))
-})
 
 

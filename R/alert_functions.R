@@ -7,7 +7,8 @@
 #'@title Define rules to issue a four level alert Green-Yellow-Orange-Red.
 #'@description The criteria for transition between colors (alert levels) can be 
 #'chosen from existing rules or can be specified by the user. The built in rules are: 
-#'Af (minimum temperature defines yellow) and Aw (humidity does).   
+#'Af (minimum temperature defines yellow) and Aw (humidity does).  
+#'@export 
 #'@param rule either a built-in rule ("Af" or "Aw") or a list with three elements defining criteria for transition to yellow (level 2),
 #' orange (level 3) and red (level 4). See description.
 #'@param delays list with three elements, each one is a vector: c(delay to turn on, delay to turn off)
@@ -80,6 +81,7 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'positive mosquito population growth are detected, green otherwise.Orange 
 #'indicates evidence of sustained transmission, red indicates evidence of 
 #'an epidemic scenario.  
+#'@export
 #'@param obj dataset with data to feed the alert, containing the variables specified in crit.
 #'@param crit criteria for the alert colors. See setCriteria()
 #'@param dy if inc > 0, and rt was orange or red at least once in the past 
@@ -186,6 +188,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #pipe_infodengue ---------------------------------------------------------------------
 #'@title pipeline used by infodengue 
 #'@description wrap of functions used by Infodengue.
+#'@export
 #'@param cities In general, a vector of 7-digit geocodes. If it is a data.frame containing geocodes
 #' and all parameters, these will replace the database's parameters. 
 #'@param cid10 default is A90 (dengue). Chik = A92.0, Zika = A92.8
@@ -315,7 +318,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
       #       nick <- gsub(" ", "", nome, fixed = TRUE)
       #       #names(alerta) <- nick
       
-      if (writedb == TRUE) write.alerta(alerta)
+      if (writedb == TRUE) write_alerta(alerta)
       
       res
 }
@@ -328,6 +331,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
 #'positive mosquito population growth are detected, green otherwise.Orange 
 #'indicates evidence of sustained transmission, red indicates evidence of 
 #'an epidemic scenario.  
+#'@export
 #'@param naps subset of vector 0:9 corresponding to the id of the APS. Default is all of them.
 #'@param crit alert criteria defined using setCriteria(). 
 #'@param se last epidemiological week (format = 201401) 
@@ -410,15 +414,16 @@ alertaRio <- function(naps = 0:9, crit, se, cid10 = "A90",
       #       nick <- gsub(" ", "", nome, fixed = TRUE)
       #       #names(alerta) <- nick
       
-      #if (writedb == TRUE) write.alerta(alerta, write = "db")  
+      #if (writedb == TRUE) write_alerta(alerta, write = "db")  
       class(res) <- "alertario"
       res
 }
 
 
-#plot.alerta --------------------------------------------------------------------
+#plot_alerta --------------------------------------------------------------------
 #'@title Plot the time series of warnings.
 #'@description Function to plot the output of tabela_historico. 
+#'@export
 #'@param obj object created by tabela_historico()
 #'@param geocodigo city's geocode.
 #'@param var variable to be plotted, usually "cases", or "p_inc100k". 
@@ -436,9 +441,9 @@ alertaRio <- function(naps = 0:9, crit, se, cid10 = "A90",
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'restab <- tabela_historico(res)
-#'plot.alerta(restab, geocodigo = cidades$municipio_geocodigo, var="casos")
+#'plot_alerta(restab, geocodigo = cidades$municipio_geocodigo, var="casos")
 
-plot.alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20F","orange","red"), 
+plot_alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20F","orange","red"), 
                       ini=201001, fim=202001, ylab=var, yrange, salvar = FALSE, 
                       nome.fig = "grafico", datasource=con){
       
@@ -499,9 +504,10 @@ plot.alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
       #       }
 }
       
-#map.Rio --------------------------------------------------------------------
+#map_Rio --------------------------------------------------------------------
 #'@title Plot the alert map for Rio de Janeiro city.
-#'@description Function to plot a map of the alert 
+#'@description Function to plot a map of the alert. 
+#'@export
 #'@param obj object created by the twoalert and fouralert functions.
 #'@param data Date
 #'@param cores colors corresponding to the levels 1, 2, 3, 4.
@@ -513,9 +519,9 @@ plot.alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
 #'params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
 #'criter <- setCriteria(rule="Af", values = params)
 #'alerio2 <- alertaRio(naps = 0:2, crit = criter, se=201804, delaymethod="fixedprob")
-#'map.Rio(alerio2)
+#'map_Rio(alerio2)
 
-map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasource=con,
+map_Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasource=con,
                   shapefile = "../report/Rio_de_Janeiro/shape/CAPS_SMS.shp", filename="", dir, resol=200){
       
       #stopifnot(names(obj[[1]]) == c("data", "indices", "rules","n"))
@@ -568,7 +574,8 @@ map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
 
 #geraMapa --------------------------------------------------------------------
 #'@title Plot the alert map for any state.
-#'@description Function to plot a map of the alert 
+#'@description Function to plot a map of the alert.
+#'@export 
 #'@param alerta object created by update.alerta.
 #'@param subset nomes das cidades que serão mostradas no mapa. 
 #'@param se epidemiological week (format = 201610).  
@@ -642,6 +649,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #tabela_historico --------------------------------------------------------------------
 #'@title Write the alert object into the database.
 #'@description Function to write the alert results into the database. 
+#'@export
 #'@param obj object created by the pipeline.
 #'@param versao Default is current's date
 #'@return data.frame with the data to be written. 
@@ -688,9 +696,11 @@ tabela_historico <- function(obj, versao = Sys.Date()){
       d
 }
 
-#write.alerta --------------------------------------------------------------------
-#'@title Write historico.alerta into the database.
-#'@description Function to write the pipeline results into the database. Receives the object created by the function historico.alerta
+#write_alerta --------------------------------------------------------------------
+#'@title Write historico_alerta into the database.
+#'@description Function to write the pipeline results into the database. 
+#'Receives the object created by the function historico.alerta.
+#'@export
 #'@param d object created by historico.alerta()
 #'@param datasource posgreSQL conn to project's database
 #'@return the same data.frame from the input
@@ -700,9 +710,9 @@ tabela_historico <- function(obj, versao = Sys.Date()){
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'restab <- tabela_historico(res[1]) 
-#'write.alerta(restab[1:5,])
+#'write_alerta(restab[1:5,])
 
-write.alerta<-function(d, datasource = con){
+write_alerta<-function(d, datasource = con){
       
       cid10 = unique(d$CID10)
       stopifnot(length(cid10)==1)
@@ -749,9 +759,10 @@ write.alerta<-function(d, datasource = con){
 
 
 
-#write.alertaRio --------------------------------------------------------------------
+#write_alertaRio --------------------------------------------------------------------
 #'@title Write the Rio de janeiro alert into the database.
 #'@description Function to write the alert results into the database. 
+#'@export
 #'@param obj object created by the alertRio function and contains alerts for each APS.
 #'@param write use "db" if data.frame should be inserted into the project database,
 #' or "no" (default) if nothing is saved. 
@@ -761,13 +772,13 @@ write.alerta<-function(d, datasource = con){
 #'params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
 #'criter <- setCriteria(rule="Af", values = params)
 #'alerio2 <- alertaRio(naps = c(1,2), crit = criter, datasource=con, se = 201201)
-#'res <- write.alertaRio(alerio2, write="no")
+#'res <- write_alertaRio(alerio2, write="no")
 #'tail(res)
 
-write.alertaRio<-function(obj, write = "no", version = Sys.Date()){
+write_alertaRio<-function(obj, write = "no", version = Sys.Date()){
       
       # check input
-      assert_that(class(obj) == "alertario", msg = "write.alertaRio: obj is an alertaRio object" )
+      assert_that(class(obj) == "alertario", msg = "write_alertaRio: obj is an alertaRio object" )
       
       
       listaAPS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
@@ -1033,7 +1044,7 @@ write.alertaRio<-function(obj, write = "no", version = Sys.Date()){
 #                   names(alertas)[i]<-nick
 #             } 
 #             if (writedb == TRUE) {
-#                   res <- write.alerta(alerta)
+#                   res <- write_alerta(alerta)
 #                   #write.csv(alerta,file=paste("memoria/", nick,hoje,".csv",sep="")) 
 #             }
 #       }
