@@ -4,20 +4,26 @@
 \alias{geraMapa}
 \title{Plot the alert map for any state.}
 \usage{
-geraMapa(alerta, subset, cores = c("green", "yellow", "orange", "red"),
-  legpos = "bottomright", se, datasource, shapefile, varid, varname,
-  titulo = "", filename, dir = "", caption = TRUE, resol = 200)
+geraMapa(alerta, subset, se, cores = c("green", "yellow", "orange",
+  "red"), legpos = "bottomright", titulo = "", filename, dir = "",
+  shapefile, varid, varname, caption = TRUE, resol = 200)
 }
 \arguments{
 \item{alerta}{object created by update.alerta.}
 
 \item{subset}{nomes das cidades que serão mostradas no mapa.}
 
+\item{se}{epidemiological week (format = 201610).}
+
 \item{cores}{colors corresponding to the levels 1, 2, 3, 4.}
 
 \item{legpos}{legend position. Default is bottomright. Check the other options in the function legend.}
 
-\item{se}{epidemiological week (format = 201610).}
+\item{titulo}{title of the map}
+
+\item{filename}{if present, the map is saved.}
+
+\item{dir}{directory where map will be saved}
 
 \item{shapefile}{shapefile containing polygons for the municipalities}
 
@@ -25,11 +31,7 @@ geraMapa(alerta, subset, cores = c("green", "yellow", "orange", "red"),
 
 \item{varname}{name of the variable to be plotted}
 
-\item{titulo}{title of the map}
-
-\item{filename}{if present, the map is saved.}
-
-\item{dir}{directory where map will be saved}
+\item{caption}{Default is TRUE}
 
 \item{resol}{dpi png resolution, default is 200}
 }

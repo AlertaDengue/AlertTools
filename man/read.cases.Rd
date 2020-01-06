@@ -25,4 +25,3 @@ dd <- read.cases(2010, 2018, mun_list = 3302403)
 \author{
 Marcelo F C Gomes
 }
-\keyword{internal}

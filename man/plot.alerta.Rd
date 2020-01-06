@@ -12,6 +12,8 @@
 \arguments{
 \item{obj}{object created by tabela.historico()}
 
+\item{geocodigo}{city's geocode.}
+
 \item{var}{variable to be plotted, usually "cases", or "p_inc100k".}
 
 \item{cores}{colors corresponding to the levels 1, 2, 3, 4.}
@@ -19,6 +21,14 @@
 \item{ini}{first epidemiological week. If not stated, use the first one available}
 
 \item{fim}{last epidemiological week. If not stated, use the last one available}
+
+\item{ylab}{y axis label}
+
+\item{yrange}{y axis range}
+
+\item{salvar}{TRUE to save the figure (default is FALSE)}
+
+\item{nome.fig}{figure name (default is "grafico")}
 }
 \value{
 a plot

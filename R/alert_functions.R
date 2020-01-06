@@ -195,6 +195,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@param nowcasting  "fixedprob" for static model, "bayesian" for the dynamic model.
 #'"none" for not doing nowcast (default) 
 #'@param writedb TRUE if it should write into the database, default is FALSE.
+#'@param datasource posgreSQL connection to project's database
 #'@return data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE.
 #'@examples
@@ -327,15 +328,14 @@ pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
 #'positive mosquito population growth are detected, green otherwise.Orange 
 #'indicates evidence of sustained transmission, red indicates evidence of 
 #'an epidemic scenario.  
-#'@param pars parameters of the alert.
 #'@param naps subset of vector 0:9 corresponding to the id of the APS. Default is all of them.
-#'@param datasource it is the name of the sql connection.
+#'@param crit alert criteria defined using setCriteria(). 
 #'@param se last epidemiological week (format = 201401) 
 #'@param cid10 default is A90 (dengue). Chik = A920.
 #'@param narule how to fill climate missing data (arima is the only option)
 #'@param delaymethod atribbute of adjuntincidence. "fixedprob" or "bayesian"
 #'@param pdig parameters for adjustIncidence = "fixedprob"
-#'(requires writing permission). 
+#'@param datasource name of the sql connection.
 #'@return list with an alert object for each APS.
 #'@examples
 #'params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
@@ -343,9 +343,9 @@ pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
 #'alerio2 <- alertaRio(naps = 0:2, crit = criter, se=201804, delaymethod="fixedprob")
 #'names(alerio2)
 
-alertaRio <- function(naps = 0:9, crit, datasource=con, se , cid10 = "A90", 
+alertaRio <- function(naps = 0:9, crit, se, cid10 = "A90", 
                       delaymethod = "fixedprob", narule="arima", 
-                      pdig = c(2.5016,1.1013)){
+                      pdig = c(2.5016,1.1013), datasource=con){
       
       # checking input
       assert_that(all(names(crit) %in% c("crity", "crito", "critr")) &
@@ -420,10 +420,15 @@ alertaRio <- function(naps = 0:9, crit, datasource=con, se , cid10 = "A90",
 #'@title Plot the time series of warnings.
 #'@description Function to plot the output of tabela.historico. 
 #'@param obj object created by tabela.historico()
+#'@param geocodigo city's geocode.
 #'@param var variable to be plotted, usually "cases", or "p_inc100k". 
 #'@param cores colors corresponding to the levels 1, 2, 3, 4.
 #'@param ini first epidemiological week. If not stated, use the first one available
 #'@param fim last epidemiological week. If not stated, use the last one available 
+#'@param ylab y axis label
+#'@param yrange y axis range
+#'@param salvar TRUE to save the figure (default is FALSE) 
+#'@param nome.fig figure name (default is "grafico")
 #'@return a plot
 #'@examples
 #' # Parameters for the model
@@ -498,7 +503,7 @@ plot.alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
 #'@title Plot the alert map for Rio de Janeiro city.
 #'@description Function to plot a map of the alert 
 #'@param obj object created by the twoalert and fouralert functions.
-#'@param var to be ploted in the graph, usually cases when available.  
+#'@param data Date
 #'@param cores colors corresponding to the levels 1, 2, 3, 4.
 #'@param filename if present, the map is saved.
 #'@param dir directory where map will be saved. 
@@ -575,6 +580,7 @@ map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
 #'@param shapefile shapefile containing polygons for the municipalities
 #'@param varid shapefile variable indicating the geocode of the municipalities  
 #'@param varname name of the variable to be plotted
+#'@param caption Default is TRUE 
 #'@param resol dpi png resolution, default is 200
 #'@return a map
 #'@examples
@@ -585,8 +591,9 @@ map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
 #'geraMapa(alerta=res, subset = cidades, se=201704, datasource=con, shapefile="shape/33MUE250GC_SIR.shp",
 #'varid="CD_GEOCMU", titulo="RJ-Norte", legpos="topright")
 
-geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), legpos="bottomright", se, 
-                   datasource, shapefile, varid, varname, titulo="", filename, dir="",caption=TRUE, resol = 200){
+geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"), legpos="bottomright",
+                   titulo="", filename, dir="", shapefile, varid, varname, caption=TRUE, 
+                   resol = 200){
       
       require(maptools,quietly = TRUE,warn.conflicts = FALSE)
       
@@ -636,6 +643,7 @@ geraMapa<-function(alerta, subset, cores = c("green","yellow","orange","red"), l
 #'@title Write the alert object into the database.
 #'@description Function to write the alert results into the database. 
 #'@param obj object created by the pipeline.
+#'@param versao Default is current's date
 #'@return data.frame with the data to be written. 
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
@@ -683,10 +691,11 @@ tabela.historico <- function(obj, versao = Sys.Date()){
 #write.alerta --------------------------------------------------------------------
 #'@title Write historico.alerta into the database.
 #'@description Function to write the pipeline results into the database. Receives the object created by the function historico.alerta
-#'@param obj object created by historico.alerta()
+#'@param d object created by historico.alerta()
+#'@param datasource posgreSQL conn to project's database
 #'@return the same data.frame from the input
 #'@examples
-#' # Parameters for the model
+#'# Parameters for the model
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
@@ -746,6 +755,7 @@ write.alerta<-function(d, datasource = con){
 #'@param obj object created by the alertRio function and contains alerts for each APS.
 #'@param write use "db" if data.frame should be inserted into the project database,
 #' or "no" (default) if nothing is saved. 
+#'@param version default is the current date
 #'@return data.frame with the data to be written. 
 #'@examples
 #'params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)

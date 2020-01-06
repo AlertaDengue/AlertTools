@@ -23,6 +23,8 @@ and all parameters, these will replace the database's parameters.}
 with zeros, "linear" for linear interpolation, "arima" for inter and extrapolation.}
 
 \item{writedb}{TRUE if it should write into the database, default is FALSE.}
+
+\item{datasource}{posgreSQL connection to project's database}
 }
 \value{
 data.frame with the week condition and the number of weeks within the 

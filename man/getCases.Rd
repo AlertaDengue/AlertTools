@@ -17,7 +17,7 @@ getCases(cities, lastday = Sys.Date(), cid10 = "A90",
 \item{dataini}{"notific" if data aggregated by notification date or "sinpri" if data aggregated
 if aggregated by date of first symptoms}
 
-\item{datasource}{PostgreSQLConnection to project database .}
+\item{datasource}{PostgreSQLConnection to project database.}
 }
 \value{
 data.frame with the data aggregated per week according to disease onset date.

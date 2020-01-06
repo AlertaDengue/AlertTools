@@ -16,6 +16,8 @@ getCasesinRio(APSid, lastday = Sys.Date(), cid10 = "A90",
 \item{cid10}{cid 10 disease code. A90 = dengue (default) , A920 = chikungunia}
 
 \item{dataini}{"sinpri" or "notific"(default)}
+
+\item{datasource}{Posgresql connection to project's database}
 }
 \value{
 data.frame with the data aggregated per health district and week

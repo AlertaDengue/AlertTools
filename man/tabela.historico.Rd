@@ -8,6 +8,8 @@ tabela.historico(obj, versao = Sys.Date())
 }
 \arguments{
 \item{obj}{object created by the pipeline.}
+
+\item{versao}{Default is current's date}
 }
 \value{
 data.frame with the data to be written.

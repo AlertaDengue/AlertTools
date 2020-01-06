@@ -8,7 +8,6 @@
 #' to either the 90% quantile or 10, whichever is the greatest. The thresholds are given both in number of cases or
 #' as incidence. The alert model uses incidence. 
 #' @name infodengue_apply_mem
-#'
 #' @param start_year Historical data starting year to consider. Default: 0 (i.e., as old as possible)
 #' @param end_year Historical data final year to consider. Default: previous year from Sys.Date()
 #' @param mun_list Vector of municipalities geocode. Default: NULL (i.e., all municipalites)
@@ -27,7 +26,6 @@
 #' @param mincases.pre minimum number of cases to launch a preseason alert. Default: 5
 #' @param mincases.epi minimum number of cases to launch an epidemic alert. Default: 10
 #' @param ... Optional arguments passed to \code{memmodel}, from MEM package.
-#'
 #' @return Function \code{info.dengue.apply.mem} will return a list with thresholds calculated by mem, by simple percentile and the
 #' choice used in the infodengue model, by municipality: 
 #'  \describe{
@@ -40,7 +38,6 @@
 #'  \item{threshold: values used by Infodengue}{MEM's values if cases > min.cases, percentiles otherwise: limiar_preseason, limiar_posseason, 
 #'  limiar_epidemico.}    
 #'    }
-#'
 #' @examples
 #' Generate thresholds for Rio de Janeiro, Curitiba and Vitoria, using the whole history. 
 #' Return object instead of writing to data base:
@@ -53,7 +50,7 @@
 #' 
 #' Write to database instead of returning object requires password:
 #' thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10], write='db')
-#' 
+
 
 infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
                                   write='no', database, passwd=NULL, i.n.max=0,

@@ -81,5 +81,4 @@ plot(thresCE)
 
 Write to database instead of returning object requires password:
 thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10], write='db')
-
 }

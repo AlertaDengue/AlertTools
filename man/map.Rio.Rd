@@ -14,13 +14,13 @@ map.Rio(obj, cores = c("green", "yellow", "orange", "red"), data,
 
 \item{cores}{colors corresponding to the levels 1, 2, 3, 4.}
 
+\item{data}{Date}
+
 \item{filename}{if present, the map is saved.}
 
 \item{dir}{directory where map will be saved.}
 
 \item{resol}{dpi png resolution, default is 200}
-
-\item{var}{to be ploted in the graph, usually cases when available.}
 }
 \value{
 a map

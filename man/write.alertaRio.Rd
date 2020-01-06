@@ -11,6 +11,8 @@ write.alertaRio(obj, write = "no", version = Sys.Date())
 
 \item{write}{use "db" if data.frame should be inserted into the project database,
 or "no" (default) if nothing is saved.}
+
+\item{version}{default is the current date}
 }
 \value{
 data.frame with the data to be written.

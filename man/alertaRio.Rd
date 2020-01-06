@@ -4,14 +4,14 @@
 \alias{alertaRio}
 \title{4 level alert Green-Yellow-Orange-Red for Rio de Janeiro.}
 \usage{
-alertaRio(naps = 0:9, crit, datasource = con, se, cid10 = "A90",
+alertaRio(naps = 0:9, crit, se, cid10 = "A90",
   delaymethod = "fixedprob", narule = "arima", pdig = c(2.5016,
-  1.1013))
+  1.1013), datasource = con)
 }
 \arguments{
 \item{naps}{subset of vector 0:9 corresponding to the id of the APS. Default is all of them.}
 
-\item{datasource}{it is the name of the sql connection.}
+\item{crit}{alert criteria defined using setCriteria().}
 
 \item{se}{last epidemiological week (format = 201401)}
 
@@ -21,10 +21,9 @@ alertaRio(naps = 0:9, crit, datasource = con, se, cid10 = "A90",
 
 \item{narule}{how to fill climate missing data (arima is the only option)}
 
-\item{pdig}{parameters for adjustIncidence = "fixedprob"
-(requires writing permission).}
+\item{pdig}{parameters for adjustIncidence = "fixedprob"}
 
-\item{pars}{parameters of the alert.}
+\item{datasource}{name of the sql connection.}
 }
 \value{
 list with an alert object for each APS.

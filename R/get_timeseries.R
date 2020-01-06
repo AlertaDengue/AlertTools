@@ -149,7 +149,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'@param dataini "notific" if data aggregated by notification date or "sinpri" if data aggregated
 #' if aggregated by date of first symptoms
 #'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8", 
-#'@param datasource PostgreSQLConnection to project database . 
+#'@param datasource PostgreSQLConnection to project database. 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
 #'d <- getCases(cities = 3300936) # dengue
@@ -238,7 +238,6 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
 #' @param end_year last year of the time series
 #' @param datasource Infodengue connection
 #' @param mun_list vector with the municipalities' 7 digit geocodes 
-#' @keywords internal
 #' @author Marcelo F C Gomes
 #' @examples
 #' dd <- read.cases(2010, 2018, mun_list = 3302403)
@@ -323,6 +322,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
 #'@param cid10 cid 10 disease code. A90 = dengue (default) , A920 = chikungunia
 #'@param dataini "sinpri" or "notific"(default)
 #'@param lastday end date of the time series
+#'@param datasource Posgresql connection to project's database
 #'@return data.frame with the data aggregated per health district and week
 #'@examples
 #'dC = getCasesinRio(APSid = 0:9, datasource = con) # Rio de Janeiro
@@ -431,30 +431,30 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="n
 #'head(mergedata(cases = cas, climate = clima))
 #'head(mergedata(tweet = tw, cases = cas))
 
-mergedata <- function(cases = c(), tweet =c(), climate=c(), ini=200952){
-      # checking the datasets
-      if (!is.null(cases) & !all(table(cases$SE)==1)) 
-            stop("merging require one line per SE in case dataset")
-      if (!is.null(tweet) & !all(table(tweet$SE)==1)) 
-            stop("merging require one line per SE in tweet dataset")
-      if (!is.null(climate) & !all(table(climate$SE)==1))
-            stop("merging require one line per SE in climate dataset. Mybe you have more than one station.")
-      
-      # merging
-      if (is.null(cases)) {
-            d <- merge(climate, tweet, by=c("SE"), all = TRUE)
-      } else if (is.null(tweet)){
-            d <- merge(cases, climate,  by=c("SE"), all = TRUE)     
-      } else if (is.null(climate)) {
-            d <- merge(cases, tweet[, c("SE","tweet")],  by=c("SE"), all = TRUE)
-      }
-      if (!(is.null(cases) | is.null(tweet) | is.null(climate))){
-            d <- merge(cases, tweet[, c("SE","tweet")],  by=c("SE"), all = TRUE)
-            d <- merge(d, climate,  by=c("SE"), all=TRUE)  
-      }
-      # removing beginning
-      d <- subset(d, SE > ini)
-      d
-}
+# mergedata <- function(cases = c(), tweet =c(), climate=c(), ini=200952){
+#       # checking the datasets
+#       if (!is.null(cases) & !all(table(cases$SE)==1)) 
+#             stop("merging require one line per SE in case dataset")
+#       if (!is.null(tweet) & !all(table(tweet$SE)==1)) 
+#             stop("merging require one line per SE in tweet dataset")
+#       if (!is.null(climate) & !all(table(climate$SE)==1))
+#             stop("merging require one line per SE in climate dataset. Mybe you have more than one station.")
+#       
+#       # merging
+#       if (is.null(cases)) {
+#             d <- merge(climate, tweet, by=c("SE"), all = TRUE)
+#       } else if (is.null(tweet)){
+#             d <- merge(cases, climate,  by=c("SE"), all = TRUE)     
+#       } else if (is.null(climate)) {
+#             d <- merge(cases, tweet[, c("SE","tweet")],  by=c("SE"), all = TRUE)
+#       }
+#       if (!(is.null(cases) | is.null(tweet) | is.null(climate))){
+#             d <- merge(cases, tweet[, c("SE","tweet")],  by=c("SE"), all = TRUE)
+#             d <- merge(d, climate,  by=c("SE"), all=TRUE)  
+#       }
+#       # removing beginning
+#       d <- subset(d, SE > ini)
+#       d
+# }
 
 

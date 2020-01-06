@@ -7,7 +7,9 @@
 write.alerta(d, datasource = con)
 }
 \arguments{
-\item{obj}{object created by historico.alerta()}
+\item{d}{object created by historico.alerta()}
+
+\item{datasource}{posgreSQL conn to project's database}
 }
 \value{
 the same data.frame from the input
