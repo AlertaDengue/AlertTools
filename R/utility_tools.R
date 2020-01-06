@@ -562,6 +562,7 @@ write.parameters<-function(params, tab, senha){
 #'@return dataframe with all parameters
 #'@examples
 #'read.parameters(cities = 3118601, cid10 = "A90")
+#'read.parameters(cities = 3118601, cid10 = "A92.0")
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'read.parameters(cities = cid$municipio_geocodigo, cid10 = "A90")
 
@@ -576,9 +577,9 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
             
       dd <- dbGetQuery(datasource,comando)
             
-      #stopifnot(all(cities %in% dd$municipio_geocodigo),message("check if cities are in the parameter table"))      
+      assert_that(all(cities %in% dd$municipio_geocodigo),msg = ("check if cities and cid10 are in the parameter table"))      
       
-      dd
+      return(dd)
 }
       
 

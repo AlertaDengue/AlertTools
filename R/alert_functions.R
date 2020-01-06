@@ -203,7 +203,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A92.0", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'head(tabela_historico(res))
 #'# User's parameters
