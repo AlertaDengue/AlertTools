@@ -44,7 +44,7 @@ Function to plot a map of the alert
 \examples{
 # Parameters for the model
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
 geraMapa(alerta=res, subset = cidades, se=201704, datasource=con, shapefile="shape/33MUE250GC_SIR.shp",
 varid="CD_GEOCMU", titulo="RJ-Norte", legpos="topright")

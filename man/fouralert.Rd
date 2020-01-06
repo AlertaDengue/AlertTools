@@ -41,5 +41,5 @@ cli = getWU(stations = 'SBGL', vars=c("temp_min"), datasource=con) \%>\%
 ale <- plyr::join_all(list(cas,cli),by="SE") 
 resf <- fouralert(ale, crit = criteria)
 # Better visualization
-tail(tabela.historico(resf),n=3)
+tail(tabela_historico(resf),n=3)
 }

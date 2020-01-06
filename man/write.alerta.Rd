@@ -20,8 +20,8 @@ Function to write the pipeline results into the database. Receives the object cr
 \examples{
 # Parameters for the model
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
-restab <- tabela.historico(res[1]) 
+restab <- tabela_historico(res[1]) 
 write.alerta(restab[1:5,])
 }

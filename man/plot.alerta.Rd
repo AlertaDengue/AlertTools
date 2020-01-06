@@ -10,7 +10,7 @@
   nome.fig = "grafico", datasource = con)
 }
 \arguments{
-\item{obj}{object created by tabela.historico()}
+\item{obj}{object created by tabela_historico()}
 
 \item{geocodigo}{city's geocode.}
 
@@ -34,13 +34,13 @@
 a plot
 }
 \description{
-Function to plot the output of tabela.historico.
+Function to plot the output of tabela_historico.
 }
 \examples{
 # Parameters for the model
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
-restab <- tabela.historico(res)
+restab <- tabela_historico(res)
 plot.alerta(restab, geocodigo = cidades$municipio_geocodigo, var="casos")
 }

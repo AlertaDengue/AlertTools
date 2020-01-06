@@ -102,7 +102,7 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'ale <- plyr::join_all(list(cas,cli),by="SE") 
 #'resf <- fouralert(ale, crit = criteria)
 #'# Better visualization
-#'tail(tabela.historico(resf),n=3)
+#'tail(tabela_historico(resf),n=3)
 
 
 fouralert <- function(obj, crit, miss="last",dy=4){
@@ -183,7 +183,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
       return(ale)      
 }
 
-#pipe.infodengue ---------------------------------------------------------------------
+#pipe_infodengue ---------------------------------------------------------------------
 #'@title pipeline used by infodengue 
 #'@description wrap of functions used by Infodengue.
 #'@param cities In general, a vector of 7-digit geocodes. If it is a data.frame containing geocodes
@@ -200,16 +200,16 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
-#'head(tabela.historico(res))
+#'head(tabela_historico(res))
 #'# User's parameters
 #'dd <- read.parameters(cities = c(3300159,3302403)) %>% mutate(limiar_epidemico = 100)
-#'res <- pipe.infodengue(cities = dd, cid10 = "A90", 
+#'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'
 
-pipe.infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasting="none", 
+pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con){
       
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
@@ -418,8 +418,8 @@ alertaRio <- function(naps = 0:9, crit, se, cid10 = "A90",
 
 #plot.alerta --------------------------------------------------------------------
 #'@title Plot the time series of warnings.
-#'@description Function to plot the output of tabela.historico. 
-#'@param obj object created by tabela.historico()
+#'@description Function to plot the output of tabela_historico. 
+#'@param obj object created by tabela_historico()
 #'@param geocodigo city's geocode.
 #'@param var variable to be plotted, usually "cases", or "p_inc100k". 
 #'@param cores colors corresponding to the levels 1, 2, 3, 4.
@@ -433,9 +433,9 @@ alertaRio <- function(naps = 0:9, crit, se, cid10 = "A90",
 #'@examples
 #' # Parameters for the model
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
-#'restab <- tabela.historico(res)
+#'restab <- tabela_historico(res)
 #'plot.alerta(restab, geocodigo = cidades$municipio_geocodigo, var="casos")
 
 plot.alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20F","orange","red"), 
@@ -586,7 +586,7 @@ map.Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
 #'@examples
 #' # Parameters for the model
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'geraMapa(alerta=res, subset = cidades, se=201704, datasource=con, shapefile="shape/33MUE250GC_SIR.shp",
 #'varid="CD_GEOCMU", titulo="RJ-Norte", legpos="topright")
@@ -639,7 +639,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 }
 
 
-#tabela.historico --------------------------------------------------------------------
+#tabela_historico --------------------------------------------------------------------
 #'@title Write the alert object into the database.
 #'@description Function to write the alert results into the database. 
 #'@param obj object created by the pipeline.
@@ -647,14 +647,14 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'@return data.frame with the data to be written. 
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2013-01-10")
-#'restab <- tabela.historico(res)
+#'restab <- tabela_historico(res)
 
-tabela.historico <- function(obj, versao = Sys.Date()){
+tabela_historico <- function(obj, versao = Sys.Date()){
       
       # --------- create single data.frame ------------------#
-      # if object created by pipe.infodengue():
+      # if object created by pipe_infodengue():
       if(class(obj)=="list" & class(obj[[1]])=="alerta"){
             data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
             indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices      
@@ -697,9 +697,9 @@ tabela.historico <- function(obj, versao = Sys.Date()){
 #'@examples
 #'# Parameters for the model
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe.infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
-#'restab <- tabela.historico(res[1]) 
+#'restab <- tabela_historico(res[1]) 
 #'write.alerta(restab[1:5,])
 
 write.alerta<-function(d, datasource = con){
