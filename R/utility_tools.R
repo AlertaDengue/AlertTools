@@ -577,14 +577,14 @@ write.parameters<-function(params, tab, senha){
 #'@return dataframe with all parameters
 #'@examples
 #'read.parameters(cities = 3118601, cid10 = "A90")
-#'read.parameters(cities = 3118601, cid10 = "A92.0")
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'read.parameters(cities = cid$municipio_geocodigo, cid10 = "A90")
 
 read.parameters<-function(cities, cid10 = "A90", datasource=con){
       
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
-            
+      if(cid10 != "A90")print("tab de parametros so tem dengue. Usando-os.")
+      cid10 = "A90"
       # reading parameters from database
       sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
       comando = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
