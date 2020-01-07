@@ -203,7 +203,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A92.0", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'head(tabela_historico(res))
 #'# User's parameters
@@ -266,7 +266,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
             dT = getTweet(cidades, lastday = finalday, cid10 = "A90", datasource)
       }
       
-      res <- list()
+      #res <- list()
        # para cada cidade ...
       
       ## FUN  calc.alerta (internal)
@@ -310,9 +310,9 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
             # Apply alert rules
             y <- fouralert(ale, crit = criteriaU)  # apply alert 
             
-            print(paste("nivel do alerta de ",cas.x$nome[1],":", tail(y$indices$level,1)))
-            y
-      }      
+            #print(paste("nivel do alerta de ",cas.x$casos[1],":", tail(y$indices$level,1)))
+            y     
+            }      
       
       res <- lapply(cidades, calc.alerta) %>% setNames(cidades) # antes o nome era character, agora e o geocodigo
       #       nick <- gsub(" ", "", nome, fixed = TRUE)
@@ -595,8 +595,8 @@ map_Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
-#'geraMapa(alerta=res, subset = cidades, se=201704, datasource=con, shapefile="shape/33MUE250GC_SIR.shp",
-#'varid="CD_GEOCMU", titulo="RJ-Norte", legpos="topright")
+#'geraMapa(alerta=res, subset = c(3300936, 3302403), se=201704, 
+#'shapefile="shape/33MUE250GC_SIR.shp", varid="CD_GEOCMU", titulo="RJ-Norte")
 
 geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"), legpos="bottomright",
                    titulo="", filename, dir="", shapefile, varid, varname, caption=TRUE, 
@@ -604,11 +604,15 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
       
       require(maptools,quietly = TRUE,warn.conflicts = FALSE)
       
-      N = length(alerta) # numero de cidades presentes no objeto alerta.
+      assert_that(class(alerta[[1]]) == "alerta", msg = "geraMapa: alerta argument must have class alerta. 
+                  Try using fouralert or infodengue_pipeline.")
+     
+       N = length(alerta) # numero de cidades presentes no objeto alerta.
       
       # subset de cidades para o mapa
       if (!missing(subset)){
-            ale <- alerta[which(names(alerta) %in% gsub(" ","", subset$nome))]
+            assert_that(class(subset) %in% c("integer","numeric"), msg = "gerMapa: subset must be a vector of geocodes" ) 
+            ale <- alerta[which(names(alerta) %in% subset)]
       } else {ale <- alerta}
       
       # table com as cidades e cores
