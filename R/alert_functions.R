@@ -447,10 +447,14 @@ plot_alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
                       ini=201001, fim=202001, ylab=var, yrange, salvar = FALSE, 
                       nome.fig = "grafico", datasource=con){
       
-      stopifnot(var %in% names(obj))
-      if(missing(geocodigo)) geocodigo <- unique(restab$municipio_geocodigo)
-      if(missing(ini))ini <- min(restab$SE)
-      if(missing(ini))fim <- max(restab$SE)
+      if(class(obj) == "alerta") obj <- tabela_historico(obj)
+      if(class(obj[[1]]) == "alerta") obj <- tabela_historico(obj)
+      assert_that(var %in% names(obj), msg = paste("plot_alerta: I don't find the 
+                                                   variable", var, "to plot"))
+      
+      if(missing(geocodigo)) geocodigo <- unique(obj$municipio_geocodigo)
+      if(missing(ini))ini <- min(obj$SE)
+      if(missing(ini))fim <- max(obj$SE)
       
       d <- obj %>% filter(SE >= ini & SE <= fim)
       
@@ -694,7 +698,8 @@ tabela_historico <- function(obj, versao = Sys.Date()){
                    nivel = indices$level,
                    versao_modelo = as.character(versao),
                    id = id)
-                   
+       
+      class(d) <- "historico_alerta"            
       # ---------if writing into historico_alerta table ---------# 
       # se tiver ja algum registro com mesmo geocodigo e SE, esse sera substituido pelo atualizado.
       d
