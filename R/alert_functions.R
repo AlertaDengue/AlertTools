@@ -499,7 +499,7 @@ plot_alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
       }
       
       geocodigo %>% map(plota)
-      
+      return()
       #par(new=T)
       #plot(dd[,var], col="white", type="l",axes=FALSE , xlab="", ylab="" ) #*coefs[2] + coefs[1]
       #        axis(1, pos=0, lty=0, lab=FALSE)
@@ -698,10 +698,7 @@ tabela_historico <- function(obj, versao = Sys.Date()){
                    nivel = indices$level,
                    versao_modelo = as.character(versao),
                    id = id)
-       
-      class(d) <- "historico_alerta"            
-      # ---------if writing into historico_alerta table ---------# 
-      # se tiver ja algum registro com mesmo geocodigo e SE, esse sera substituido pelo atualizado.
+      
       d
 }
 
