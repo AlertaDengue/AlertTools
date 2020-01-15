@@ -349,7 +349,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
 #'@param datasource name of the sql connection.
 #'@return list with an alert object for each APS.
 #'@examples
-#'alerio2 <- alertaRio(naps = 0:2, se=201804, delaymethod="fixedprob")
+#'alerio2 <- alertaRio(naps = 0:2, se=201804, delaymethod="fixedprob", cid10 = "A920")
  #'names(alerio2)
 
 alertaRio <- function(naps = 0:9, se, cid10 = "A90", 
@@ -372,7 +372,13 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90",
       
       cas = getCasesinRio(APSid = naps, cid10 = cid10, datasource=datasource)
       cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min", datasource=datasource)
-      if(cid10 == "A90") tw <- getTweet(cities = 3304557, cid10="A90", datasource = datasource)[,c("SE","tweet")]
+      if(cid10 == "A90") {
+            tw <- getTweet(cities = 3304557, cid10="A90")[,c("SE","tweet")]
+      }else {
+            tw <- data.frame(SE = seqSE(from = min(cas$SE), to = max(cas$SE))$SE,
+                                   tweet = NA)
+      }
+      
                   
       
       # nowcasting and Rt parameters 
@@ -404,11 +410,9 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90",
                   adjustIncidence(method = delaymethod, pdig = p) %>%
                   Rt(count = "tcasesmed",gtdist="normal", meangt= meangt, sdgt = 1) %>%
                   mutate(inc = tcasesmed/populacao*100000) %>%
-                  full_join(cli.aps, by = "SE")
+                  full_join(cli.aps, by = "SE") %>% 
+                  full_join(tw, by = "SE")
             
-            if(cid10 == "A90") d.aps <- d.aps %>% full_join(tw, by = "SE")
-            else d.aps$tweet <- NA
-                  
             y <- fouralert(obj = d.aps[d.aps$SE <= se,],crit = crit)
             print(paste("nivel do alerta de ",d.aps$localidade[1],":", 
                         tail(y$indices$level,1)))

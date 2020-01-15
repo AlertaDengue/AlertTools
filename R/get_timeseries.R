@@ -92,7 +92,7 @@ bestWU <- function(series,var){
             else {return(series[[which.max(lastdate)[1]]])}
 }
 
-# GetTweet --------------------------------------------------------------
+# getTweet --------------------------------------------------------------
 #'@description Create weekly time series from tweeter data from server. The 
 #'source of this data is the Observatorio da Dengue (UFMG).
 #'@title Get Tweeter Data
