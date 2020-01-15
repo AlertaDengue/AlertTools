@@ -357,6 +357,7 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90",
                       pdig = c(2.5016,1.1013), datasource=con){
       
       assert_that(narule == "arima", msg = "alertaRio: arima is the only na fill method available")
+      assert_that(cid10 %in% c("A90","A920"), msg = "alertaRio: cid10 = A90 for dengue or cid10 = A920 for chik" )
       
       if(missing(se)) se = data2SE(days = Sys.Date(), format = "%Y-%m-%d")
       
