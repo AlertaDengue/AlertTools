@@ -95,13 +95,14 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'val = c(varcli ="temp_min", "clicrit"="22","limiar_preseason"="10","limiar_epidemico"="100")
 #'criteria = setCriteria(rule="Af",values=val)
 #'# Get, organize data 
-#'cas = getCases(cities = 3304557, cid10 = "A90", datasource=con) %>% 
+#'cas = getCases(cities = 3200300, cid10 = "A90") %>% 
 #'      Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) %>%
 #'      mutate(inc = casos/pop*100000)
-#'cli = getWU(stations = 'SBGL', vars=c("temp_min"), datasource=con) %>%
-#'      mutate(temp_min = nafill(temp_min, rule = "arima")) 
+#'cli = getWU(stations = 'SBGL', vars="temp_min") %>%
+#'      mutate(temp_min = nafill(temp_min, rule = "arima"))
+#'tw = getTweet(cities = 3200300)
 #'# Calculate alert      
-#'ale <- plyr::join_all(list(cas,cli),by="SE") 
+#'ale <- plyr::join_all(list(cas,cli,tw), by="SE") 
 #'resf <- fouralert(ale, crit = criteria)
 #'# Better visualization
 #'tail(tabela_historico(resf),n=3)
@@ -207,7 +208,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'finalday= "2018-08-12",nowcasting="none")
 #'head(tabela_historico(res))
 #'# User's parameters
-#'dd <- read.parameters(cities = c(3300159,3302403)) %>% mutate(limiar_epidemico = 100)
+#'dd <- read.parameters(cities = c(3200300)) %>% mutate(limiar_epidemico = 100)
 #'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'

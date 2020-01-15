@@ -103,10 +103,11 @@ bestWU <- function(series,var){
 #'@param datasource Use the connection to the Postgresql server for using project data.  
 #'@return data.frame with weekly counts of people tweeting on dengue.
 #'@examples
-#'res = getTweet(cities = 3302205, lastday = "2014-03-01")
+#'tw <- getTweet(cities = 3302205, lastday = "2014-03-01")
+#'tw <- getTweet(cities = 3200300, lastday = "2016-03-01")
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
-#'res <- getTweet(cities = cid$municipio_geocodigo) 
-#'tail(res)
+#'tw <- getTweet(cities = cid$municipio_geocodigo) 
+#'tail(tw)
 
 getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con) {
       
@@ -124,23 +125,33 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
             
       } else {stop(paste("there is no tweet for", cid10,"in the database"))}
       
-      # warning: there are cities without any tweet 
+      # no tweets found for these cities 
+      if(nrow(tw) == 0){
+            message(paste("cidade(s)",cities,"nunca tweetou sobre dengue"))
+            return(data.frame(Municipio_geocodigo = cities,
+                             SE = seqSE(from = 201001, to = data2SE(lastday, 
+                                                                    format = "%Y-%m-%d"))$SE,
+                             tweet = 0))
+      }
+      
+      # checking if tweets were partially found
       tots = tapply(tw$numero,tw$Municipio_geocodigo,sum)
       if (any(tots==0)) message(paste("cidade(s)",cities[which(tots==0)],"nunca tweetou sobre dengue"))
       
-      # Counting number of tweets per SE and city 
+      # Counting number of tweets per SE and city
       tw <- tw %>%  # 
             mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) # creating column SE
-      
+            
       sem <-  expand.grid(Municipio_geocodigo = cities, 
                           SE = seqSE(from = 201001, to = max(tw$SE))$SE)
       st <- full_join(sem,tw,by = c("Municipio_geocodigo", "SE")) %>% 
-            arrange(Municipio_geocodigo,SE) %>%
-            group_by(Municipio_geocodigo,SE)  %>%
-            summarize(tweet = sum(numero))  %>%
-            select(cidade = Municipio_geocodigo, SE, tweet)
-     
-      as.data.frame(st)
+                  arrange(Municipio_geocodigo,SE) %>%
+                  group_by(Municipio_geocodigo,SE)  %>%
+                  summarize(tweet = sum(numero))  %>%
+                  select(cidade = Municipio_geocodigo, SE, tweet)
+            
+      return(as.data.frame(st))      
+      
 }
 
 

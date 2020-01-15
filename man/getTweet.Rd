@@ -24,8 +24,8 @@ Create weekly time series from tweeter data from server. The
 source of this data is the Observatorio da Dengue (UFMG).
 }
 \examples{
-res = getTweet(cities = 3302205, lastday = "2014-03-01")
+tw <- getTweet(cities = 3302205, lastday = "2014-03-01")
 cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
-res <- getTweet(cities = cid$municipio_geocodigo) 
-tail(res)
+tw <- getTweet(cities = cid$municipio_geocodigo) 
+tail(tw)
 }
