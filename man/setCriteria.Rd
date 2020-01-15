@@ -24,16 +24,3 @@ The criteria for transition between colors (alert levels) can be
 chosen from existing rules or can be specified by the user. The built in rules are: 
 Af (minimum temperature defines yellow) and Aw (humidity does).
 }
-\examples{
-Af is originally created for dengue in Southeast Brazil
-setCriteria(rule="Af")
-Defining a rule
-myrule = list(crity = "temp_min > 25 & casos > 0", crito = "p1 > 0.9 & inc > 1", 
-critr = "inc > 100 & casos > 10")
-mydelay = list(delayy = c(3,1), delayo = c(3,1), delayr = c(2,2))
-setCriteria(rule = myrule, delays = mydelay)
-Defining values
-val = c(varcli ="temp_min", "limiar_preseason"="10",
-"limiar_epidemico"="100", "clicrit"="22")
-setCriteria(rule="Af",values=val)
-}

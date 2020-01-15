@@ -23,10 +23,12 @@
 #'critr = "inc > 100 & casos > 10")
 #'mydelay = list(delayy = c(3,1), delayo = c(3,1), delayr = c(2,2))
 #'setCriteria(rule = myrule, delays = mydelay)
-#'Defining values
-#'val = c(varcli ="temp_min", "limiar_preseason"="10",
-#'"limiar_epidemico"="100", "clicrit"="22")
+#'Defining values manually
+#'val <- c("varcli" ="temp_min", "limiar_preseason"="10","limiar_epidemico"="100", "clicrit"="22")
 #'setCriteria(rule="Af",values=val)
+#'Using infodengue's parameters:
+#'val <- read.parameters(3304557)
+#'setCriteria(rule="Af", values=val)
 
 setCriteria <- function(rule=NULL, values=NULL, 
                         delays = list(delayy = c(0,0), delayo = c(0,0), delayr = c(0,0))){
@@ -40,6 +42,7 @@ setCriteria <- function(rule=NULL, values=NULL,
             assert_that(any(names(values) %in% c("varcli", "clicrit", "limiar_preseason",
                                             "limiar_epidemico")), msg = "setcriteria: elements missing from arg values")
             }
+      
       
       # pre-defined rules
       if(!is.null(rule)){
@@ -67,6 +70,10 @@ setCriteria <- function(rule=NULL, values=NULL,
             assert_that(rule[1] == "Af" & values[["varcli"]] == "temp_min" | 
                       rule[1] == "Aw" & values[["varcli"]] == "umid_max", 
             msg = "setcriteria: Af requires temp_min and Aw requires umid_max")
+            
+            if(class(values) == "data.frame") { # handling values from read.parameters
+                  values <- unlist(sapply(names(values),function(x) values[[x]])) 
+            }
             
             criteria <- lapply(criteria, function(x) c(str_replace_all(x[1], values), x[c(2,3)]))
       }
@@ -334,7 +341,6 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
 #'an epidemic scenario.  
 #'@export
 #'@param naps subset of vector 0:9 corresponding to the id of the APS. Default is all of them.
-#'@param crit alert criteria defined using setCriteria(). 
 #'@param se last epidemiological week (format = 201401) 
 #'@param cid10 default is A90 (dengue). Chik = A920.
 #'@param narule how to fill climate missing data (arima is the only option)
@@ -343,23 +349,20 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
 #'@param datasource name of the sql connection.
 #'@return list with an alert object for each APS.
 #'@examples
-#'params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
-#'criter <- setCriteria(rule="Af", values = params)
-#'alerio2 <- alertaRio(naps = 0:2, crit = criter, se=201804, delaymethod="fixedprob")
-#'names(alerio2)
+#'alerio2 <- alertaRio(naps = 0:2, se=201804, delaymethod="fixedprob")
+ #'names(alerio2)
 
-alertaRio <- function(naps = 0:9, crit, se, cid10 = "A90", 
+alertaRio <- function(naps = 0:9, se, cid10 = "A90", 
                       delaymethod = "fixedprob", narule="arima", 
                       pdig = c(2.5016,1.1013), datasource=con){
-      
-      # checking input
-      assert_that(all(names(crit) %in% c("crity", "crito", "critr")) &
-                        all(sapply(crit,length) %in% 3),
-                  msg = "alertaRio: argument crit is mispecified. use setCriteria()")
       
       assert_that(narule == "arima", msg = "alertaRio: arima is the only na fill method available")
       
       if(missing(se)) se = data2SE(days = Sys.Date(), format = "%Y-%m-%d")
+      
+      # getting parameters and criteria
+      pars <- read.parameters(3304557, cid10 = cid10)
+      crit <- setCriteria(rule = "Af", values = pars)
       
       # reading data
       message("lendo dados ...")

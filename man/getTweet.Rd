@@ -25,6 +25,7 @@ source of this data is the Observatorio da Dengue (UFMG).
 }
 \examples{
 tw <- getTweet(cities = 3302205, lastday = "2014-03-01")
+tw <- getTweet(cities = 3200300, lastday = "2016-03-01")
 cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 tw <- getTweet(cities = cid$municipio_geocodigo) 
 tail(tw)

@@ -4,14 +4,11 @@
 \alias{alertaRio}
 \title{4 level alert Green-Yellow-Orange-Red for Rio de Janeiro.}
 \usage{
-alertaRio(naps = 0:9, crit, se, cid10 = "A90",
-  delaymethod = "fixedprob", narule = "arima", pdig = c(2.5016,
-  1.1013), datasource = con)
+alertaRio(naps = 0:9, se, cid10 = "A90", delaymethod = "fixedprob",
+  narule = "arima", pdig = c(2.5016, 1.1013), datasource = con)
 }
 \arguments{
 \item{naps}{subset of vector 0:9 corresponding to the id of the APS. Default is all of them.}
-
-\item{crit}{alert criteria defined using setCriteria().}
 
 \item{se}{last epidemiological week (format = 201401)}
 
@@ -35,8 +32,6 @@ indicates evidence of sustained transmission, red indicates evidence of
 an epidemic scenario.
 }
 \examples{
-params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
-criter <- setCriteria(rule="Af", values = params)
-alerio2 <- alertaRio(naps = 0:2, crit = criter, se=201804, delaymethod="fixedprob")
+alerio2 <- alertaRio(naps = 0:2, se=201804, delaymethod="fixedprob")
 names(alerio2)
 }
