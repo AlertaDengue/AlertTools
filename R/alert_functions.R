@@ -430,12 +430,12 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90",
 
 
 #plot_alerta --------------------------------------------------------------------
-#'@title Plot the time series of warnings.
+#'@title Plot the time series of infodengue's alert levels for one or more cities.
 #'@description Function to plot the output of tabela_historico. 
 #'@export
-#'@param obj object created by tabela_historico()
-#'@param geocodigo city's geocode.
-#'@param var variable to be plotted, usually "cases", or "p_inc100k". 
+#'@param obj object created by tabela_historico() or from the pipeline.
+#'@param geocodigo city's geocode. If missing, plots for all cities will be created.
+#'@param var variable to be plotted, usually "cases", or "inc". 
 #'@param cores colors corresponding to the levels 1, 2, 3, 4.
 #'@param ini first epidemiological week. If not stated, use the first one available
 #'@param fim last epidemiological week. If not stated, use the last one available 
@@ -443,10 +443,10 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90",
 #'@param yrange y axis range
 #'@param salvar TRUE to save the figure (default is FALSE) 
 #'@param nome.fig figure name (default is "grafico")
-#'@return a plot
+#'@return a plot for each city
 #'@examples
 #' # Parameters for the model
-#'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
+#'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro", datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'restab <- tabela_historico(res)
@@ -456,10 +456,14 @@ plot_alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
                       ini=201001, fim=202001, ylab=var, yrange, salvar = FALSE, 
                       nome.fig = "grafico", datasource=con){
       
+      # type of object to plot
       if(class(obj) == "alerta") obj <- tabela_historico(obj)
       if(class(obj[[1]]) == "alerta") obj <- tabela_historico(obj)
+
       assert_that(var %in% names(obj), msg = paste("plot_alerta: I don't find the 
                                                    variable", var, "to plot"))
+      
+      assert_that(class(obj) != "alertario)", msg = paste("use plot_alertaRio() to plot alerta rio"))
       
       if(missing(geocodigo)) geocodigo <- unique(obj$municipio_geocodigo)
       if(missing(ini))ini <- min(obj$SE)
@@ -516,7 +520,88 @@ plot_alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
       #        mtext("casos",4, line=3,col="darkgrey", cex=0.7)
       #       }
 }
+
+#plot_alertaRio --------------------------------------------------------------------
+#'@title Plot the time series of alerts for each APS. Specific for the Rio de Janeiro alert model.
+#'@description Function to plot the output of alertaRio(). 
+#'@export
+#'@param ale object created by alertaRio()
+#'@param aps aps to be plotted. If missing, figures will be created for all aps (health districts) 
+#'@param var variable to be plotted, usually "cases", or "inc". 
+#'@param cores colors corresponding to the levels 1, 2, 3, 4.
+#'@param ini first epidemiological week. If not stated, use the first one available
+#'@param fim last epidemiological week. If not stated, use the last one available 
+#'@param ylab y axis label
+#'@param yrange y axis range
+#'@param salvar TRUE to save the figure (default is FALSE) 
+#'@param nome.fig figure name (default is "grafico")
+#'@return a plot
+#'@examples
+#' # Parameters for the model
+#'alerio2 <- alertaRio(naps = 0:9, se=201804, delaymethod="fixedprob", cid10 = "A90")
+#'plot_alertaRio(alerio2, var = "inc")
+
+plot_alertaRio<-function(ale, aps, var = "casos", cores = c("#0D6B0D","#C8D20F","orange","red"), 
+                      ini=201001, fim=202001, ylab=var, yrange, salvar = FALSE, 
+                      nome.fig = "grafico", datasource=con){
       
+      # type of object to plot
+      assert_that(class(ale) == "alertario", msg = "plot_alertaRio can only be used with object created by alertaRio()") 
+      
+      obj <- write_alertaRio(ale, write = FALSE)
+      #if(class(obj) == "alertario") obj <- write_alertaRio(obj, write = "no")
+      assert_that(var %in% names(obj), msg = paste("plot_alertaRio: I don't find the 
+                                                   variable", var, "in", ale))
+      
+      
+      if(missing(aps)) aps <- unique(obj$aps)
+      if(missing(ini))ini <- min(obj$se)
+      if(missing(ini))fim <- max(obj$se)
+      
+      d <- obj %>% filter(se >= ini & se <= fim)
+      
+      # get the thresholds (the same for all aps)
+      pars <- read.parameters(cities = 3304557, cid10 = unique(na.omit(d$CID10))) 
+      #print(pars_table)
+      # para uma cidade, dados e parametros para o grafico
+      
+      plota <- function(ap, yrange){
+            
+            dd <- d %>% filter(aps == ap)            
+            x <- seq_along(dd$se)
+            ticks <- seq(1, length(dd$se), length.out = 8)
+            if(missing(yrange)) yrange = range(dd[,var], na.rm=TRUE)
+            
+            if(salvar == TRUE) png(paste(nome.fig,aps,"_",max(dd$se),".png", sep = ""))
+            # grafico
+            par(mai=c(0,0,0,0),mar=c(4,4,0,4))
+            plot(x, dd[,var], xlab = "", ylab = var, type="l", ylim= yrange, axes=FALSE)
+            axis(1, at = ticks, labels = dd$se[ticks], las=3, cex=0.8)
+            axis(2, las=2, cex=0.8)
+            
+            for (i in 1:4) {
+                  onde <- which(dd$nivel==i) 
+                  if (length(onde))
+                        segments(x[onde],0,x[onde],(dd[onde,var]),col=cores[i],lwd=3)
+            }
+            if(var == "casos") {
+                  abline(h=pars$limiar_preseason, lty=2, col="darkgreen")
+                  abline(h=pars$limiar_epidemico, lty=2, col="red")
+            }
+            if (var == "inc") {
+                  abline(h=pars$limiar_preseason/dd$pop[1]*100000, lty=2, col="darkgreen")
+                  abline(h=pars$limiar_epidemico/dd$pop[1]*100000, lty=2, col="red")
+            }
+            if(var == "temp_min" & pars$clicrit == "temp_min") abline(h = pars$clicrit, lty=2, col = "yellow")
+            
+            if(salvar == TRUE) dev.off()
+      }
+      
+      aps %>% map(plota)
+      return()
+      
+}
+
 #map_Rio --------------------------------------------------------------------
 #'@title Plot the alert map for Rio de Janeiro city.
 #'@description Function to plot a map of the alert. 
