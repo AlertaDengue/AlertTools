@@ -84,7 +84,7 @@ bestWU <- function(series,var){
       # prop missing data
       propNA <- sapply(series,function(x,v=var) sum(is.na(x[,v]))/nrow(x))
       # last date with data
-      if(any(propNA == 1)) {
+      if(sum(propNA == 1)) {
             ser <- series[[which(propNA != 1)]]
             emptysta <- unique(series[[which(propNA == 1)]]$estacao)
             sta <- unique(ser$estacao) 
