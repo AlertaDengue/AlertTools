@@ -354,8 +354,8 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
 #'@param datasource name of the sql connection.
 #'@return list with an alert object for each APS.
 #'@examples
-#'alerio2 <- alertaRio(naps = 0:2, se=201804, delaymethod="fixedprob", cid10 = "A920")
- #'names(alerio2)
+#'alerio2 <- alertaRio(naps = 0:9, se=201952, delaymethod="fixedprob", cid10 = "A90")
+#'names(alerio2)
 
 alertaRio <- function(naps = 0:9, se, cid10 = "A90", 
                       delaymethod = "fixedprob", narule="arima", 
@@ -887,7 +887,7 @@ write_alerta<-function(d, datasource = con){
 #'res <- write_alertaRio(alerio2, write="no")
 #'tail(res)
 
-write_alertaRio<-function(obj, write = "no", version = Sys.Date()){
+write_alertaRio<-function(obj, write = "no", datasource = con, version = Sys.Date()){
       
       # check input
       assert_that(class(obj) == "alertario", msg = "write_alertaRio: obj is an alertaRio object" )
@@ -953,7 +953,8 @@ write_alertaRio<-function(obj, write = "no", version = Sys.Date()){
                   try(dbGetQuery(datasource, insert_sql2))    
                   
             }
-            
+            # escrevendo
+            1:nrow(dados) %>% map(escreve_linha)
             refresh_sql = "REFRESH MATERIALIZED VIEW uf_total_view;"
             try(dbGetQuery(datasource, refresh_sql))
             message(paste("dados escritos na tabela", tabela))
