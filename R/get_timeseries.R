@@ -92,12 +92,15 @@ bestWU <- function(series,var){
             
             return(ser)
             }
-      lastdate <- sapply(series, function(x,v=var) x$SE[max(which(is.na(x[,v])==FALSE))])
       
-      if(sum(propNA) == 2) {
-            message("WARNING: Both stations without data")
-            return(NULL)}
-            else {return(series[[which.max(lastdate)[1]]])}
+      if(sum(propNA) == 2) { #none has data
+            message("WARNING: Both stations without data. Returning the first one with NAs")
+            ser <- series[[1]]
+            return(ser)
+      } else { # both has data
+            lastdate <- sapply(series, function(x,v=var) x$SE[max(which(is.na(x[,v])==FALSE))])
+            return(series[[which.max(lastdate)[1]]])
+            }
 }
 
 # getTweet --------------------------------------------------------------

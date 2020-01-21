@@ -122,6 +122,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
                         all(sapply(crit,length) %in% 3),
                   msg = "fouralert: argument crit is mispecified")
       
+      
       # criteria
       #cyellow = crit[[1]]; corange = crit[[2]]; cred = crit[[3]]
       parsed_rules <- lapply(crit, function(x) parse(text=x[1]))
@@ -274,7 +275,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
             dT = getTweet(cidades, lastday = finalday, cid10 = "A90", datasource)
       }
       
-      #res <- list()
+      
        # para cada cidade ...
       
       ## FUN  calc.alerta (internal)
@@ -287,11 +288,15 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
             cli.x <- bestWU(series = list(cliwu[cliwu$estacao == parcli.x[[1]],],
                                           cliwu[cliwu$estacao == parcli.x[[2]],]), var = varcli.x)
             
-            lastdatewu <- cli.x$SE[max(which(is.na(cli.x[,varcli.x])==FALSE))]
+            # se nenhuma estacao tiver dados (cli.x = NULL), 
+            propNA <- sum(is.na(cli.x[,varcli.x]))/nrow(cli.x)
+            
+            lastdatewu <- ifelse(propNA < 1, cli.x$SE[max(which(is.na(cli.x[,varcli.x])==FALSE))],
+                                 NA)
             print(paste("Rodando alerta para ", x, "usando estacao", cli.x$estacao[1],"(ultima leitura:", lastdatewu,")"))
             
-            # climate data interpolation using arima 
-            if(!is.null(narule)) cli.x[,varcli.x] <- nafill(cli.x[,varcli.x], rule = narule) 
+            # climate data interpolation using arima (if there is any data) 
+            if(!is.null(narule) & !is.na(lastdatewu)) cli.x[,varcli.x] <- nafill(cli.x[,varcli.x], rule = narule) 
             
             # casos + nowcasting + Rt + incidencia 
             
