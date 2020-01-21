@@ -128,10 +128,11 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
       # no tweets found for these cities 
       if(nrow(tw) == 0){
             message(paste("cidade(s)",cities,"nunca tweetou sobre dengue"))
-            return(data.frame(Municipio_geocodigo = cities,
+            tw <- expand.grid(Municipio_geocodigo = cities,
                              SE = seqSE(from = 201001, to = data2SE(lastday, 
-                                                                    format = "%Y-%m-%d"))$SE,
-                             tweet = 0))
+                                                                    format = "%Y-%m-%d"))$SE)
+            tw$tweet <- 0
+            return(tw)
       }
       
       # checking if tweets were partially found

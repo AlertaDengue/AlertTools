@@ -279,7 +279,7 @@ lastDBdate <- function(tab, city = NULL, station = NULL, datasource){
 #'@param pass password
 #'@return "PostgreSQLConnection" object   
 #'@examples
-#'con <- DenguedbConnect()
+#'con <- DenguedbConnect(pass)
 #'dbListTables(con) 
 #'dbDisconnect(con)
 
