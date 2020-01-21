@@ -84,6 +84,14 @@ bestWU <- function(series,var){
       # prop missing data
       propNA <- sapply(series,function(x,v=var) sum(is.na(x[,v]))/nrow(x))
       # last date with data
+      if(any(propNA == 1)) {
+            ser <- series[[which(propNA != 1)]]
+            emptysta <- unique(series[[which(propNA == 1)]]$estacao)
+            sta <- unique(ser$estacao) 
+            message(paste("WU station",emptysta, "has no data. Using", sta ))
+            
+            return(ser)
+            }
       lastdate <- sapply(series, function(x,v=var) x$SE[max(which(is.na(x[,v])==FALSE))])
       
       if(all(propNA ==1)) {
