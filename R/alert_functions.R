@@ -49,13 +49,13 @@ setCriteria <- function(rule=NULL, values=NULL,
       
             if(rule[1] == "Af"){
                   criteria <- list(
-                  crity = c("temp_min > clicrit & casos > 0", 3, 3), #3,2
+                  crity = c("temp_min > clicrit", 3, 3), #3,2
                   crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
                   critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
             )} 
             if (rule[1] == "Aw"){
                    criteria = list(
-                         crity = c("umid_max > clicrit & casos > 0", 3, 2), #3,2
+                         crity = c("umid_max > clicrit", 3, 2), #3,2
                    crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
                    critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
                    )}
@@ -372,9 +372,20 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90",
       
       # reading data
       message("lendo dados ...")
-      print(paste("Ultimos registros de dengue:",lastDBdate("sinan", city=3304557,datasource=datasource)))
-      print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=3304557,datasource=datasource)))
+      if(cid10 == "A90"){
+            print(paste("Ultimos registros de dengue:",lastDBdate("sinan", city=3304557,datasource=datasource)))
+            print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=3304557,datasource=datasource)))
+      }
       
+      if(cid10 == "A920"){
+            print(paste("Ultimos registros de chik:",lastDBdate("sinan", city=3304557,datasource=datasource)))
+            #print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=3304557,datasource=datasource)))
+      }
+      
+      print(paste("Ultimos dados de clima (SBRJ):",lastDBdate(tab="clima_wu", station="SBRJ",datasource=datasource)))  
+      print(paste("Ultimos dados de clima (SBJR):",lastDBdate(tab="clima_wu", station="SBJR",datasource=datasource)))  
+      print(paste("Ultimos dados de clima (SBGL):",lastDBdate(tab="clima_wu", station="SBGL",datasource=datasource)))  
+            
       cas = getCasesinRio(APSid = naps, cid10 = cid10, datasource=datasource)
       cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min", datasource=datasource)
       if(cid10 == "A90") {
