@@ -221,7 +221,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'finalday= "2018-08-12",nowcasting="none")
 #'
 
-pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasting="none", 
+pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con){
       
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
@@ -354,10 +354,10 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), nowcasti
 #'@param datasource name of the sql connection.
 #'@return list with an alert object for each APS.
 #'@examples
-#'alerio2 <- alertaRio(naps = 0:9, se=201952, delaymethod="fixedprob", cid10 = "A90")
+#'alerio2 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A90")
 #'names(alerio2)
 
-alertaRio <- function(naps = 0:9, se, cid10 = "A90", 
+alertaRio <- function(naps = 0:9, se, cid10 = "A90", iniSE = 201001,
                       delaymethod = "fixedprob", narule="arima", 
                       pdig = c(2.5016,1.1013), datasource=con){
       
@@ -382,10 +382,7 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90",
             #print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=3304557,datasource=datasource)))
       }
       
-      print(paste("Ultimos dados de clima (SBRJ):",lastDBdate(tab="clima_wu", station="SBRJ",datasource=datasource)))  
-      print(paste("Ultimos dados de clima (SBJR):",lastDBdate(tab="clima_wu", station="SBJR",datasource=datasource)))  
-      print(paste("Ultimos dados de clima (SBGL):",lastDBdate(tab="clima_wu", station="SBGL",datasource=datasource)))  
-            
+          
       cas = getCasesinRio(APSid = naps, cid10 = cid10, datasource=datasource)
       cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min", datasource=datasource)
       if(cid10 == "A90") {
@@ -422,6 +419,7 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90",
             
             d.aps <- cas %>%
                   filter(localidadeid == aps) %>%
+                  filter(SE >= iniSE) %>%
                   arrange(SE) %>%
                   adjustIncidence(method = delaymethod, pdig = p) %>%
                   Rt(count = "tcasesmed",gtdist="normal", meangt= meangt, sdgt = 1) %>%
@@ -438,6 +436,7 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90",
       res <- lapply(naps, calc.alertaRio) %>% setNames(APS) # antes o nome era character, agora e o geocodigo
       #       nick <- gsub(" ", "", nome, fixed = TRUE)
       #       #names(alerta) <- nick
+      
       
       #if (writedb == TRUE) write_alerta(alerta, write = "db")  
       class(res) <- "alertario"

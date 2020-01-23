@@ -18,7 +18,7 @@
 #'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
 #'tail(res)
 
-getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource=con) {
+getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 201001, datasource=con) {
       
       # validade climate variables
       wuvars <- c("temp_min","temp_max","temp_med","umid_min","umid_med","umid_max",
@@ -49,7 +49,8 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), datasource
             mutate(estacao = Estacao_wu_estacao_id) %>% 
             mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) %>% # creating column SE
             group_by(estacao,SE)  %>%
-            summarise_at(vars(vars),list(mean),na.rm=TRUE)
+            summarise_at(vars(vars),list(mean),na.rm=TRUE) %>%
+            filter(SE > iniSE)
       
       # criar serie temporal-----------------------------------------
         st <-  expand.grid(estacao = stations, 
@@ -415,7 +416,7 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="n
       # criando serie temporal
       sem <-  expand.grid(id = unique(casos$id), SE = seqSE(from = 201001, 
                         to = max(casos$SE, na.rm=TRUE))$SE)
-      st <- full_join(sem,casos,by = c("id", "SE")) %>% 
+      st <- left_join(sem,casos,by = c("id", "SE")) %>% 
             arrange(id,SE) %>%
             left_join(.,pop[,c("id","populacao")],"id") %>%
             rename(localidadeid = id) %>%
