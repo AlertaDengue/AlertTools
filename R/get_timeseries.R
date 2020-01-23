@@ -14,8 +14,8 @@
 #' to open the database connection. 
 #'@return data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
 #'@examples
-#'res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", datasource= con)
-#'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
+#'res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201201)
+#'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med")
 #'tail(res)
 
 getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 201001, datasource=con) {
@@ -49,14 +49,13 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 20
             mutate(estacao = Estacao_wu_estacao_id) %>% 
             mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) %>% # creating column SE
             group_by(estacao,SE)  %>%
-            summarise_at(vars(vars),list(mean),na.rm=TRUE) %>%
-            filter(SE > iniSE)
+            summarise_at(vars(vars),list(mean),na.rm=TRUE) 
       
       # criar serie temporal-----------------------------------------
         st <-  expand.grid(estacao = stations, 
-                        SE = seqSE(from = 201001, to = max(d1$SE))$SE,
+                        SE = seqSE(from = iniSE, to = max(d1$SE))$SE,
                         stringsAsFactors = FALSE) %>%
-                full_join(.,d1,by = c("estacao", "SE")) %>%
+                left_join(.,d1,by = c("estacao", "SE")) %>%
             arrange(estacao,SE)
     st
     
@@ -240,7 +239,7 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
       
       # criando serie 
       sem <-  expand.grid(municipio_geocodigo = cities, SE = seqSE(from = 201001, to = max(casos$SE, na.rm=TRUE))$SE)
-      st <- full_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 
+      st <- left_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 
             arrange(municipio_geocodigo,SE) %>%
             mutate(localidade = 0) %>%  # para uso qdo tiver divisao submunicipal
             mutate(geocodigo = municipio_geocodigo) %>%

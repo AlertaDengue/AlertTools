@@ -212,7 +212,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'head(tabela_historico(res))
 #'# User's parameters
@@ -261,10 +261,11 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
       # Reading the meteorological data
       #print('Obtendo os dados de clima...')
       varscli <- unique(pars_table$varcli)
-      cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday,datasource)
+      
+      cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday)
       
       # Reading Cases
-      #print("Obtendo dados de notificacao ...")
+      print("Obtendo dados de notificacao ...")
       
       casos <- getCases(cidades, lastday = finalday, cid10 = cid10) %>%
             mutate(inc = casos/pop*100000)
@@ -315,6 +316,8 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
                   ale$tweets <- 0
             }
             
+            #ale <- ale[(ale$SE >= iniSE), ]
+            
             # build rules
             crit.x <- pars_table[pars_table$municipio_geocodigo==x,] # parameters
             crit.x.vector <- structure(as.character(crit.x), names = as.character(names(crit.x))) # dataframe -> vector
@@ -347,6 +350,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
 #'@export
 #'@param naps subset of vector 0:9 corresponding to the id of the APS. Default is all of them.
 #'@param se last epidemiological week (format = 201401) 
+#'@param iniSE first epidemiological week
 #'@param cid10 default is A90 (dengue). Chik = A920.
 #'@param narule how to fill climate missing data (arima is the only option)
 #'@param delaymethod atribbute of adjuntincidence. "fixedprob" or "bayesian"
