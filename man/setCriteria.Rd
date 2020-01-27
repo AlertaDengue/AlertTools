@@ -8,19 +8,32 @@ setCriteria(rule = NULL, values = NULL, delays = list(delayy = c(0,
   0), delayo = c(0, 0), delayr = c(0, 0)))
 }
 \arguments{
-\item{rule}{either a built-in rule ("Af" or "Aw") or a list with three elements defining criteria for transition to yellow (level 2),
-orange (level 3) and red (level 4). See description.}
+\item{rule}{either a built-in rule ("Af" or "Aw") or a list with three elements defining criteria for 
+transition to yellow (level 2), orange (level 3) and red (level 4). See description.}
 
 \item{values}{named vector of values for the critical parameters. Use character.}
 
 \item{delays}{list with three elements, each one is a vector: c(delay to turn on, delay to turn off)}
 }
 \value{
-list with rules. To be useful, this list must contain variables that match
-those in the data.
+list with rules. To be useful, this list must contain variables that match those in the data.
 }
 \description{
 The criteria for transition between colors (alert levels) can be 
 chosen from existing rules or can be specified by the user. The built in rules are: 
 Af (minimum temperature defines yellow) and Aw (humidity does).
+}
+\examples{
+setCriteria(rule="Af")
+Defining a rule
+myrule = list(crity = "temp_min > 25 & casos > 0", crito = "p1 > 0.9 & inc > 1", 
+critr = "inc > 100 & casos > 10")
+mydelay = list(delayy = c(3,1), delayo = c(3,1), delayr = c(2,2))
+setCriteria(rule = myrule, delays = mydelay)
+Defining values manually
+val <- c("varcli" ="temp_min", "limiar_preseason"="10","limiar_epidemico"="100", "clicrit"="22")
+setCriteria(rule="Af",values=val)
+Using infodengue parameters:
+val <- read.parameters(3304557)
+setCriteria(rule="Af", values=val)
 }

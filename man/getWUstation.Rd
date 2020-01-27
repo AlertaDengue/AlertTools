@@ -7,7 +7,9 @@
 getWUstation(cities, datasource = con)
 }
 \arguments{
-\item{cities}{geocodes}
+\item{cities}{vector with geocodes}
+
+\item{datasource}{connection to the project database}
 }
 \value{
 data.frame

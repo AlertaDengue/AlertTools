@@ -3,20 +3,19 @@
 # Claudia Codeco 2015
 # 
 
+
 #setCriteria -------------------------------------------------------------------
 #'@title Define rules to issue a four level alert Green-Yellow-Orange-Red.
 #'@description The criteria for transition between colors (alert levels) can be 
 #'chosen from existing rules or can be specified by the user. The built in rules are: 
 #'Af (minimum temperature defines yellow) and Aw (humidity does).  
 #'@export 
-#'@param rule either a built-in rule ("Af" or "Aw") or a list with three elements defining criteria for transition to yellow (level 2),
-#' orange (level 3) and red (level 4). See description.
+#'@param rule either a built-in rule ("Af" or "Aw") or a list with three elements defining criteria for 
+#'transition to yellow (level 2), orange (level 3) and red (level 4). See description.
 #'@param delays list with three elements, each one is a vector: c(delay to turn on, delay to turn off)
 #'@param values named vector of values for the critical parameters. Use character.   
-#'@return list with rules. To be useful, this list must contain variables that match
-#' those in the data.  
+#'@return list with rules. To be useful, this list must contain variables that match those in the data.  
 #'@examples
-#'Af is originally created for dengue in Southeast Brazil
 #'setCriteria(rule="Af")
 #'Defining a rule
 #'myrule = list(crity = "temp_min > 25 & casos > 0", crito = "p1 > 0.9 & inc > 1", 
@@ -26,7 +25,7 @@
 #'Defining values manually
 #'val <- c("varcli" ="temp_min", "limiar_preseason"="10","limiar_epidemico"="100", "clicrit"="22")
 #'setCriteria(rule="Af",values=val)
-#'Using infodengue's parameters:
+#'Using infodengue parameters:
 #'val <- read.parameters(3304557)
 #'setCriteria(rule="Af", values=val)
 
@@ -223,6 +222,10 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 
 pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con){
+      
+      
+      # check data
+      
       
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
       if (class(cities) %in% c("integer","numeric")) {

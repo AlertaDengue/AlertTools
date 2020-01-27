@@ -652,14 +652,13 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
 #'@description  Get the meteorological stations associated with one or more cities
 #'@title get meteorological stations
 #'@export
-#'@param cities geocodes
-#'@param datasource
+#'@param cities vector with geocodes
+#'@param datasource connection to the project database
 #'@return data.frame
 #'@examples
 #'getWUstation(cities = 3304557)
 #'cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
 #'getWUstation(cities = cidades$municipio_geocodigo)
-
 
 getWUstation <- function(cities, datasource = con){
       sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
@@ -669,8 +668,6 @@ getWUstation <- function(cities, datasource = con){
       city_table <- dbGetQuery(datasource,comando)
       return(city_table)
 }
-
-
 
 # insertCityinAlerta ------------------------------------
 #'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 
