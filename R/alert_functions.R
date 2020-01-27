@@ -829,7 +829,7 @@ tabela_historico <- function(obj, versao = Sys.Date()){
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2016-08-12",nowcasting="none")
 #'restab <- tabela_historico(res[1]) 
-#'write_alerta(restab[1:5,])
+#'write_alerta(restab)
 
 write_alerta<-function(d, datasource = con){
       
@@ -870,7 +870,7 @@ write_alerta<-function(d, datasource = con){
       escreve_linha <- function(li){
             vetor <- dados[li,]
             linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"',", str_c(vetor[1,3:11], collapse=","),
-                          ",",vetor[1,12],",'", as.character(vetor[1,13]),"',",as.character(vetor[1,14]),"'", sep="")
+                          ",",vetor[1,12],",'", as.character(vetor[1,13]),"',$$",as.character(vetor[1,14]),"$$", sep="")
             linha = gsub("NA","NULL",linha)
             insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" (" ,varnames.sql,") VALUES (", linha, ")ON CONFLICT ON CONSTRAINT ",constr.unico,"  
                                      DO UPDATE SET ",updates, sep="")
