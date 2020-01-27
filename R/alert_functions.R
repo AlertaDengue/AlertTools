@@ -729,7 +729,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
       # subset de cidades para o mapa
       if (!missing(subset)){
             assert_that(class(subset) %in% c("integer","numeric"), msg = "gerMapa: subset must be a vector of geocodes" ) 
-            ale <- alerta[which(names(alerta) %in% subset)]
+            ale <- alerta[which(as.numeric(names(alerta)) %in% subset)]
       } else {ale <- alerta}
       
       # table com as cidades e cores
@@ -870,7 +870,7 @@ write_alerta<-function(d, datasource = con){
       escreve_linha <- function(li){
             vetor <- dados[li,]
             linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"',", str_c(vetor[1,3:11], collapse=","),
-                          ",",vetor[1,12],",'", as.character(vetor[1,13]),"','",as.character(vetor[1,14]),"'", sep="")
+                          ",",vetor[1,12],",'", as.character(vetor[1,13]),"',",as.character(vetor[1,14]),"'", sep="")
             linha = gsub("NA","NULL",linha)
             insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" (" ,varnames.sql,") VALUES (", linha, ")ON CONFLICT ON CONSTRAINT ",constr.unico,"  
                                      DO UPDATE SET ",updates, sep="")
