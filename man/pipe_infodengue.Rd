@@ -36,7 +36,7 @@ wrap of functions used by Infodengue.
 \examples{
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
-finalday= "2018-08-12",nowcasting="none")
+finalday= "2019-08-12",nowcasting="none")
 head(tabela_historico(res))
 # User's parameters
 dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)

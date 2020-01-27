@@ -212,7 +212,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
-#'finalday= "2018-08-12",nowcasting="none")
+#'finalday= "2019-08-12",nowcasting="none")
 #'head(tabela_historico(res))
 #'# User's parameters
 #'dd <- read.parameters(cities = c(3200300)) %>% mutate(limiar_epidemico = 100)
@@ -804,11 +804,11 @@ tabela_historico <- function(obj, versao = Sys.Date()){
       d<- data %>%
             rename(municipio_geocodigo = cidade,
                    municipio_nome = nome,
-                   p_inc100k =inc) %>%
-            mutate(casos_est = ifelse(has_name(.,"tcasesmed"),tcasesmed,NA),
-                   casos_est_min = ifelse(has_name(.,"tcasesICmin"),tcasesICmin,NA),
-                   casos_est_max = ifelse(has_name(.,"tcasesICmax"),tcasesICmax,NA),
-                   p_rt1 = ifelse(is.na(p1),0,p1),
+                   p_inc100k =inc,
+                   casos_est = tcasesmed,
+                   casos_est_min = tcasesICmin,
+                   casos_est_max = tcasesICmax) %>%
+            mutate(p_rt1 = ifelse(is.na(p1),0,p1),
                    Localidade_id  = ifelse(is.na(localidade),0,localidade),
                    data_iniSE = SE2date(SE)$ini,
                    nivel = indices$level,
