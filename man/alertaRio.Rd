@@ -4,8 +4,9 @@
 \alias{alertaRio}
 \title{4 level alert Green-Yellow-Orange-Red for Rio de Janeiro.}
 \usage{
-alertaRio(naps = 0:9, se, cid10 = "A90", delaymethod = "fixedprob",
-  narule = "arima", pdig = c(2.5016, 1.1013), datasource = con)
+alertaRio(naps = 0:9, se, cid10 = "A90", iniSE = 201001,
+  delaymethod = "fixedprob", narule = "arima", pdig = c(2.5016,
+  1.1013), datasource = con)
 }
 \arguments{
 \item{naps}{subset of vector 0:9 corresponding to the id of the APS. Default is all of them.}
@@ -13,6 +14,8 @@ alertaRio(naps = 0:9, se, cid10 = "A90", delaymethod = "fixedprob",
 \item{se}{last epidemiological week (format = 201401)}
 
 \item{cid10}{default is A90 (dengue). Chik = A920.}
+
+\item{iniSE}{first epidemiological week}
 
 \item{delaymethod}{atribbute of adjuntincidence. "fixedprob" or "bayesian"}
 
@@ -32,6 +35,6 @@ indicates evidence of sustained transmission, red indicates evidence of
 an epidemic scenario.
 }
 \examples{
-alerio2 <- alertaRio(naps = 0:2, se=201804, delaymethod="fixedprob", cid10 = "A920")
+alerio2 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A90")
 names(alerio2)
 }

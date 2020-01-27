@@ -16,7 +16,7 @@ DenguedbConnect(pass)
 Opens a connection to the Project database.
 }
 \examples{
-con <- DenguedbConnect()
+con <- DenguedbConnect(pass)
 dbListTables(con) 
 dbDisconnect(con)
 }

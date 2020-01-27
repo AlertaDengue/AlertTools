@@ -4,26 +4,32 @@
 \alias{lastDBdate}
 \title{Returns the most recent date present in the database table.}
 \usage{
-lastDBdate(tab, city = NULL, station = NULL, datasource)
+lastDBdate(tab, cities, cid10 = "A90", stations, datasource = con)
 }
 \arguments{
-\item{tab}{table in the database. Either (sinan, clima_wu, tweet ou historico).}
+\item{tab}{table in the database. Either (sinan, clima_wu, tweet, historico,
+historico_mrj).}
 
-\item{city}{city geocode, if empty, whole dataset is considered. Not implemented yet.}
+\item{cities}{vector of geocodes.}
 
-\item{station}{wu station.}
+\item{cid10}{relevant for sinan, tweeter or historico. Codes are: dengue "A90", 
+chik "A92.0", zika "A92.8".}
+
+\item{stations}{vector with wu stations. Ex. c("SGBL", "SBRL")}
 
 \item{datasource}{}
 }
 \value{
-most recent date
+vector with two elements: data.max = most recent date in the collection of cities or stations;
+se = corresponding epidemiological week.
 }
 \description{
 Useful to check if the database is up-to-date.
 }
 \examples{
-lastDBdate(tab="tweet",datasource=con)
-lastDBdate(tab="tweet", city=330240,datasource=con)
-lastDBdate(tab="sinan", city=330240,datasource=con)
-lastDBdate(tab="clima_wu", station="SBAF",datasource=con)  
+cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
+lastDBdate(tab = "tweet", cities = cidades$municipio_geocodigo, cid10 = "A90")
+lastDBdate(tab = "sinan", cities = cidades$municipio_geocodigo, cid10 = "A90")
+lastDBdate(tab = "clima_wu", stations = "SBAF", datasource=con)  
+lastDBdate(tab = "clima_wu", cities = cidades$municipio_geocodigo, datasource=con)  
 }

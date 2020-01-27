@@ -205,69 +205,85 @@ seqSE <- function(from, to){
 #'@description  Useful to check if the database is up-to-date. 
 #'@title Returns the most recent date present in the database table. 
 #'@export
-#'@param tab table in the database. Either (sinan, clima_wu, tweet ou historico). 
-#'@param city city geocode, if empty, whole dataset is considered. Not implemented yet.
-#'@param station wu station.
+#'@param tab table in the database. Either (sinan, clima_wu, tweet, historico,
+#'historico_mrj). 
+#'@param cities vector of geocodes.
+#'@param cid10 relevant for sinan, tweeter or historico. Codes are: dengue "A90", 
+#'chik "A92.0", zika "A92.8".  
+#'@param stations vector with wu stations. Ex. c("SGBL", "SBRL")
 #'@param datasource 
-#'@return most recent date 
+#'@return vector with two elements: data.max = most recent date in the collection of cities or stations;
+#'se = corresponding epidemiological week.
 #'@examples
-#'lastDBdate(tab="tweet",datasource=con)
-#'lastDBdate(tab="tweet", city=330240,datasource=con)
-#'lastDBdate(tab="sinan", city=330240,datasource=con)
-#'lastDBdate(tab="clima_wu", station="SBAF",datasource=con)  
+#'cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
+#'lastDBdate(tab = "tweet", cities = cidades$municipio_geocodigo, cid10 = "A90")
+#'lastDBdate(tab = "sinan", cities = cidades$municipio_geocodigo, cid10 = "A90")
+#'lastDBdate(tab = "clima_wu", stations = "SBAF", datasource=con)  
+#'lastDBdate(tab = "clima_wu", cities = cidades$municipio_geocodigo, datasource=con)  
 
-lastDBdate <- function(tab, city = NULL, station = NULL, datasource){
-      if (tab == "sinan"){
-            if (is.null(city)) {
-                  sql <- "SELECT dt_notific from \"Municipio\".\"Notificacao\""
-                  print("Nenhuma cidade indicada, data refere-se ao banco todo")
+lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
+      
+      # check input
+      assert_that(tab %in% c("sinan", "clima_wu", "tweet", "historico"), msg =
+                        "lastDBdate only works for tables sinan, clima_wu, tweet, historico and historico_mrj")
+      
+      if (tab %in% c("sinan","tweet","historico", "historico_mrj")){
+            
+            assert_that(cid10 %in% c("A90", "A92.0", "A92.8"), msg = "lastDBdate asking for valid cid10")
+            
+            sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+            
+            if(tab == "sinan") {
+                  
+                  sqlcom <- paste("SELECT MAX(dt_digita) from \"Municipio\".\"Notificacao\" WHERE 
+                            municipio_geocodigo IN (", sqlcity,") AND cid10_codigo = $$", cid10,"$$", sep="")
+            }
+            
+            if(tab == "tweet"){
+            
+                  if(cid10 != "A90"){
+                        message("tweet table has no value for this cid10")
+                        return(NULL)
                   } else {
-                        if(nchar(city) == 6) city <- sevendigitgeocode(city)
-                        sql <- paste("SELECT dt_notific from \"Municipio\".\"Notificacao\" WHERE municipio_geocodigo = ", city)
+                        sqlcom <- paste0("SELECT MAX(data_dia) from \"Municipio\".\"Tweet\" WHERE
+                                         \"Municipio_geocodigo\" IN (", sqlcity,")")
                         }
-            dd <- dbGetQuery(datasource,sql)
-            date <- max(dd$dt_notific)
-      }
-      
-      if (tab == "tweet"){
-            if (is.null(city)) {
-                  sql <- paste("SELECT data_dia from \"Municipio\".\"Tweet\"")
-                  print("Nenhuma cidade indicada, data refere-se ao banco todo")
-            } else {
-                  if(nchar(city) == 6) city <- sevendigitgeocode(city)
-                  sql <- paste("SELECT data_dia from \"Municipio\".\"Tweet\" WHERE \"Municipio_geocodigo\" = ", city)
-                  }
-            dd <- dbGetQuery(datasource,sql)
-            date <- max(dd$data_dia)
-      }
-      
+            }
+            
+            if (tab == "historico"){
+                      if(cid10 == "A90")    tabela <- "\"Municipio\".\"Historico_alerta\""
+                      if(cid10 == "A92.0")  tabela <- "\"Municipio\".\"Historico_alerta_chik\""
+                      if(cid10 == "A92.8")  tabela <- "\"Municipio\".\"Historico_alerta_zika\""
+
+                        sqlcom <- paste0("SELECT MAX(\"data_iniSE\") FROM ",tabela, 
+                                     " WHERE municipio_geocodigo IN (", sqlcity,")")
+            }
+                      
+            if (tab == "historico"){
+                        if(cid10 == "A90")    tabela <- "\"Municipio\".alerta_mrj_dengue"
+                        if(cid10 == "A92.0")  tabela <- "\"Municipio\".alerta_mrj_chik"
+                        if(cid10 == "A92.8")  tabela <- "\"Municipio\".alerta_mrj_zika"
+                              
+                              sqlcom <- paste0("SELECT MAX(data) FROM ",tabela, 
+                                               " WHERE municipio_geocodigo IN (", sqlcity,")")         
+            }
+            
+      } 
       
       if (tab == "clima_wu"){
-            if (!is.null(city)) stop("indique a estacao desejada")
-            if (is.null(station)) {
-                  sql <- paste("SELECT data_dia from \"Municipio\".\"Clima_wu\" WHERE 
-                               \"Estacao_wu_estacao_id\"")
-                  print("Nenhuma estacao indicada, data e' a mais recente no banco todo")
-            } else {
-                  sql1 <- paste("'", station, "'",sep = "")
-                  sql <- paste("SELECT * from \"Municipio\".\"Clima_wu\" WHERE \"Estacao_wu_estacao_id\" = ",sql1)
+            if(missing(stations) & !missing(cities)){
+                  wu_table <- getWUstation(cities)
+                  stations <- unique(wu_table$codigo_estacao_wu, wu_table$estacao_wu_sec)
             }
-            dd <- dbGetQuery(datasource,sql)
-            datacomdados <- which(is.na(dd$temp.min)==FALSE) 
-            date <- dd$data_dia[max(datacomdados)]
+            
+            sqlstations = paste("'", str_c(stations, collapse = "','"),"'", sep="")
+            sqlcom <- paste("SELECT MAX(data_dia) from \"Municipio\".\"Clima_wu\" WHERE 
+                               \"Estacao_wu_estacao_id\" IN ( ",sqlstations,")")
+                  
       }
-      
-      if (tab == "historico"){
-            if (is.null(city)) {
-                  sql <- paste("SELECT \"data_iniSE\" from \"Municipio\".\"Historico_alerta\"")
-                  print("Nenhuma cidade indicada, data refere-se ao banco todo")
-            } else {
-                  sql <- paste("SELECT \"data_iniSE\" from \"Municipio\".\"Historico_alerta\" WHERE municipio_geocodigo = ", city)
-            }
-            dd <- dbGetQuery(datasource,sql)
-            date <- max(dd$data_iniSE)
-      }
-      date
+      try(ult_day <- dbGetQuery(datasource,sqlcom))
+      ult_se <- data2SE(ult_day$max, format = "%Y-%m-%d") # SE
+      return(c(data = ult_day, se = ult_se))
 }
 
 
@@ -632,6 +648,29 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
       return(dd)
 }
       
+# getWUstation ------------------------------------------
+#'@description  Get the meteorological stations associated with one or more cities
+#'@title get meteorological stations
+#'@export
+#'@param cities geocodes
+#'@param datasource
+#'@return data.frame
+#'@examples
+#'getWUstation(cities = 3304557)
+#'cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
+#'getWUstation(cities = cidades$municipio_geocodigo)
+
+
+getWUstation <- function(cities, datasource = con){
+      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+                       \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
+                       ")" , sep="")
+      city_table <- dbGetQuery(datasource,comando)
+      return(city_table)
+}
+
+
 
 # insertCityinAlerta ------------------------------------
 #'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 

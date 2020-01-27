@@ -2,9 +2,9 @@
 % Please edit documentation in R/utility_tools.R
 \name{insertCityinAlerta}
 \alias{insertCityinAlerta}
-\title{Initial setup of a new city in the alerta system.}
+\title{Initial setup of a new city in the alerta system. Insert into tables Regionais.}
 \usage{
-insertCityinAlerta(city, id_regional, regional, senha)
+insertCityinAlerta(city, id_regional, regional, datasource = con)
 }
 \arguments{
 \item{city}{geocode of the city. Mandatory}
@@ -23,5 +23,5 @@ Initial setup of a new city in the alerta system.  Can be integrated later with
 the delay model and write.parameters
 }
 \examples{
-insertCityinAlerta(city=3200300, id_regional=0, regional = "ES-MN-AlfredoChaves")
+insertCityinAlerta(city=3506003, id_regional=6, regional = "Bauru")
 }

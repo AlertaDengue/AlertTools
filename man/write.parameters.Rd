@@ -4,17 +4,15 @@
 \alias{write.parameters}
 \title{City's parameterization.}
 \usage{
-write.parameters(params, tab, senha)
+write.parameters(params, overwrite = FALSE, senha)
 }
 \arguments{
-\item{params}{vector of the names of the params to be inserted in the table. Default: params = c("codigo_estacao_wu", 
-"limiar_preseason", "limiar_posseason","limiar_epidemico, "estacao_wu_sec"). It can be a subset of the default.}
-
-\item{tab}{data.frame with the values for each city. It must have a column named "municipio_geocodigo",
-plus other columns named as in newpars.}
+\item{params}{vector of the names of the params to be inserted in the table. Default: 
+params = data.frame("municipio_geocodigo","limiar_preseason", "limiar_posseason","limiar_epidemico"
+"varcli","clicrit","cid10","codmodelo"). It can be a subset of the default.}
 }
 \value{
-nothing.
+the new line in the parameters table
 }
 \description{
 Write the alert parameters for each city into the database, to be used in the update.alert. 
@@ -22,6 +20,7 @@ Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_p
 "limiar_epidemico, "estacao_wu_sec".  City must be already in the regionais table.
 }
 \examples{
-newpars = c("limiar_preseason", "limiar_posseason","estacao_wu_sec")
-res = write.parameters(newpars,tab)
+newpars = data.frame(municipio_geocodigo = 0000000, cid10 = "A90", limiar_preseason=2, limiar_posseason=2,
+varcli = "temp_min", clicrit = 20)
+res = write.parameters(newpars)
 }

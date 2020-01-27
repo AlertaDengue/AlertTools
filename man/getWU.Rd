@@ -5,7 +5,7 @@
 \title{Get Climate Data}
 \usage{
 getWU(stations, vars = "temp_min", finalday = Sys.Date(),
-  datasource = con)
+  iniSE = 201001, datasource = con)
 }
 \arguments{
 \item{stations}{station code (4 digits).}
@@ -25,7 +25,7 @@ data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin ume
 Create weekly time series from meteorological station data in server taking the mean of the daily values.
 }
 \examples{
-res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", datasource= con)
-res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"), datasource= con)
+res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201201)
+res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med")
 tail(res)
 }

@@ -5,8 +5,8 @@
 \title{pipeline used by infodengue}
 \usage{
 pipe_infodengue(cities, cid10 = "A90", finalday = Sys.Date(),
-  nowcasting = "none", narule = NULL, writedb = FALSE,
-  datasource = con)
+  iniSE = 201001, nowcasting = "none", narule = NULL,
+  writedb = FALSE, datasource = con)
 }
 \arguments{
 \item{cities}{In general, a vector of 7-digit geocodes. If it is a data.frame containing geocodes
@@ -35,7 +35,7 @@ wrap of functions used by Infodengue.
 }
 \examples{
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
 head(tabela_historico(res))
 # User's parameters
