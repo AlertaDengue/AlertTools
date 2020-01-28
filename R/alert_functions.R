@@ -211,21 +211,32 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
-#'finalday= "2019-08-12",nowcasting="none")
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+#'finalday= "2020-01-23",nowcasting="none")
 #'head(tabela_historico(res))
 #'# User's parameters
 #'dd <- read.parameters(cities = c(3200300)) %>% mutate(limiar_epidemico = 100)
 #'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
-#'
+#'restab <- tabela_historico(res)
 
 pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con){
       
       
-      # check data
+      se_alvo <- data2SE(finalday, format = "%Y-%m-%d")
       
+      # check dates
+      last_sinan_date <- lastDBdate(tab = "sinan", cid10 = cid10, cities = cities)
+      if(last_sinan_date$se < se_alvo) {
+            message(paste("last date in database is",last_sinan_date$se,
+                  ". Should I continue with SE =", se_alvo,
+                   "? Y(yes or empty), R(reset to the last date) or N(stop) "))
+            keep_se <- readline(prompt = "Enter option:" )
+      
+      if(keep_se == "R") se_alvo <- last_sinan_date$se
+      if(keep_se == "N") return()
+      }
       
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
       if (class(cities) %in% c("integer","numeric")) {
