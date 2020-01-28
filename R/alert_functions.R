@@ -870,8 +870,10 @@ write_alerta<-function(d, datasource = con){
       
       # ------ vars to write
       
-      dados <- d %>% select(dcolumns)
+      dados <- d %>% 
+            select(dcolumns)
       
+     
       # ------ sql command
       varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
                           "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
@@ -883,10 +885,12 @@ write_alerta<-function(d, datasource = con){
       
       escreve_linha <- function(li){
             vetor <- dados[li,]
+            vetor$municipio_nome = gsub(vetor$municipio_nome, pattern = "'", replacement = "''")
             linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"',", str_c(vetor[1,3:11], collapse=","),
-                          ",",vetor[1,12],",'", as.character(vetor[1,13]),"',$$",as.character(vetor[1,14]),"$$", sep="")
+                          ",",vetor[1,12],",'", as.character(vetor[1,13]),"','",as.character(vetor[1,14]),"')", sep="")
             linha = gsub("NA","NULL",linha)
-            insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" (" ,varnames.sql,") VALUES (", linha, ")ON CONFLICT ON CONSTRAINT ",constr.unico,"  
+            
+            insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" (" ,varnames.sql,") VALUES (", linha, " ON CONFLICT ON CONSTRAINT ",constr.unico,"  
                                      DO UPDATE SET ",updates, sep="")
             try(dbGetQuery(datasource, insert_sql))    
             insert_sql
