@@ -4,9 +4,21 @@
 \alias{geraMapa}
 \title{Plot the alert map for any state.}
 \usage{
-geraMapa(alerta, subset, se, cores = c("green", "yellow", "orange",
-  "red"), legpos = "bottomright", titulo = "", filename, dir = "",
-  shapefile, varid, varname, caption = TRUE, resol = 200)
+geraMapa(
+  alerta,
+  subset,
+  se,
+  cores = c("green", "yellow", "orange", "red"),
+  legpos = "bottomright",
+  titulo = "",
+  filename,
+  dir = "",
+  shapefile,
+  varid,
+  varname,
+  caption = TRUE,
+  resol = 200
+)
 }
 \arguments{
 \item{alerta}{object created by update.alerta.}

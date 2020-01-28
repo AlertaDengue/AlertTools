@@ -29,7 +29,7 @@ Useful to check if the database is up-to-date.
 \examples{
 cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
 lastDBdate(tab = "tweet", cities = cidades$municipio_geocodigo, cid10 = "A90")
-lastDBdate(tab = "sinan", cities = cidades$municipio_geocodigo, cid10 = "A90")
+lastDBdate(tab = "sinan", cities = cidades$municipio_geocodigo, cid10 = "A92.8")
 lastDBdate(tab = "clima_wu", stations = "SBAF", datasource=con)  
 lastDBdate(tab = "clima_wu", cities = cidades$municipio_geocodigo, datasource=con)  
 }

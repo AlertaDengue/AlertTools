@@ -4,8 +4,13 @@
 \alias{getCases}
 \title{Get Case Data and aggregate per week and area}
 \usage{
-getCases(cities, lastday = Sys.Date(), cid10 = "A90",
-  dataini = "notific", datasource = con)
+getCases(
+  cities,
+  lastday = Sys.Date(),
+  cid10 = "A90",
+  dataini = "notific",
+  datasource = con
+)
 }
 \arguments{
 \item{cities}{cities' geocode.}

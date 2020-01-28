@@ -4,8 +4,11 @@
 \alias{setCriteria}
 \title{Define rules to issue a four level alert Green-Yellow-Orange-Red.}
 \usage{
-setCriteria(rule = NULL, values = NULL, delays = list(delayy = c(0,
-  0), delayo = c(0, 0), delayr = c(0, 0)))
+setCriteria(
+  rule = NULL,
+  values = NULL,
+  delays = list(delayy = c(0, 0), delayo = c(0, 0), delayr = c(0, 0))
+)
 }
 \arguments{
 \item{rule}{either a built-in rule ("Af" or "Aw") or a list with three elements defining criteria for 

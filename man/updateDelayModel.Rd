@@ -4,8 +4,16 @@
 \alias{updateDelayModel}
 \title{Update notification delay model.}
 \usage{
-updateDelayModel(cities, ufs, period, datasource, plotar = FALSE, write,
-  verbose = FALSE, regional = FALSE)
+updateDelayModel(
+  cities,
+  ufs,
+  period,
+  datasource,
+  plotar = FALSE,
+  write,
+  verbose = FALSE,
+  regional = FALSE
+)
 }
 \arguments{
 \item{cities}{geocode of one of more cities.}

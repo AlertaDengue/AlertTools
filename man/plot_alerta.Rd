@@ -4,10 +4,19 @@
 \alias{plot_alerta}
 \title{Plot the time series of infodengue's alert levels for one or more cities.}
 \usage{
-plot_alerta(obj, geocodigo, var = "casos", cores = c("#0D6B0D",
-  "#C8D20F", "orange", "red"), ini = 201001, fim = 202001,
-  ylab = var, yrange, salvar = FALSE, nome.fig = "grafico",
-  datasource = con)
+plot_alerta(
+  obj,
+  geocodigo,
+  var = "casos",
+  cores = c("#0D6B0D", "#C8D20F", "orange", "red"),
+  ini = 201001,
+  fim = 202001,
+  ylab = var,
+  yrange,
+  salvar = FALSE,
+  nome.fig = "grafico",
+  datasource = con
+)
 }
 \arguments{
 \item{obj}{object created by tabela_historico() or from the pipeline.}

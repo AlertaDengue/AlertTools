@@ -4,8 +4,7 @@
 \alias{fitDelay.inla}
 \title{Fit INLA model to notification delay.}
 \usage{
-fitDelay.inla(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12,
-  plotar = FALSE)
+fitDelay.inla(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar = FALSE)
 }
 \arguments{
 \item{obj}{object with observed delays, produced by delaycalc().}

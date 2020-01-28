@@ -4,10 +4,16 @@
 \alias{map_Rio}
 \title{Plot the alert map for Rio de Janeiro city.}
 \usage{
-map_Rio(obj, cores = c("green", "yellow", "orange", "red"), data,
+map_Rio(
+  obj,
+  cores = c("green", "yellow", "orange", "red"),
+  data,
   datasource = con,
   shapefile = "../report/Rio_de_Janeiro/shape/CAPS_SMS.shp",
-  filename = "", dir, resol = 200)
+  filename = "",
+  dir,
+  resol = 200
+)
 }
 \arguments{
 \item{obj}{object created by the twoalert and fouralert functions.}

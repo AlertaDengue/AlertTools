@@ -9,12 +9,24 @@ If calculated value falls below that, it is set to 5, with high activity (limiar
 to either the 90% quantile or 10, whichever is the greatest. The thresholds are given both in number of cases or
 as incidence. The alert model uses incidence.}
 \usage{
-infodengue_apply_mem(mun_list, start_year = 2010,
-  end_year = as.integer(format(Sys.Date(), "\%Y")) - 1, write = "no",
-  database, passwd = NULL, i.n.max = 0, limiar.preseason = 0.95,
-  limiar.epidemico = 0.95, i.type.curve = 2, i.type.threshold = 2,
-  i.type.intensity = 2, mincases.pre = 5, mincases.pos = 5,
-  mincases.epi = 10, ...)
+infodengue_apply_mem(
+  mun_list,
+  start_year = 2010,
+  end_year = as.integer(format(Sys.Date(), "\%Y")) - 1,
+  write = "no",
+  database,
+  passwd = NULL,
+  i.n.max = 0,
+  limiar.preseason = 0.95,
+  limiar.epidemico = 0.95,
+  i.type.curve = 2,
+  i.type.threshold = 2,
+  i.type.intensity = 2,
+  mincases.pre = 5,
+  mincases.pos = 5,
+  mincases.epi = 10,
+  ...
+)
 }
 \arguments{
 \item{mun_list}{Vector of municipalities geocode. Default: NULL (i.e., all municipalites)}

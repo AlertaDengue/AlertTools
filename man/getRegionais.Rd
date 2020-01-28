@@ -4,8 +4,13 @@
 \alias{getRegionais}
 \title{get list of regionais.}
 \usage{
-getRegionais(cities = NULL, uf, sortedby = "a", datasource = con,
-  complete = FALSE)
+getRegionais(
+  cities = NULL,
+  uf,
+  sortedby = "a",
+  datasource = con,
+  complete = FALSE
+)
 }
 \arguments{
 \item{cities}{cities' geocodes}

@@ -4,8 +4,13 @@
 \alias{getdelaydata}
 \title{Get delay data for one or more cities for delay analysis}
 \usage{
-getdelaydata(cities, years = NULL, cid10 = "A90",
-  lastday = Sys.Date(), datasource)
+getdelaydata(
+  cities,
+  years = NULL,
+  cid10 = "A90",
+  lastday = Sys.Date(),
+  datasource
+)
 }
 \arguments{
 \item{cities}{vector with geocodes}

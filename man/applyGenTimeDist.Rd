@@ -4,8 +4,7 @@
 \alias{applyGenTimeDist}
 \title{Calculate matrix of generation time distribution for cities in infodengue}
 \usage{
-applyGenTimeDist(cities, stations, cid10 = "A90", datasource = con,
-  ...)
+applyGenTimeDist(cities, stations, cid10 = "A90", datasource = con, ...)
 }
 \arguments{
 \item{cities}{: vector of geocodes}

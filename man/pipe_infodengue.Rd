@@ -4,9 +4,18 @@
 \alias{pipe_infodengue}
 \title{pipeline used by infodengue}
 \usage{
-pipe_infodengue(cities, cid10 = "A90", finalday = Sys.Date(),
-  iniSE = 201001, nowcasting = "none", narule = NULL,
-  writedb = FALSE, datasource = con)
+pipe_infodengue(
+  cities,
+  cid10 = "A90",
+  finalday = Sys.Date(),
+  iniSE = 201001,
+  nowcasting = "none",
+  narule = NULL,
+  writedb = FALSE,
+  datasource = con,
+  userinput = FALSE,
+  keep_se = "R"
+)
 }
 \arguments{
 \item{cities}{In general, a vector of 7-digit geocodes. If it is a data.frame containing geocodes
@@ -25,6 +34,9 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 \item{writedb}{TRUE if it should write into the database, default is FALSE.}
 
 \item{datasource}{posgreSQL connection to project's database}
+
+\item{keep_se}{if sinan data is older than final_day: "R" use the last sinan date as
+as final.date; "Y" keep the final.date.}
 }
 \value{
 data.frame with the week condition and the number of weeks within the 
@@ -35,12 +47,12 @@ wrap of functions used by Infodengue.
 }
 \examples{
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
-finalday= "2019-08-12",nowcasting="none")
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+finalday= "2020-01-23",nowcasting="none")
 head(tabela_historico(res))
 # User's parameters
 dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)
 res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
-
+restab <- tabela_historico(res)
 }

@@ -205,6 +205,8 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@param finalday if provided, uses only disease data reported up to that day
 #'@param nowcasting  "fixedprob" for static model, "bayesian" for the dynamic model.
 #'"none" for not doing nowcast (default) 
+#'@param keep_se if sinan data is older than final_day: "R" use the last sinan date as
+#'as final.date; "Y" keep the final.date. 
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param datasource posgreSQL connection to project's database
 #'@return data.frame with the week condition and the number of weeks within the 
@@ -221,21 +223,27 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'restab <- tabela_historico(res)
 
 pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
-                            narule=NULL, writedb = FALSE, datasource = con){
+                            narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, keep_se = "R"){
       
       
       se_alvo <- data2SE(finalday, format = "%Y-%m-%d")
       
       # check dates
       last_sinan_date <- lastDBdate(tab = "sinan", cid10 = cid10, cities = cities)
-      if(last_sinan_date$se < se_alvo) {
-            message(paste("last date in database is",last_sinan_date$se,
-                  ". Should I continue with SE =", se_alvo,
-                   "? Y(yes or empty), R(reset to the last date) or N(stop) "))
-            keep_se <- scan("stdin", character(), n = 1)
       
-      if(keep_se == "R") se_alvo <- last_sinan_date$se
-      if(keep_se == "N") return()
+      assert_that(!is.na(last_sinan_date$se), msg = paste("no sinan data for cid10", cid10)) 
+      
+      if(last_sinan_date$se < se_alvo) {
+            
+            if (userinput){
+                  message(paste("last date in database is",last_sinan_date$se,
+                                ". Should I continue with SE =", se_alvo,
+                                "? Y(yes or empty), R(reset to the last date) or N(stop) "))
+                  keep_se <- scan("stdin", character(), n = 1)
+                        
+            } 
+            if(keep_se == "R") se_alvo <- last_sinan_date$se
+            if(keep_se == "N") return()
       }
       
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe

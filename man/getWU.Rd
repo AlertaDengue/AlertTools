@@ -4,8 +4,13 @@
 \alias{getWU}
 \title{Get Climate Data}
 \usage{
-getWU(stations, vars = "temp_min", finalday = Sys.Date(),
-  iniSE = 201001, datasource = con)
+getWU(
+  stations,
+  vars = "temp_min",
+  finalday = Sys.Date(),
+  iniSE = 201001,
+  datasource = con
+)
 }
 \arguments{
 \item{stations}{station code (4 digits).}

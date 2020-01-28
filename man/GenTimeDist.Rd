@@ -4,8 +4,7 @@
 \alias{GenTimeDist}
 \title{Calculates temperature dependent generation time distribution}
 \usage{
-GenTimeDist(serTemp, cid10 = "A90", GT.max = 10,
-  smooth = "sinusoidal", nc = 1)
+GenTimeDist(serTemp, cid10 = "A90", GT.max = 10, smooth = "sinusoidal", nc = 1)
 }
 \arguments{
 \item{serTemp}{: Temperature series}

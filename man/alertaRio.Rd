@@ -4,9 +4,16 @@
 \alias{alertaRio}
 \title{4 level alert Green-Yellow-Orange-Red for Rio de Janeiro.}
 \usage{
-alertaRio(naps = 0:9, se, cid10 = "A90", iniSE = 201001,
-  delaymethod = "fixedprob", narule = "arima", pdig = c(2.5016,
-  1.1013), datasource = con)
+alertaRio(
+  naps = 0:9,
+  se,
+  cid10 = "A90",
+  iniSE = 201001,
+  delaymethod = "fixedprob",
+  narule = "arima",
+  pdig = c(2.5016, 1.1013),
+  datasource = con
+)
 }
 \arguments{
 \item{naps}{subset of vector 0:9 corresponding to the id of the APS. Default is all of them.}

@@ -4,8 +4,13 @@
 \alias{getCasesinRio}
 \title{Get cases from an APS in Rio de Janeiro and aggregate them into weekly time series.}
 \usage{
-getCasesinRio(APSid, lastday = Sys.Date(), cid10 = "A90",
-  dataini = "notific", datasource = con)
+getCasesinRio(
+  APSid,
+  lastday = Sys.Date(),
+  cid10 = "A90",
+  dataini = "notific",
+  datasource = con
+)
 }
 \arguments{
 \item{APSid}{0(APS1), 1 (APS2.1), 2 (APS2.2), 3(APS3.1), 4(APS3.2), 5(APS3.3), 6(APS4),

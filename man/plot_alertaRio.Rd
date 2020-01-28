@@ -4,9 +4,19 @@
 \alias{plot_alertaRio}
 \title{Plot the time series of alerts for each APS. Specific for the Rio de Janeiro alert model.}
 \usage{
-plot_alertaRio(ale, aps, var = "casos", cores = c("#0D6B0D", "#C8D20F",
-  "orange", "red"), ini = 201001, fim = 202001, ylab = var, yrange,
-  salvar = FALSE, nome.fig = "grafico", datasource = con)
+plot_alertaRio(
+  ale,
+  aps,
+  var = "casos",
+  cores = c("#0D6B0D", "#C8D20F", "orange", "red"),
+  ini = 201001,
+  fim = 202001,
+  ylab = var,
+  yrange,
+  salvar = FALSE,
+  nome.fig = "grafico",
+  datasource = con
+)
 }
 \arguments{
 \item{ale}{object created by alertaRio()}

@@ -4,8 +4,7 @@
 \alias{write_alertaRio}
 \title{Write the Rio de janeiro alert into the database.}
 \usage{
-write_alertaRio(obj, write = "no", datasource = con,
-  version = Sys.Date())
+write_alertaRio(obj, write = "no", datasource = con, version = Sys.Date())
 }
 \arguments{
 \item{obj}{object created by the alertRio function and contains alerts for each APS.}
