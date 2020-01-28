@@ -232,7 +232,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
             message(paste("last date in database is",last_sinan_date$se,
                   ". Should I continue with SE =", se_alvo,
                    "? Y(yes or empty), R(reset to the last date) or N(stop) "))
-            keep_se <- readline(prompt = "Enter option:" )
+            keep_se <- scan("stdin", character(), n = 1)
       
       if(keep_se == "R") se_alvo <- last_sinan_date$se
       if(keep_se == "N") return()
