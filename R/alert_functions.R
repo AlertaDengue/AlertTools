@@ -297,7 +297,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
             print("Reading tweets...")
             dT = getTweet(cidades, lastday = finalday, cid10 = "A90")
       }
-      print(head(dT))
+      
       
        # para cada cidade ...
       
