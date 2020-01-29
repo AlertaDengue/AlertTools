@@ -10,6 +10,10 @@ tabela_historico(obj, versao = Sys.Date())
 \item{obj}{object created by the pipeline.}
 
 \item{versao}{Default is current's date}
+
+\item{ini_se}{first week of the table. Default is the first date in obj.To do.}
+
+\item{last_se}{last week of the table. Default is the last date in obj. To do.}
 }
 \value{
 data.frame with the data to be written.
