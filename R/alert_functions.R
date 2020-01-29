@@ -213,7 +213,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1:2], cid10 = "A90", 
 #'finalday= "2020-01-23",nowcasting="none")
 #'head(tabela_historico(res))
 #'# User's parameters
@@ -331,14 +331,15 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
                   arrange(SE)
             
             # Joining all data
+            ale <- cas.x %>% 
+                  left_join(cli.x, by = c("SE"))
+            print(class(ale))
             if(exists("dT")) {
-                  ale <- plyr::join_all(list(cas.x,cli.x,dT))
+                  dt.x <- dT[dT$cidade == x, c("SE", "tweet")]
+                  ale <- merge(ale, dt.x, by = "SE") 
             } else{
-                  ale <- plyr::join_all(list(cas.x,cli.x))
-                  ale$tweets <- 0
+                  ale$tweet <- 0
             }
-            
-            #ale <- ale[(ale$SE >= iniSE), ]
             
             # build rules
             crit.x <- pars_table[pars_table$municipio_geocodigo==x,] # parameters
@@ -347,8 +348,6 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
             
             # Apply alert rules
             y <- fouralert(ale, crit = criteriaU)  # apply alert 
-            
-            #print(paste("nivel do alerta de ",cas.x$casos[1],":", tail(y$indices$level,1)))
             y     
             }      
       
@@ -794,6 +793,8 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'@description Function to write the alert results into the database. 
 #'@export
 #'@param obj object created by the pipeline.
+#'@param ini_se first week of the table. Default is the first date in obj.
+#'@param last_se last week of the table. Default is the last date in obj. 
 #'@param versao Default is current's date
 #'@return data.frame with the data to be written. 
 #'@examples
@@ -878,7 +879,7 @@ write_alerta<-function(d, datasource = con){
       
       # ------ vars to write
       
-      dados <- d %>% 
+      dados <- d %>%
             select(dcolumns)
       
      
