@@ -2,7 +2,7 @@
 # FUNCOES PARA ORGANIZAR SERIES
 #TEMPORAIS A PARTIR DOS DADOS BRUTOS CLAUDIA CODECO - 2015
 
-# GetWU --------------------------------------------------------
+# getWU --------------------------------------------------------
 #'@description Create weekly time series from meteorological station data in server taking the mean of the daily values.
 #'@title Get Climate Data
 #'@export
@@ -18,7 +18,8 @@
 #'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med")
 #'tail(res)
 
-getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 201001, datasource=con) {
+getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 201001,
+                  datasource=con) {
       
       # validade climate variables
       wuvars <- c("temp_min","temp_max","temp_med","umid_min","umid_med","umid_max",

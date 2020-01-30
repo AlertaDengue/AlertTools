@@ -381,8 +381,8 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
 #'@param datasource name of the sql connection.
 #'@return list with an alert object for each APS.
 #'@examples
-#'alerio2 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A90")
-#'names(alerio2)
+#'alerio1 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A90")
+#'alerio2 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A920")
 
 alertaRio <- function(naps = 0:9, se, cid10 = "A90", iniSE = 201001,
                       delaymethod = "fixedprob", narule="arima", 
@@ -399,19 +399,14 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90", iniSE = 201001,
       
       # reading data
       message("lendo dados ...")
-      if(cid10 == "A90"){
-            print(paste("Ultimos registros de dengue:",lastDBdate("sinan", city=3304557,datasource=datasource)))
-            print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=3304557,datasource=datasource)))
-      }
+      print(paste("Ultimos registros de",cid10,":",
+                        lastDBdate("sinan", cities=3304557,cid10 = cid10)[["se"]]))
+      print(paste("Ultimos registros de tweets:",
+                        lastDBdate("tweet", cid10 = cid10, cities=3304557)$se))
       
-      if(cid10 == "A920"){
-            print(paste("Ultimos registros de chik:",lastDBdate("sinan", city=3304557,datasource=datasource)))
-            #print(paste("Ultimos registros de tweets:",lastDBdate("tweet", city=3304557,datasource=datasource)))
-      }
       
-          
-      cas = getCasesinRio(APSid = naps, cid10 = cid10, datasource=datasource)
-      cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min", datasource=datasource)
+      cas = getCasesinRio(APSid = naps, cid10 = cid10)
+      cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min")
       if(cid10 == "A90") {
             tw <- getTweet(cities = 3304557, cid10="A90")[,c("SE","tweet")]
       }else {

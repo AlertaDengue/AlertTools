@@ -226,9 +226,18 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
       # check input
       assert_that(tab %in% c("sinan", "clima_wu", "tweet", "historico"), msg =
                         "lastDBdate only works for tables sinan, clima_wu, tweet, historico and historico_mrj")
+      # dealing with synonimous cid 
+      if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
+            if (cid10 %in% c("A92", "A920","A92.0")) { # chik
+                  cid10 <- "A92.0"}  else{
+                        if (cid10 %in% c("A92.8","A928")){  # zika
+                        cid10 <- "A92.8"                      
+                        }                  
+                  }
+      }
       
       if (tab %in% c("sinan","tweet","historico", "historico_mrj")){
-            
+      
             assert_that(cid10 %in% c("A90", "A92.0", "A92.8"), msg = "lastDBdate asking for valid cid10")
             
             sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
