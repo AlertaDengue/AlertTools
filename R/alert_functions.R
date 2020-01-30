@@ -16,7 +16,7 @@
 #'@param values named vector of values for the critical parameters. Use character.   
 #'@return list with rules. To be useful, this list must contain variables that match those in the data.  
 #'@examples
-#'setCriteria(rule="Af")
+#'NOT USE: setCriteria(rule="Af")
 #'Defining a rule
 #'myrule = list(crity = "temp_min > 25 & casos > 0", crito = "p1 > 0.9 & inc > 1", 
 #'critr = "inc > 100 & casos > 10")
@@ -33,8 +33,6 @@ setCriteria <- function(rule=NULL, values=NULL,
                         delays = list(delayy = c(0,0), delayo = c(0,0), delayr = c(0,0))){
       
       # checking input
-      assert_that(all(c("clicrit", "varcli", "limiar_preseason", "limiar_epidemico")%in%names(values)),
-                  msg = "setCriteria: arg values should include clicrit varcli limiar_preseason limiar_epidemico" )
       if(!is.null(rule)) assert_that(rule %in% c("Af","Aw"),msg = "setcriteria: rule unknown. Try Af or Aw")
       if(is.null(rule)) {
             assert_that(!is.null(values), msg = "setcriteria: if rule is null, values must be provided.")
@@ -48,13 +46,13 @@ setCriteria <- function(rule=NULL, values=NULL,
       
             if(rule[1] == "Af"){
                   criteria <- list(
-                  crity = c("temp_min > clicrit", 3, 3), #3,2
+                  crity = c("temp_min > clicrit | inc > limiar_preseason", 3, 3), #3,2
                   crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
                   critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
             )} 
             if (rule[1] == "Aw"){
                    criteria = list(
-                         crity = c("umid_max > clicrit", 3, 2), #3,2
+                         crity = c("umid_max > clicrit | inc > limiar_preseason", 3, 2), #3,2
                    crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
                    critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
                    )}
@@ -165,22 +163,18 @@ fouralert <- function(obj, crit, miss="last",dy=4){
       indices$level[indices$nrtrue == delay_turnon[3]] <-4
       
     
-      # from orange-red to yellow:
-      # if inc > 0, and rt was orange or red at least once in the past dy weeks -> level yellow
-      indices$level[intersect(x = which(obj$inc>0), 
-                              y = which(zoo::rollapply(indices$level,dy,function(x) any(x>=3))))]<-2
       
       # delayed turnoff
       delayturnoff <- function(level){
             delay_level = delay_turnoff[[(level-1)]]# as.numeric(as.character(cond[3])) 
             
             ifelse (delay_level == 0, return(indices),
-                    {pos <- which(indices$level==delay_level) %>% # weeks with alert at level delay_level
+                    {pos <- which(indices$level==level) %>% # weeks with alert at level delay_level
                     lapply(.,function(x)x+seq(0,delay_level)) %>% # current and subsequent weeks 
                           unlist() %>% 
                           unique()
                     pos <- pos[pos<=le] # remove inexisting rows
-                    indices$level[pos] <- unlist(lapply(indices$level[pos], function(x) max(x,2)))
+                    indices$level[pos] <- level #unlist(lapply(indices$level[pos], function(x) max(x,2)))
                     return(indices)
             })
       }
@@ -188,6 +182,19 @@ fouralert <- function(obj, crit, miss="last",dy=4){
       indices <- delayturnoff(level=4)
       indices <- delayturnoff(level=3)
       indices <- delayturnoff(level=2)
+      
+      # from orange-red to yellow:
+      # if rt was orange or red at least once in the past dy weeks -> level yellow
+      contains_34 <- which(zoo::rollapply(indices$level,list(c(-dy:0)),
+                                    function(x) any(x>=3), fill=NA))
+      
+      # to visualize how it works, descomment the following lines
+      #indices$dy <- NA
+      #indices$dy[contains_34]<-pmax(indices$level[contains_34], rep(2, length(contains_34)))
+      
+      indices$level[contains_34]<-pmax(indices$level[contains_34], 
+                                        rep(2, length(contains_34)))
+      
       ale <- list(data=obj, indices=indices, crit = crit, n=4)
       class(ale)<-"alerta" 
       return(ale)      
@@ -230,6 +237,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
       
       # check dates
       last_sinan_date <- lastDBdate(tab = "sinan", cid10 = cid10, cities = cities)
+      print(paste("last sinan date is", last_sinan_date$se))
       
       assert_that(!is.na(last_sinan_date$se), msg = paste("no sinan data for cid10", cid10)) 
       
@@ -248,7 +256,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
       
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
       if (class(cities) %in% c("integer","numeric")) {
-            pars_table <- read.parameters(cities = cities, cid10 = cid10, datasource)
+            pars_table <- read.parameters(cities = cities, cid10 = cid10)
             message("reading parameters from database")
       } else { # if city contains data already
             if(all(c("municipio_geocodigo","limiar_preseason",
@@ -342,6 +350,8 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
             } else{
                   ale$tweet <- 0
             }
+            
+            assert_that(nrow(ale)>0, msg = "check alertapipeline. error makes nrow(ale) = 0")
             
             # build rules
             crit.x <- pars_table[pars_table$municipio_geocodigo==x,] # parameters
@@ -510,7 +520,7 @@ plot_alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
       
       # get the thresholds
       pars_table <- read.parameters(cities = geocodigo, 
-                                    cid10 = d$CID10[1], datasource = datasource) 
+                                    cid10 = d$CID10[1]) 
       #print(pars_table)
       # para uma cidade, dados e parametros para o grafico
       
@@ -536,12 +546,12 @@ plot_alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
                         segments(x[onde],0,x[onde],(dd[onde,var]),col=cores[i],lwd=3)
             }
             if(var == "casos") {
-                  abline(h=pars$limiar_preseason, lty=2, col="darkgreen")
-                  abline(h=pars$limiar_epidemico, lty=2, col="red")
+                  abline(h=pars$limiar_preseason*dd$pop[1]/1e5, lty=2, col="darkgreen")
+                  abline(h=pars$limiar_epidemico*dd$pop[1]/1e5, lty=2, col="red")
             }
             if (var == "p_inc100k") {
-                  abline(h=pars$limiar_preseason/dd$pop[1]*100000, lty=2, col="darkgreen")
-                  abline(h=pars$limiar_epidemico/dd$pop[1]*100000, lty=2, col="red")
+                  abline(h=pars$limiar_preseason, lty=2, col="darkgreen")
+                  abline(h=pars$limiar_epidemico, lty=2, col="red")
             }
             if(var == "temp_min" & pars$clicrit == "temp_min") abline(h = pars$clicrit, lty=2, col = "yellow")
             if(var == "umid_max" & pars$clicrit == "umid_max") abline(h = pars$clicrit, lty=2, col = "yellow")

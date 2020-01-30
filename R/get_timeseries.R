@@ -161,7 +161,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
                   arrange(Municipio_geocodigo,SE) %>%
                   group_by(Municipio_geocodigo,SE)  %>%
                   summarize(tweet = sum(numero))  %>%
-                  select(cidade = Municipio_geocodigo, SE, tweet)
+                  select(Municipio_geocodigo, SE, tweet)
             
       return(as.data.frame(st))      
       
