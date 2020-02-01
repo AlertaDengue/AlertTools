@@ -42,6 +42,6 @@ indicates evidence of sustained transmission, red indicates evidence of
 an epidemic scenario.
 }
 \examples{
-alerio2 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A90")
-names(alerio2)
+alerio1 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A90")
+alerio2 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A920")
 }

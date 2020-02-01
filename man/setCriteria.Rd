@@ -27,7 +27,7 @@ chosen from existing rules or can be specified by the user. The built in rules a
 Af (minimum temperature defines yellow) and Aw (humidity does).
 }
 \examples{
-setCriteria(rule="Af")
+NOT USE: setCriteria(rule="Af")
 Defining a rule
 myrule = list(crity = "temp_min > 25 & casos > 0", crito = "p1 > 0.9 & inc > 1", 
 critr = "inc > 100 & casos > 10")
