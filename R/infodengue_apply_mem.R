@@ -8,6 +8,7 @@
 #' to either the 90% quantile or 10, whichever is the greatest. The thresholds are given both in number of cases or
 #' as incidence. The alert model uses incidence. 
 #' @name infodengue_apply_mem
+#' @export
 #' @param start_year Historical data starting year to consider. Default: 0 (i.e., as old as possible)
 #' @param end_year Historical data final year to consider. Default: previous year from Sys.Date()
 #' @param mun_list Vector of municipalities geocode. Default: NULL (i.e., all municipalites)
