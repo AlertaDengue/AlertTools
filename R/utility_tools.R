@@ -513,7 +513,7 @@ getCidades <- function(regional, uf, datasource=con){
 }
 
 
-# write.parameters ------------------------------------
+# write_parameters ------------------------------------
 #'@description  Write the alert parameters for each city into the database, to be used in the update.alert. 
 #'Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_posseason",
 #'"limiar_epidemico, "estacao_wu_sec".  City must be already in the regionais table.
@@ -524,102 +524,94 @@ getCidades <- function(regional, uf, datasource=con){
 #' "varcli","clicrit","cid10","codmodelo"). It can be a subset of the default. 
 #'@return the new line in the parameters table 
 #'@examples
-#'newpars = data.frame(municipio_geocodigo = 0000000, cid10 = "A90", limiar_preseason=2, limiar_posseason=2,
-#'varcli = "temp_min", clicrit = 20)
-#'res = write.parameters(newpars)
+#'newpars = data.frame(limiar_preseason=2, limiar_posseason=2, varcli = "temp_min", clicrit = 20)
+#'res = write_parameters(newpars)
 
-write.parameters<-function(params, overwrite = FALSE, senha){
-      
+write_parameters<-function(city, cid10, params, overwrite = FALSE, senha){
       
       # checking inputs
-      assert_that(all(c("municipio_geocodigo", "cid10") %in% names(params)), msg = "write.parameters:
-            municipio_geocodigo or cid10,missing in params")
-      
       assert_that(class(params) == "data.frame", msg = "write.parameters: params should 
                   be a data.frame")
       
-      assert_that(params$cid10 %in% c("A90","A92.0","A92.8"), msg = paste("write.parameters: not
+      assert_that(cid10 %in% c("A90","A92.0","A92.8"), msg = paste("write.parameters: not
                                                                    prepared for cid10 = ",params$cid10))
       
-      varscliwu <- dbListFields(con, c("Municipio","Clima_wu")) # variaveis meteorologicas
-      if("varcli" %in% params) assert_that(varcli %in% varscliwu, msg = paste("varcli", params$varcli,
-                                                                              "does not exist in wu table"))
-      # check if city is in the system (Regional table)
+      # check if city is already in the system (Regional table)
       conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin", password=senha, dbname="dengue")
       
       sql1 = paste("SELECT * from \"Dengue_global\".regional_saude SET  
-                               WHERE municipio_geocodigo = ",params$municipio_geocodigo, sep="")      
+                               WHERE municipio_geocodigo = ",city, sep="")      
       cityregtable = try(dbGetQuery(conn, sql1))
-      assert_that(nrow(cityregtable)>0, msg = paste("geocode", params$municipio_geocodigo, "not implemented in Infodengue. Use insertCityinAlerta()") )
+      assert_that(nrow(cityregtable)>0, msg = paste("geocode", city, 
+                                                    "not implemented in Infodengue. Use insertCityinAlerta()") )
+      
       
       # Next step, check if there are any parameters for this cid10?      
       sql2 = paste("SELECT * from \"Dengue_global\".parameters SET  
-                               WHERE municipio_geocodigo = ",params$municipio_geocodigo," AND cid10 = $$",
-                   params$cid10,"$$", sep="")      
+                               WHERE municipio_geocodigo = ",city," AND cid10 = $$",
+                                cid10,"$$", sep="")      
       parline = try(dbGetQuery(conn, sql2))
       
       assert_that(nrow(parline) < 2, msg = paste("parameter table has something wrong. more than one line for", 
-                                               params$cid10, "for city", params$municipio_geocodigo, "."))
+                                               params$cid10, "for city", city, "."))
       
-      # should we overwrite?
-      assert_that(nrow(parline) == 0 | (nrow(parline) == 1 & overwrite == TRUE), msg = 
-                        paste("Parameters table has already values for cid10", params$cid10, "for city",
-                              params$municipio_geocodigo, ". Use overwrite = TRUE if you want to 
-                              replace values."))
-            
-      # now let's write the data
-      vars = names(newpars)
-      nrows = nrow(newpars)
-      
-      # but first check if the variable names are correct
-      assert_that(all(vars %in% names(parline)), msg = "check the names in write.parameters
-                  (params). At least one param is wrong.")
-      
-      # string com vetor de nomes das variaveis   # PAREI 
-      varnames <- paste("(", params[1], sep="")
-      for (j in params[-1]) varnames <- paste(varnames, j, sep=",")
-      varnames <- paste(varnames, ")", sep="")
-      
-      # identificando as variaveis string 
-      p1 <- ifelse(any(params == "codigo_estacao_wu"), which(params == "codigo_estacao_wu"), NA)
-      p2 <- ifelse(any(params == "estacao_wu_sec"), which(params == "estacao_wu_sec"), NA)
-      stringvars = as.vector(na.exclude(c(p1,p2)))           
-      
-      for (li in 1:nrows){
-            linha = ""
-            cid = tab$municipio_geocodigo[li]
-            
-                        
-            assert_that(nrow(parlines == 0), 
-                        msg = paste("city", cid, "is not in the parameter table")) 
-            
-            assert_that(cid10 %in% cityline$cid10 & overwrite == FALSE, 
-            msg = paste("there are parameters for this cid10 in", cid , "To overwrite, use argument 
-                  write.parameters"))
-            
-            if(!(cid10 %in% cityline$cid10)){  
-                  message(paste("there is no parameter for", cid10," for ", cid,". Writing..."))
-                  
-                  for (i in 1:length(params)) {
-                        if (i %in% stringvars & !is.na(as.character(tab[li,params[i]]))) 
-                              value = paste(params[i],"='", as.character(tab[li,params[i]]), "'", sep="")
-                        
-                        else value = paste(params[i],"=", as.character(tab[li,params[i]]), sep="")
-                        
-                        linha = ifelse (i>1, paste(linha, value, sep=","), paste(linha, value, sep=""))
-                  }
-                  linha = gsub("NA","NULL",linha)
-                  
-                  }
-            
-                        
-            update_sql = paste("UPDATE \"Dengue_global\".parameter SET ", linha, 
-                               " WHERE municipio_geocodigo = ",cid,sep="")      
-            
-            try(dbGetQuery(conn, update_sql))
+      if(nrow(parline) == 1){
+            message("the following parameters were found. Rerun with overwrite = T, to replace them")
+            print(parline)
+            return(parline)
       }
-      dbReadTable(conn, c("Dengue_global","regional_saude"))
-      dbDisconnect(conn)
+      
+      # now let's write the data
+      if(nrow(parline == 0) | overwrite == TRUE){
+            vars_names = c("municipio_geocodigo","cid10",names(params))
+            npars = nrow(params)
+            
+            # check if the names are correct
+            tab_names <- dbListFields(conn, c("Dengue_global","parameters"))
+            assert_that(all(vars_names %in% tab_names), msg = "check the names in write.parameters
+                  (params). At least one param is wrong.")
+            
+            # names for SQL
+            varnamessql <- str_c(vars_names, collapse = ",")
+            updates = str_c(paste(vars_names,"=excluded.",vars_names,sep=""),collapse=",") # excluidos, se duplicado
+            
+            # values for SQL  
+            
+            if(nrow == 1){ # line already exists, replacing only the new data
+                  for(i in names(params)) parline[i] <- params[i]
+            }else{# new line
+                  parline <- params
+                  parline$cid10 <- cid10
+                  parline$municipio_geocodigo <- city
+            } 
+      }
+      
+      stringvars <- c("varcli", "codmodelo")[c("varcli", "codmodelo") %in% vars_names]              
+      
+      # vetor$municipio_nome = gsub(vetor$municipio_nome, pattern = "'", replacement = "''")
+      #             linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"',", str_c(vetor[1,3:11], collapse=","),
+      #                           ",",vetor[1,12],",'", as.character(vetor[1,13]),"','",as.character(vetor[1,14]),"')", sep="")
+      #             linha = gsub("NA","NULL",linha)
+      #             
+      #             if (i %in% stringvars & !is.na(as.character(tab[li,params[i]]))) 
+      #                         value = paste(params[i],"='", as.character(tab[li,params[i]]), "'", sep="")
+      #                   
+      #                   else value = paste(params[i],"=", as.character(tab[li,params[i]]), sep="")
+      #                   
+      #                   linha = ifelse (i>1, paste(linha, value, sep=","), paste(linha, value, sep=""))
+      #             }
+      #             linha = gsub("NA","NULL",linha)
+      #             
+      #             }
+      #       
+      #                   
+      #       update_sql = paste("UPDATE \"Dengue_global\".parameter SET ", linha, 
+      #                          " WHERE municipio_geocodigo = ",cid,sep="")      
+      #       
+      #       try(dbGetQuery(conn, update_sql))
+      # }
+      # dbReadTable(conn, c("Dengue_global","regional_saude"))
+      # dbDisconnect(conn)
 }
 
 # read.parameters ------------------------------------
@@ -678,7 +670,7 @@ getWUstation <- function(cities, datasource = con){
       return(city_table)
 }
 
-# insertCityinAlerta ------------------------------------
+# insert_city_infodengue ------------------------------------
 #'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 
 #'the delay model and write.parameters
 #'@title Initial setup of a new city in the alerta system. Insert into tables Regionais. 
@@ -686,26 +678,26 @@ getWUstation <- function(cities, datasource = con){
 #'@param city geocode of the city. Mandatory 
 #'@param id_regional numerical id of the 'Regional da saude'
 #'@param regional name of the 'Regional da saude'
-#'@param estacao_wu_sec main weather station
 #'@return to be defined
 #'@examples
-#'insertCityinAlerta(city=3506003, id_regional=6, regional = "Bauru")
+#'insert_city_infodengue(geocodigo = 3506003, id_regional=6, regional = "Bauru", )
 
-insertCityinAlerta<-function(city,id_regional,regional,datasource=con){
+insert_city_infodengue<-function(geocodigo ,id_regional, regional, datasource=con){
       
       
       # check if city is really new
-      if(nchar(city) == 6) city <- sevendigitgeocode(city)   
+      if(nchar(geocodigo) == 6) geocodigo <- sevendigitgeocode(geocodigo)   
       consult_sql = paste("SELECT * from \"Dengue_global\".regional_saude SET  
-                               WHERE municipio_geocodigo = ",city,sep="")      
+                               WHERE municipio_geocodigo = ",geocodigo,sep="")      
       cityline = try(dbGetQuery(datasource, consult_sql))
       
       if (nrow(cityline)!=0) {
             message("city already implemented. Nothing done.")
+            if(any(is.na(cityline))) message("Use write.parameters() to set the alert parameters.")
             return(cityline)
       }
       else{
-            el1 = as.character(city)
+            el1 = as.character(geocodigo)
             el2 = as.character(id_regional)
             el3 = paste("'",regional,"'",sep="")
             linha = paste(el1,el2,el3,sep=",")
@@ -715,6 +707,7 @@ insertCityinAlerta<-function(city,id_regional,regional,datasource=con){
             try(dbGetQuery(datasource, sqlinsert1))
             }
       
+       
       cityline
 }
       

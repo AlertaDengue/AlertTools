@@ -210,6 +210,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@param narule how to treat missing climate data. Do nothing (default), "zero" fills 
 #'with zeros, "linear" for linear interpolation, "arima" for inter and extrapolation.
 #'@param finalday if provided, uses only disease data reported up to that day
+#'@param datarelatorio epidemiological week
 #'@param nowcasting  "fixedprob" for static model, "bayesian" for the dynamic model.
 #'"none" for not doing nowcast (default) 
 #'@param keep_se if sinan data is older than final_day: "R" use the last sinan date as
@@ -229,11 +230,15 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'finalday= "2018-08-12",nowcasting="none")
 #'restab <- tabela_historico(res)
 
-pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
-                            narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, keep_se = "R"){
+pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
+                            narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE){
       
       
-      se_alvo <- data2SE(finalday, format = "%Y-%m-%d")
+      if(missing(datarelatorio)) {
+            datarelatorio <- data2SE(finalday, format = "%Y-%m-%d") 
+      } else { # if datarelatorio & finalday are given, priority is datarelatorio
+            finalday <- SE2date(datarelatorio)$ini+6
+      }
       
       # check dates
       last_sinan_date <- lastDBdate(tab = "sinan", cid10 = cid10, cities = cities)
@@ -241,17 +246,15 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
       
       assert_that(!is.na(last_sinan_date$se), msg = paste("no sinan data for cid10", cid10)) 
       
-      if(last_sinan_date$se < se_alvo) {
+      if(last_sinan_date$se < datarelatorio) {
             
             if (userinput){
                   message(paste("last date in database is",last_sinan_date$se,
-                                ". Should I continue with SE =", se_alvo,
-                                "? Y(yes or empty), R(reset to the last date) or N(stop) "))
-                  keep_se <- scan("stdin", character(), n = 1)
-                        
+                                ". Should I continue with SE =", se_alerta,
+                                "? empty if YES, or change to new date"))
+                  x <- scan("stdin", character(), n = 1)
+                   if(is.null(x)) datarelatorio <- as.numeric(x)     
             } 
-            if(keep_se == "R") se_alvo <- last_sinan_date$se
-            if(keep_se == "N") return()
       }
       
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
@@ -324,10 +327,12 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
             
             lastdatewu <- ifelse(propNA < 1, cli.x$SE[max(which(is.na(cli.x[,varcli.x])==FALSE))],
                                  NA)
-            print(paste("Rodando alerta para ", x, "usando estacao", cli.x$estacao[1],"(ultima leitura:", lastdatewu,")"))
+            print(paste("Rodando alerta para ", x, "usando estacao", cli.x$estacao[1],
+                        "(ultima leitura:", lastdatewu,")"))
             
             # climate data interpolation using arima (if there is any data) 
-            if(!is.null(narule) & !is.na(lastdatewu)) cli.x[,varcli.x] <- nafill(cli.x[,varcli.x], rule = narule) 
+            if(!is.null(narule) & !is.na(lastdatewu)) cli.x[,varcli.x] <- nafill(cli.x[,varcli.x], 
+                                                                                 rule = narule) 
             
             # casos + nowcasting + Rt + incidencia 
             
@@ -345,7 +350,7 @@ pipe_infodengue <- function(cities, cid10="A90", finalday = Sys.Date(), iniSE = 
             if(exists("dT")) {
                   dt.x <- dT[dT$Municipio_geocodigo == x, c("SE", "tweet")]
                   if(nrow(dt.x) > 0){
-                        ale <- merge(ale, dt.x, by = "SE")      
+                        ale <- merge(ale, dt.x, by = "SE",all.x = T)      
                   } else ale$tweet <- 0
             } else{
                   ale$tweet <- 0
