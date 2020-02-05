@@ -213,8 +213,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@param datarelatorio epidemiological week
 #'@param nowcasting  "fixedprob" for static model, "bayesian" for the dynamic model.
 #'"none" for not doing nowcast (default) 
-#'@param keep_se if sinan data is older than final_day: "R" use the last sinan date as
-#'as final.date; "Y" keep the final.date. 
+#'@param completetail if sinan data is older than final_day, fill in the tail with NA (default) or 0.  
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param datasource posgreSQL connection to project's database
 #'@return data.frame with the week condition and the number of weeks within the 
@@ -231,7 +230,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'restab <- tabela_historico(res)
 
 pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
-                            narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE){
+                            narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, completetail = NA){
       
       
       if(missing(datarelatorio)) {
@@ -242,7 +241,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       
       # check dates
       last_sinan_date <- lastDBdate(tab = "sinan", cid10 = cid10, cities = cities)
-      print(paste("last sinan date is", last_sinan_date$se))
+      print(paste("last sinan date for",cid10 ,"is", last_sinan_date$se))
       
       assert_that(!is.na(last_sinan_date$se), msg = paste("no sinan data for cid10", cid10)) 
       
@@ -253,7 +252,9 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
                                 ". Should I continue with SE =", datarelatorio,
                                 "? tecle Y if YES, or change to new date"))
                   x <- scan("stdin", character(), n = 1)
-                   if(x!="Y") datarelatorio <- as.numeric(x)     
+                   if(x!="Y") { 
+                         datarelatorio <- as.numeric(x)   
+                         } else {completetail <- 0} # complete the tail with zeros
             } 
       }
       
@@ -300,7 +301,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       # Reading Cases
       print("Obtendo dados de notificacao ...")
       
-      casos <- getCases(cidades, lastday = finalday, cid10 = cid10) %>%
+      casos <- getCases(cidades, lastday = finalday, cid10 = cid10, completetail = completetail) %>%
             mutate(inc = casos/pop*100000)
       
       # Reading tweets 
@@ -308,6 +309,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             print("Reading tweets...")
             dT = getTweet(cidades, lastday = finalday, cid10 = "A90")
       }
+      
       
       
        # para cada cidade ...

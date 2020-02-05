@@ -23,6 +23,8 @@ getCases(
 if aggregated by date of first symptoms}
 
 \item{datasource}{PostgreSQLConnection to project database.}
+
+\item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
 }
 \value{
 data.frame with the data aggregated per week according to disease onset date.

@@ -174,6 +174,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'@export
 #'@param cities cities' geocode.
 #'@param lastday last day. Default is the last available. Format: "yyyy-mm-dd"
+#'@param completetail if sinan data is older than final_day, fill in the tail with NA (default) or 0.
 #'@param dataini "notific" if data aggregated by notification date or "sinpri" if data aggregated
 #' if aggregated by date of first symptoms
 #'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8", 
@@ -181,12 +182,13 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
 #'d <- getCases(cities = 3300936) # dengue
+#'d <- getCases(cities = 3300936, completetail = 0) # dengue
 #'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'d <- getCases(cities = cid$municipio_geocodigo, datasource = con, dataini = "sinpri") 
 #'tail(d)
 
-getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific",
+getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific", completetail = NA,
                      datasource=con) {
       
       assert_that(class(cities) %in% c("integer","numeric"), msg = "cities should be a vector of numeric geocodes") 
@@ -238,8 +240,9 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
                   count(SE)
       }
       
+      lastSE <- data2SE(lastday, format = "%Y-%m-%d")  
       # criando serie 
-      sem <-  expand.grid(municipio_geocodigo = cities, SE = seqSE(from = 201001, to = max(casos$SE, na.rm=TRUE))$SE)
+      sem <-  expand.grid(municipio_geocodigo = cities, SE = seqSE(from = 201001, to = lastSE[1])$SE)
       st <- left_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 
             arrange(municipio_geocodigo,SE) %>%
             mutate(localidade = 0) %>%  # para uso qdo tiver divisao submunicipal
@@ -249,8 +252,10 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
             select(SE, cidade = municipio_geocodigo,CID10, casos =n,localidade,nome,
                    pop=populacao) 
       
-      st$casos[is.na(st$casos)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
-            
+      SElastcase <- max(st$SE[st$casos > 0], na.rm = TRUE)
+      st$casos[(is.na(st$casos) & st$SE < SElastcase)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
+      if(!is.na(completetail)) st$casos[st$SE > SElastcase] <- completetail
+      
       if(any(is.na(st$pop)))warning("getCases function failed to import pop data for one or more cities", cities)
       
       st  

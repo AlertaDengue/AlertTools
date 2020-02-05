@@ -14,7 +14,8 @@ pipe_infodengue(
   narule = NULL,
   writedb = FALSE,
   datasource = con,
-  userinput = FALSE
+  userinput = FALSE,
+  completetail = NA
 )
 }
 \arguments{
@@ -37,8 +38,7 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 
 \item{datasource}{posgreSQL connection to project's database}
 
-\item{keep_se}{if sinan data is older than final_day: "R" use the last sinan date as
-as final.date; "Y" keep the final.date.}
+\item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
 }
 \value{
 data.frame with the week condition and the number of weeks within the 
