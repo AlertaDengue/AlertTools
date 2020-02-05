@@ -229,9 +229,11 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
       # dealing with synonimous cid 
       if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
             if (cid10 %in% c("A92", "A920","A92.0")) { # chik
+                  cid <-c("A92", "A920","A92.0")
                   cid10 <- "A92.0"}  else{
                         if (cid10 %in% c("A92.8","A928")){  # zika
-                        cid10 <- "A92.8"                      
+                              cid <- c("A92.8","A928")
+                              cid10 <- "A92.8"                      
                         }                  
                   }
       }
@@ -241,11 +243,13 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
             assert_that(cid10 %in% c("A90", "A92.0", "A92.8"), msg = "lastDBdate asking for valid cid10")
             
             sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+            sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
+            
             
             if(tab == "sinan") {
                   
-                  sqlcom <- paste("SELECT MAX(dt_digita) from \"Municipio\".\"Notificacao\" WHERE 
-                            municipio_geocodigo IN (", sqlcity,") AND cid10_codigo = $$", cid10,"$$", sep="")
+                  sqlcom <- paste("SELECT MAX(dt_digita) from \"Municipio\".\"Notificacao\" WHERE municipio_geocodigo IN (", sqlcity, 
+                                  ") AND cid10_codigo IN(", sqlcid,")", sep="")
             }
             
             if(tab == "tweet"){
@@ -291,7 +295,8 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
                   
       }
       try(ult_day <- dbGetQuery(datasource,sqlcom))
-      ult_se <- data2SE(ult_day$max, format = "%Y-%m-%d") # SE
+      ult_se <- NA
+      if(!is.na(ult_day)) ult_se <- data2SE(ult_day$max, format = "%Y-%m-%d") # SE
       return(c(data = ult_day, se = ult_se))
 }
 

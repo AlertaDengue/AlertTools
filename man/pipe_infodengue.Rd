@@ -7,14 +7,14 @@
 pipe_infodengue(
   cities,
   cid10 = "A90",
+  datarelatorio,
   finalday = Sys.Date(),
   iniSE = 201001,
   nowcasting = "none",
   narule = NULL,
   writedb = FALSE,
   datasource = con,
-  userinput = FALSE,
-  keep_se = "R"
+  userinput = FALSE
 )
 }
 \arguments{
@@ -22,6 +22,8 @@ pipe_infodengue(
 and all parameters, these will replace the database's parameters.}
 
 \item{cid10}{default is A90 (dengue). Chik = A92.0, Zika = A92.8}
+
+\item{datarelatorio}{epidemiological week}
 
 \item{finalday}{if provided, uses only disease data reported up to that day}
 
