@@ -250,7 +250,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             
             if (userinput){
                   message(paste("last date in database is",last_sinan_date$se,
-                                ". Should I continue with SE =", se_alerta,
+                                ". Should I continue with SE =", datarelatorio,
                                 "? empty if YES, or change to new date"))
                   x <- scan("stdin", character(), n = 1)
                    if(is.null(x)) datarelatorio <- as.numeric(x)     
