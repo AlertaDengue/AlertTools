@@ -9,6 +9,7 @@ getCases(
   lastday = Sys.Date(),
   cid10 = "A90",
   dataini = "notific",
+  completetail = NA,
   datasource = con
 )
 }
@@ -22,9 +23,9 @@ getCases(
 \item{dataini}{"notific" if data aggregated by notification date or "sinpri" if data aggregated
 if aggregated by date of first symptoms}
 
-\item{datasource}{PostgreSQLConnection to project database.}
-
 \item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
+
+\item{datasource}{PostgreSQLConnection to project database.}
 }
 \value{
 data.frame with the data aggregated per week according to disease onset date.
@@ -34,6 +35,7 @@ Create weekly time series from case data from server. The source is the SINAN.
 }
 \examples{
 d <- getCases(cities = 3300936) # dengue
+d <- getCases(cities = 3300936, completetail = 0) # dengue
 d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 d <- getCases(cities = cid$municipio_geocodigo, datasource = con, dataini = "sinpri") 

@@ -865,7 +865,7 @@ tabela_historico <- function(obj, versao = Sys.Date()){
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2016-08-12",nowcasting="none")
-#'restab <- tabela_historico(res[1]) 
+#'restab <- tabela_historico(res) 
 #'write_alerta(restab)
 
 write_alerta<-function(d, datasource = con){
@@ -879,10 +879,14 @@ write_alerta<-function(d, datasource = con){
       
       dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
                     "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
-                    "nivel","id","versao_modelo","municipio_nome")
+                    "nivel","id","versao_modelo","municipio_nome","Rt", "pop", "tweet")
+      dcolumns1 <-c("temp_min", "umid_max")
       
       assert_that(all(dcolumns %in% names(d)), msg = paste("write_alerta: check if d contains
                                                            columns", dcolumns))
+      assert_that(any(dcolumns1 %in% names(d)), msg = paste("write_alerta: check if d contains
+                                                           climate variable in", dcolumns1))
+      
       # nomes das tabelas para salvar os historicos:
       if(cid10=="A90") {tabela <-  "Historico_alerta"; constr.unico = "alertas_unicos"}
       if(cid10=="A92.0") {tabela <-  "Historico_alerta_chik"; constr.unico = "alertas_unicos_chik"}
@@ -891,16 +895,19 @@ write_alerta<-function(d, datasource = con){
       
       print(paste("writing alerta into table", tabela))
       
-      # ------ vars to write
+      # ------ vars to write 
       
+      if("temp_min" %in% names(d)) dcolumns = c(dcolumns, "temp_min")
+      if("umid_max" %in% names(d)) dcolumns = c(dcolumns, "umid_max")
+            
       dados <- d %>%
-            select(dcolumns)
+            select(all_of(dcolumns))
       
-     
+       
       # ------ sql command
       varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
                           "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
-                          "nivel","id","versao_modelo","municipio_nome")
+                          "nivel","id","versao_modelo","municipio_nome","\"Rt\"", "pop", "tweet", "tempmin", "umidmax")
       
       varnames.sql <- str_c(varnamesforsql, collapse = ",")
       updates = str_c(paste(varnamesforsql,"=excluded.",varnamesforsql,sep=""),collapse=",") # excluidos, se duplicado
@@ -908,12 +915,17 @@ write_alerta<-function(d, datasource = con){
       
       escreve_linha <- function(li){
             vetor <- dados[li,]
-            vetor$municipio_nome = gsub(vetor$municipio_nome, pattern = "'", replacement = "''")
-            linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"',", str_c(vetor[1,3:11], collapse=","),
-                          ",",vetor[1,12],",'", as.character(vetor[1,13]),"','",as.character(vetor[1,14]),"')", sep="")
+            #vetor$municipio_nome = gsub(vetor$municipio_nome, pattern = "'", replacement = "''")
+            linha = paste0(vetor$SE,",'",as.character(vetor$data_iniSE),"',", str_c(vetor[1,c("casos_est","casos_est_min","casos_est_max",
+                  "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","), ",'", 
+                  as.character(vetor$versao_modelo),"','",as.character(vetor$municipio_nome),"',", 
+                          str_c(vetor[1,c("Rt","pop","tweet")], collapse = ","))
+            if("temp_min" %in% names(vetor)) linha = paste0(linha,",", vetor$temp_min, ",","NA")
+            if("umid_max" %in% names(vetor)) linha = paste0(linha,",", "NA", ",", vetor$umid_max)
             linha = gsub("NA","NULL",linha)
+            linha = gsub("NaN","NULL",linha)
             
-            insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" (" ,varnames.sql,") VALUES (", linha, " ON CONFLICT ON CONSTRAINT ",constr.unico,"  
+            insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" (" ,varnames.sql,") VALUES (", linha, ") ON CONFLICT ON CONSTRAINT ",constr.unico,"  
                                      DO UPDATE SET ",updates, sep="")
             try(dbGetQuery(datasource, insert_sql))    
             insert_sql
