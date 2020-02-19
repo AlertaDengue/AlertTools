@@ -355,9 +355,10 @@ dd
 #'@param datasource valid connection to database
 #'@return list with d = data.frame with data.
 #'@examples
-#'dados <- getdelaydata(cities=3304557, years=c(2017, 2018), cid10="A92", datasource=con)  # Not run without connection
+#'dados <- getdelaydata(cities=3302403, years=c(2017, 2018), cid10="A90", datasource=con)  # Not run without connection
 
-getdelaydata <- function(cities, years = NULL, cid10 = "A90", lastday = Sys.Date(), datasource){
+getdelaydata <- function(cities, years = NULL, cid10 = "A90", lastday = Sys.Date(), 
+                         datasource = con){
       
       ncities = length(cities)
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
@@ -398,8 +399,11 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", lastday = Sys.Date
                           " out of ",nb, "notifications" ))
             
             # Create SE_digit
-            dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
-            dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
+            #dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
+            #dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
+            dd$SE_digit <- daySEday(dd$dt_digita)$SE
+            dd$ano_digit <- floor(dd$SE_digit/100)
+            dd$se_digit <- dd$SE_digit - dd$ano*100
             dd
       }
 }

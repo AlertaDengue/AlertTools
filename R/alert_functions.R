@@ -915,7 +915,7 @@ write_alerta<-function(d, datasource = con){
       
       escreve_linha <- function(li){
             vetor <- dados[li,]
-            #vetor$municipio_nome = gsub(vetor$municipio_nome, pattern = "'", replacement = "''")
+            vetor$municipio_nome = gsub(vetor$municipio_nome, pattern = "'", replacement = "''")
             linha = paste0(vetor$SE,",'",as.character(vetor$data_iniSE),"',", str_c(vetor[1,c("casos_est","casos_est_min","casos_est_max",
                   "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","), ",'", 
                   as.character(vetor$versao_modelo),"','",as.character(vetor$municipio_nome),"',", 
