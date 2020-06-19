@@ -747,7 +747,7 @@ map_Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
-#'geraMapa(alerta=res, subset = c(3300936, 3302403), se=201704, 
+#'geraMapa(alerta=res, subset = c(3300936, 3302403), se=201804, 
 #'shapefile="shape/33MUE250GC_SIR.shp", varid="CD_GEOCMU", titulo="RJ-Norte")
 
 geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"), legpos="bottomright",

@@ -60,8 +60,8 @@ This value is passed to i.level.intensity parameter in \code{memmodel}, from MEM
 \item{con}{Connection to PostGreSQL database, using \code{dbConnect} from RPostgreSQL package}
 }
 \value{
-Function \code{info.dengue.apply.mem} will return a list with thresholds calculated by mem, by simple percentile and the
-choice used in the infodengue model, by municipality: 
+Function \code{info.dengue.apply.mem} will return a list with thresholds calculated by mem, 
+by simple percentile and the choice used in the infodengue model, by municipality: 
  \describe{
  \item{mem: threshold values calculated by mem}{municipio_geocodigo = geocode, inc_preseason = preseason incidence threshold, inc_posseason = 
  pos-season incidence threshold, inc_epidemico = high incidence threshold, inicio and inicio.ic = estimated begining of the season
@@ -84,9 +84,9 @@ as incidence. The alert model uses incidence.
 \examples{
 Generate thresholds for Rio de Janeiro, Curitiba and Vitoria, using the whole history. 
 Return object instead of writing to data base:
-mun_list <- c(3304557, 4106902, 3205309)
-mun_list <- getCidades(uf = "Ceará", datasource=con)$municipio_geocodigo
-thresCE <- infodengue_apply_mem(mun_list=mun_list,database=con)
+mun_list <- c(4106902, 3205309)
+mun_list <- getCidades(uf = "Minas Gerais", datasource=con)$municipio_geocodigo
+thresMG <- infodengue_apply_mem(mun_list=mun_list,database=con)
 
 A nice way to visualize the calculated thresholds
 plot(thresCE) 
