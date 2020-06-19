@@ -687,6 +687,63 @@ getWUstation <- function(cities, datasource = con){
       return(city_table)
 }
 
+# setWUstation ------------------------------------------
+#'@description  Set primary and secondary meteorological stations associated 
+#'with one or more cities of the same state
+#'@title set meteorological stations
+#'@export
+#'@param st data.frame containing municipio_geocodigo, primary_station, 
+#'secondary_station
+#'@param UF name of the state.Ex. "Rio de Janeiro"
+#'@param senha for the connection to the project database
+#'@return 
+#'@examples
+#'NOT RUN
+#'wudata = data.frame(municipio_geocodigo = 3107802, primary_station = "SBIP",
+#'secondary_station = "SBGV")
+#'setWUstation(wudata, UF = "Minas Gerais")
+#'getWUstation(cities =wudata$municipio_geocodigo)
+
+setWUstation <- function(st, UF, senha){
+      
+      conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin", password=senha, dbname="dengue")
+      
+      ncities <- nrow(st)
+      
+      # checking inputs
+      assert_that(class(st) == "data.frame", 
+                  msg = "setWUstation: st should be a data.frame")
+      
+      assert_that(all(names(st) %in% c("municipio_geocodigo" , "primary_station",
+                                 "secondary_station")), 
+                  msg = "setWUstation: st should contain columns municipio_geocodigo, 
+                        primary_station, secondary_station")
+      
+      # check if city is already in the system (Regional table)
+      cities_table <- getCidades(uf = UF, datasource = conn)
+      cities_in <- st$municipio_geocodigo %in% cities_table$municipio_geocodigo
+       
+      assert_that(sum(cities_in)==ncities, 
+                  msg = paste("geocodes", st$municipio_geocodigo[cities_in == FALSE] , 
+                              "not implemented in Infodengue. Use insertCityinAlerta()") )
+      
+      ## writing 
+    
+      for (i in 1:ncities) {
+            el1 = paste("'", as.character(st$primary_station[i]),"'",sep="")
+            el2 = paste("'", as.character(st$secondary_station[i]),"'",sep="")
+            linha = paste("codigo_estacao_wu = ", el1, ",", "estacao_wu_sec = ", el2, sep = "")
+            update_sql = paste("UPDATE \"Dengue_global\".regional_saude SET ", linha , " WHERE 
+                               municipio_geocodigo = ", st$municipio_geocodigo[i], sep="")  
+            cityline = try(dbGetQuery(conn, update_sql))
+      }
+      
+      dbDisconnect(conn)
+      
+      return()
+}
+
+
 # insert_city_infodengue ------------------------------------
 #'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 
 #'the delay model and write.parameters
