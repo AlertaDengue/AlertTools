@@ -4,7 +4,10 @@
 \alias{DenguedbConnect}
 \title{Returns the connection to the database.}
 \usage{
-DenguedbConnect()
+DenguedbConnect(pass)
+}
+\arguments{
+\item{pass}{password}
 }
 \value{
 "PostgreSQLConnection" object
@@ -13,7 +16,7 @@ DenguedbConnect()
 Opens a connection to the Project database.
 }
 \examples{
-con <- DenguedbConnect()
+con <- DenguedbConnect(pass)
 dbListTables(con) 
 dbDisconnect(con)
 }

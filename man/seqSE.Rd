@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_tools.R
 \name{seqSE}
 \alias{seqSE}
-\title{Sequence of epidemiological weeks}
+\title{Sequence of epidemiological weeks.}
 \usage{
 seqSE(from, to)
 }
@@ -18,5 +18,5 @@ data.frame with the epidemiological weeks and corresponding extreme days. WARNIN
 Creates a sequence of epidemiological weeks and respective initial and final days
 }
 \examples{
-seqSE(201802, 202110)
+seqSE(201802, 202010)
 }

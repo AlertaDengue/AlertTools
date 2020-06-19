@@ -4,26 +4,32 @@
 \alias{geraMapa}
 \title{Plot the alert map for any state.}
 \usage{
-geraMapa(alerta, subset, cores = c("green", "yellow", "orange", "red"),
-  legpos = "bottomright", se, datasource, shapefile, varid, varname,
-  titulo = "", filename, dir = "", caption = TRUE, resol = 200)
+geraMapa(
+  alerta,
+  subset,
+  se,
+  cores = c("green", "yellow", "orange", "red"),
+  legpos = "bottomright",
+  titulo = "",
+  filename,
+  dir = "",
+  shapefile,
+  varid,
+  varname,
+  caption = TRUE,
+  resol = 200
+)
 }
 \arguments{
 \item{alerta}{object created by update.alerta.}
 
 \item{subset}{nomes das cidades que serão mostradas no mapa.}
 
+\item{se}{epidemiological week (format = 201610).}
+
 \item{cores}{colors corresponding to the levels 1, 2, 3, 4.}
 
 \item{legpos}{legend position. Default is bottomright. Check the other options in the function legend.}
-
-\item{se}{epidemiological week (format = 201610).}
-
-\item{shapefile}{shapefile containing polygons for the municipalities}
-
-\item{varid}{shapefile variable indicating the geocode of the municipalities}
-
-\item{varname}{name of the variable to be plotted}
 
 \item{titulo}{title of the map}
 
@@ -31,26 +37,27 @@ geraMapa(alerta, subset, cores = c("green", "yellow", "orange", "red"),
 
 \item{dir}{directory where map will be saved}
 
+\item{shapefile}{shapefile containing polygons for the municipalities}
+
+\item{varid}{shapefile variable indicating the geocode of the municipalities}
+
+\item{varname}{name of the variable to be plotted}
+
+\item{caption}{Default is TRUE}
+
 \item{resol}{dpi png resolution, default is 200}
 }
 \value{
 a map
 }
 \description{
-Function to plot a map of the alert
+Function to plot a map of the alert.
 }
 \examples{
 # Parameters for the model
-criteriaU = list(crity = c("temp_min > tcrit", 3, 1),
-crito = c("p1 > 0.95 & inc > preseas", 3, 1),
-critr = c("inc > inccrit", 2, 2))
-gtdist="normal"; meangt=3; sdgt = 1.2
-pars.RJ <- NULL
-pars.RJ[["Norte"]] <- list(pdig = c(2.997765,0.7859499),tcrit=22, ucrit = NA, inccrit = 100, preseas=8.283, posseas = 7.67878514885295, legpos="bottomright")
-# Running the model:
-res <- update.alerta(region = "Norte", state = "Rio de Janeiro", pars = pars.RJ, crit = criteriaU, adjustdelay=F, datasource = con,
-sefinal=201704, delaymethod="fixedprob")
-cidades = getCidades(regional = "Norte", uf = "Rio de Janeiro", datasource = con)["nome"]
-geraMapa(alerta=res, subset = cidades, se=201704, datasource=con, shapefile="shape/33MUE250GC_SIR.shp",
-varid="CD_GEOCMU", titulo="RJ-Norte", legpos="topright")
+cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+finalday= "2018-08-12",nowcasting="none")
+geraMapa(alerta=res, subset = c(3300936, 3302403), se=201804, 
+shapefile="shape/33MUE250GC_SIR.shp", varid="CD_GEOCMU", titulo="RJ-Norte")
 }

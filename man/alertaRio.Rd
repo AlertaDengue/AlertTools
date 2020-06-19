@@ -4,25 +4,33 @@
 \alias{alertaRio}
 \title{4 level alert Green-Yellow-Orange-Red for Rio de Janeiro.}
 \usage{
-alertaRio(naps = 0:9, pars, crit, datasource, se, cid10 = "A90",
-  verbose = TRUE, delaymethod = "fixedprob", dataini = "notific")
+alertaRio(
+  naps = 0:9,
+  se,
+  cid10 = "A90",
+  iniSE = 201001,
+  delaymethod = "fixedprob",
+  narule = "arima",
+  pdig = c(2.5016, 1.1013),
+  datasource = con
+)
 }
 \arguments{
 \item{naps}{subset of vector 0:9 corresponding to the id of the APS. Default is all of them.}
-
-\item{pars}{parameters of the alert.}
-
-\item{datasource}{it is the name of the sql connection.}
 
 \item{se}{last epidemiological week (format = 201401)}
 
 \item{cid10}{default is A90 (dengue). Chik = A920.}
 
-\item{verbose}{FALSE}
+\item{iniSE}{first epidemiological week}
 
 \item{delaymethod}{atribbute of adjuntincidence. "fixedprob" or "bayesian"}
 
-\item{dataini}{"notific" if use notification date to calculate incidence or "sinpri" if uses date of first symptoms}
+\item{narule}{how to fill climate missing data (arima is the only option)}
+
+\item{pdig}{parameters for adjustIncidence = "fixedprob"}
+
+\item{datasource}{name of the sql connection.}
 }
 \value{
 list with an alert object for each APS.
@@ -34,13 +42,6 @@ indicates evidence of sustained transmission, red indicates evidence of
 an epidemic scenario.
 }
 \examples{
-params <- list(pdigChik = c(2.687797, 1.362566), tcrit=22, inccrit=100, preseas = 14.15, posseas = 18)
-criter = list(
-     crity = c("temp_min > tcrit & casos > 0", 3, 1),
-     crito = c("p1 > 0.95 & temp_min >= tcrit", 3, 1),
-     critr = c("inc > inccrit & casos > 5", 2, 2))
-alerionot <- alertaRio(pars=params, cid = "A920", crit = criter, datasource=con, se=201918,
-delaymethod="fixedprob",verbose=FALSE)
-aleriosinpri <- alertaRio(pars=params, cid = "A920", crit = criter, datasource=con, se=201918,
-delaymethod="fixedprob",verbose=FALSE,dataini = "sinpri")
+alerio1 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A90")
+alerio2 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A920")
 }

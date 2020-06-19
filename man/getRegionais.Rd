@@ -4,9 +4,17 @@
 \alias{getRegionais}
 \title{get list of regionais.}
 \usage{
-getRegionais(uf, sortedby = "a", datasource = con)
+getRegionais(
+  cities = NULL,
+  uf,
+  sortedby = "a",
+  datasource = con,
+  complete = FALSE
+)
 }
 \arguments{
+\item{cities}{cities' geocodes}
+
 \item{uf}{full name of the state.}
 
 \item{sortedby}{the options are: 'a' alphabetically, 'id' regional id number, if available}
@@ -21,5 +29,6 @@ consult database to get list of regionais
 }
 \examples{
 getRegionais(uf="Rio de Janeiro")
+getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro")
 getRegionais(uf="Rio de Janeiro", sortedby = 'id')
 }

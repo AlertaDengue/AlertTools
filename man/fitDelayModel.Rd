@@ -4,8 +4,15 @@
 \alias{fitDelayModel}
 \title{Fit lognormal model to the notification delay}
 \usage{
-fitDelayModel(cities, period, plotar = TRUE, cid10 = "A90", datasource,
-  verbose = TRUE, inidate = "dt_notific")
+fitDelayModel(
+  cities,
+  period,
+  plotar = TRUE,
+  cid10 = "A90",
+  datasource,
+  verbose = TRUE,
+  inidate = "dt_notific"
+)
 }
 \arguments{
 \item{cities}{geocode of one of more cities. If more than one city, a single model is fitted to the whole dataset.}
@@ -19,16 +26,7 @@ Default is the whole period available.}
 
 \item{datasource}{sql connection}
 
-\item{cities}{geocode of one of more cities. If more than one city, a single model is fitted to the whole dataset.}
-
-\item{period}{range of dates for the analysis. Format: c("2010-01-01","2015-12-31"). 
-Default is the whole period available.}
-
 \item{dateini}{either dt_notific(default) or dt_sin_pri}
-
-\item{datasource}{sql connection}
-
-\item{plotar}{if TRUE, show plot of the fitted model}
 }
 \value{
 object with a summary of the analysis and suggestion of best model

@@ -4,9 +4,17 @@
 \alias{delaycalc}
 \title{Organize delay data for analysis and produce a nice plot.}
 \usage{
-delaycalc(d, nt_year = "ano_notif", nt_week = "se_notif",
-  dg_year = "ano_digit", dg_week = "se_digit", SE = "SE_notif",
-  lastSE = NA, truncweeks = 25, verbose = TRUE)
+delaycalc(
+  d,
+  nt_year = "ano_notif",
+  nt_week = "se_notif",
+  dg_year = "ano_digit",
+  dg_week = "se_digit",
+  SE = "SE_notif",
+  lastSE = NA,
+  truncweeks = 25,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{d}{dataset with case data containing at least three variables: the event week  (tini) and event registry (tfim). Only one city at a time.}
@@ -37,7 +45,7 @@ The second function to be used in the delay fitting process using inla. Calculat
 of cases reported per week with a given delay. Also removes data with notification delay greater than truncdays.
 }
 \examples{
-dados <- getdelaydata(cities=2305001, datasource=con)
+dados <- getdelaydata(cities=3304557, datasource=con)
 res = delaycalc(dados)  
 head(res$d)  # data
 head(res$delay.tbl)  # running matrix

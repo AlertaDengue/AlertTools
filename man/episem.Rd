@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_tools.R
 \name{episem}
 \alias{episem}
-\title{Define Epidemiological Week}
+\title{Define Epidemiological Week.}
 \usage{
 episem(x, format = "\%Y-\%m-\%d", separa = "", retorna = "YW")
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_tools.R
 \name{data2SE}
 \alias{data2SE}
-\title{Define Epidemiological Week}
+\title{Define Epidemiological Week.}
 \usage{
 data2SE(days, format = "\%d/\%m/\%Y")
 }

@@ -4,8 +4,15 @@
 \alias{Rtoriginal}
 \title{Computes the effective reproductive number using a Alerta's original formulation.}
 \usage{
-Rtoriginal(obj, count = "casos", meangt, CI = "beta", alpha = 0.95,
-  a0 = 2, b0 = 3)
+Rtoriginal(
+  obj,
+  count = "casos",
+  meangt,
+  CI = "beta",
+  alpha = 0.95,
+  a0 = 2,
+  b0 = 3
+)
 }
 \arguments{
 \item{obj}{object with the format of getcases. A data.frame with variables "casos" and "SE".}

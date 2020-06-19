@@ -3,10 +3,36 @@
 # Claudia Codeco 2015
 # -----------------------------------------------------------
 
+
+# epiYear ---------------------------------------------------------------------
+#'@description Find to which epidemiological year belongs a given epidemiological week. 
+#'@title Define Epidemiological Year.
+#'@export
+#'@param se numeric vector with epidemiological weeks to be converted
+#'@param cut epidemiological week that separates consecutive epidemiological years. Default = 41
+#'@return vector of epidemiological years. 
+#'@examples
+#'epiYear(se = 201012)
+#'epiYear(se = 201012:201522)
+
+epiYear <- function(se, cut = 41){
+  
+  d <- tibble(se = se)
+  d %>%
+    mutate(year = round(se/100),
+           eweek = se - year*100,
+           eyear = case_when(
+             eweek < cut ~ year - 1,  # if se < cut, eYear = previous calendar Year
+             TRUE ~ year              # if se >= cut, eYear = current calendar Year  
+           )) 
+} 
+
+
 # data2SE ---------------------------------------------------------------------
 #'@description Find to which epidemiological week belongs a given day. Uses episem function 
 #'(formula generated data).
-#'@title Define Epidemiological Week
+#'@title Define Epidemiological Week.
+#'@export
 #'@param date string vector with dates to be converted
 #'@param format date format
 #'@return data.frame with the epidemiological weeks. 
@@ -27,7 +53,8 @@ data2SE <- function(days, format = "%d/%m/%Y"){
 # episem ---------------------------------------------------------------------
 #' @description Find to which epidemiological week belongs a given day 
 #' @author Oswaldo Cruz
-#' @title Define Epidemiological Week
+#' @title Define Epidemiological Week.
+#' @export
 #' @param date date to be converted (class Date)
 #' @param separa symbol between year and week
 #' @param retorna What should be return, if epidemiological year and week ('YW'), epi. year only ('Y') or epi. week only ('W').
@@ -125,6 +152,7 @@ lastepiweek <- function(ano){
 # SE2date ---------------------------------------------------------------------
 #'@description Return the first day of the Epidemiological Week
 #'@title Return the first day of the Epidemiological Week
+#'@export
 #'@param SE string vector with dates to be converted, format 201420
 #'@return data.frame with SE and first day.
 #'@examples
@@ -141,15 +169,51 @@ SE2date <- function(se){
       res
 }
 
+# daySEday---------------------------------------------------------------------
+#'@description Return the first day of the Epidemiological Week and vice-versa
+#'@title Return the first day of the Epidemiological Week and vice-versa
+#'@export
+#'@param x numeric vector with epidemiological weeks , format 201945, or date
+#'@return data.frame with SE and first day.
+#'@examples
+#'daySEday(x=201812)
+#'daySEday(x = c(201401:201409)
+#'daySEday(x = c("2015-12-23", "2015-10-23", "2014-10-16"))
+
+daySEday <- function(x, format = "%Y-%m-%d"){
+      #load("R/sysdata.rda")
+      n <- length(x)
+            if(class(x[1]) %in% c("numeric","integer")) {
+            assert_that(all(x > 200952 & x < 202100), msg = "day2SE: SE format = 
+                        201612, btw 201001 and 202052")
+                  
+            res <- data.frame(SE = x, ini = as.Date("1970-01-01"))
+                  
+            for (i in 1:n) res$ini[i] <- SE$Inicio[SE$SE == res$SE[i]]
+            return(res)
+            
+            }
+      if(class(x[1]) == "character") x <- as.Date(x, format = format)
+      assert_that(all(x <= "2020/12/31" & x >= "2010/01/01"))
+      res <- data.frame(SE = NA, ini = x)
+      for (i in 1:n) res$SE[i] <- SE[which(SE$Inicio<=x[i] & SE$Termino >= x[i]), "SE"]
+      return(res)
+      
+      
+      #SE$sem <- SE$Ano*100 + SE$SE
+      
+}
+
 
 # seqSE ---------------------------------------------------------------------
 #'@description Creates a sequence of epidemiological weeks and respective initial and final days
-#'@title Sequence of epidemiological weeks
+#'@title Sequence of epidemiological weeks.
+#'@export
 #'@param from first week in format 201401
 #'@param to first week in format 201401
 #'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works from 2010 to 2020.
 #'@examples
-#'seqSE(201802, 202110)
+#'seqSE(201802, 202010)
 
 
 seqSE <- function(from, to){
@@ -164,7 +228,8 @@ seqSE <- function(from, to){
       
       if (to > SE$SE[N]){
             to <- SE$SE[N]
-            warning(paste("This function only works from 2010 to", max(SE$Ano),". Last SE returned is", to))
+            warning(paste("This function only works from 2010 to
+                          ",max(SE$Ano),". Last returned date is", to))
       }
       
       SE[which(SE$SE==from):which(SE$SE==to),]
@@ -174,86 +239,119 @@ seqSE <- function(from, to){
 # lastDBdate ---------------------------------------------------------------------
 #'@description  Useful to check if the database is up-to-date. 
 #'@title Returns the most recent date present in the database table. 
-#'@param tab table in the database. Either (sinan, clima_wu, tweet ou historico). 
-#'@param city city geocode, if empty, whole dataset is considered. Not implemented yet.
-#'@param station wu station.
+#'@export
+#'@param tab table in the database. Either (sinan, clima_wu, tweet, historico,
+#'historico_mrj). 
+#'@param cities vector of geocodes.
+#'@param cid10 relevant for sinan, tweeter or historico. Codes are: dengue "A90", 
+#'chik "A92.0", zika "A92.8".  
+#'@param stations vector with wu stations. Ex. c("SGBL", "SBRL")
 #'@param datasource 
-#'@return most recent date 
+#'@return vector with two elements: data.max = most recent date in the collection of cities or stations;
+#'se = corresponding epidemiological week.
 #'@examples
-#'lastDBdate(tab="tweet",datasource=con)
-#'lastDBdate(tab="tweet", city=330240,datasource=con)
-#'lastDBdate(tab="sinan", city=330240,datasource=con)
-#'lastDBdate(tab="clima_wu", station="SBAF",datasource=con)  
+#'cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
+#'lastDBdate(tab = "tweet", cities = cidades$municipio_geocodigo, cid10 = "A90")
+#'lastDBdate(tab = "sinan", cities = cidades$municipio_geocodigo, cid10 = "A92.8")
+#'lastDBdate(tab = "clima_wu", stations = "SBAF", datasource=con)  
+#'lastDBdate(tab = "clima_wu", cities = cidades$municipio_geocodigo, datasource=con)  
 
-lastDBdate <- function(tab, city = NULL, station = NULL, datasource){
-      if (tab == "sinan"){
-            if (is.null(city)) {
-                  sql <- "SELECT dt_notific from \"Municipio\".\"Notificacao\""
-                  print("Nenhuma cidade indicada, data refere-se ao banco todo")
-                  } else {
-                        if(nchar(city) == 6) city <- sevendigitgeocode(city)
-                        sql <- paste("SELECT dt_notific from \"Municipio\".\"Notificacao\" WHERE municipio_geocodigo = ", city)
-                        }
-            dd <- dbGetQuery(datasource,sql)
-            date <- max(dd$dt_notific)
-      }
+lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
       
-      if (tab == "tweet"){
-            if (is.null(city)) {
-                  sql <- paste("SELECT data_dia from \"Municipio\".\"Tweet\"")
-                  print("Nenhuma cidade indicada, data refere-se ao banco todo")
-            } else {
-                  if(nchar(city) == 6) city <- sevendigitgeocode(city)
-                  sql <- paste("SELECT data_dia from \"Municipio\".\"Tweet\" WHERE \"Municipio_geocodigo\" = ", city)
+      # check input
+      assert_that(tab %in% c("sinan", "clima_wu", "tweet", "historico"), msg =
+                        "lastDBdate only works for tables sinan, clima_wu, tweet, historico and historico_mrj")
+      # dealing with synonimous cid 
+      if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
+            if (cid10 %in% c("A92", "A920","A92.0")) { # chik
+                  cid <-c("A92", "A920","A92.0")
+                  cid10 <- "A92.0"}  else{
+                        if (cid10 %in% c("A92.8","A928")){  # zika
+                              cid <- c("A92.8","A928")
+                              cid10 <- "A92.8"                      
+                        }                  
                   }
-            dd <- dbGetQuery(datasource,sql)
-            date <- max(dd$data_dia)
       }
       
+      if (tab %in% c("sinan","tweet","historico", "historico_mrj")){
+      
+            assert_that(cid10 %in% c("A90", "A92.0", "A92.8"), msg = "lastDBdate asking for valid cid10")
+            
+            sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+            sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
+            
+            
+            if(tab == "sinan") {
+                  
+                  sqlcom <- paste("SELECT MAX(dt_digita) from \"Municipio\".\"Notificacao\" WHERE municipio_geocodigo IN (", sqlcity, 
+                                  ") AND cid10_codigo IN(", sqlcid,")", sep="")
+            }
+            
+            if(tab == "tweet"){
+            
+                  if(cid10 != "A90"){
+                        message("tweet table has no value for this cid10")
+                        return(NULL)
+                  } else {
+                        sqlcom <- paste0("SELECT MAX(data_dia) from \"Municipio\".\"Tweet\" WHERE
+                                         \"Municipio_geocodigo\" IN (", sqlcity,")")
+                        }
+            }
+            
+            if (tab == "historico"){
+                      if(cid10 == "A90")    tabela <- "\"Municipio\".\"Historico_alerta\""
+                      if(cid10 == "A92.0")  tabela <- "\"Municipio\".\"Historico_alerta_chik\""
+                      if(cid10 == "A92.8")  tabela <- "\"Municipio\".\"Historico_alerta_zika\""
+
+                        sqlcom <- paste0("SELECT MAX(\"data_iniSE\") FROM ",tabela, 
+                                     " WHERE municipio_geocodigo IN (", sqlcity,")")
+            }
+                      
+            if (tab == "historico"){
+                        if(cid10 == "A90")    tabela <- "\"Municipio\".alerta_mrj_dengue"
+                        if(cid10 == "A92.0")  tabela <- "\"Municipio\".alerta_mrj_chik"
+                        if(cid10 == "A92.8")  tabela <- "\"Municipio\".alerta_mrj_zika"
+                              
+                              sqlcom <- paste0("SELECT MAX(data) FROM ",tabela, 
+                                               " WHERE municipio_geocodigo IN (", sqlcity,")")         
+            }
+            
+      } 
       
       if (tab == "clima_wu"){
-            if (!is.null(city)) stop("indique a estacao desejada")
-            if (is.null(station)) {
-                  sql <- paste("SELECT data_dia from \"Municipio\".\"Clima_wu\" WHERE 
-                               \"Estacao_wu_estacao_id\"")
-                  print("Nenhuma estacao indicada, data e' a mais recente no banco todo")
-            } else {
-                  sql1 <- paste("'", station, "'",sep = "")
-                  sql <- paste("SELECT * from \"Municipio\".\"Clima_wu\" WHERE \"Estacao_wu_estacao_id\" = ",sql1)
+            if(missing(stations) & !missing(cities)){
+                  wu_table <- getWUstation(cities)
+                  stations <- unique(wu_table$codigo_estacao_wu, wu_table$estacao_wu_sec)
             }
-            dd <- dbGetQuery(datasource,sql)
-            datacomdados <- which(is.na(dd$temp.min)==FALSE) 
-            date <- dd$data_dia[max(datacomdados)]
+            
+            sqlstations = paste("'", str_c(stations, collapse = "','"),"'", sep="")
+            sqlcom <- paste("SELECT MAX(data_dia) from \"Municipio\".\"Clima_wu\" WHERE 
+                               \"Estacao_wu_estacao_id\" IN ( ",sqlstations,")")
+                  
       }
-      
-      if (tab == "historico"){
-            if (is.null(city)) {
-                  sql <- paste("SELECT \"data_iniSE\" from \"Municipio\".\"Historico_alerta\"")
-                  print("Nenhuma cidade indicada, data refere-se ao banco todo")
-            } else {
-                  sql <- paste("SELECT \"data_iniSE\" from \"Municipio\".\"Historico_alerta\" WHERE municipio_geocodigo = ", city)
-            }
-            dd <- dbGetQuery(datasource,sql)
-            date <- max(dd$data_iniSE)
-      }
-      date
+      try(ult_day <- dbGetQuery(datasource,sqlcom))
+      ult_se <- NA
+      if(!is.na(ult_day)) ult_se <- data2SE(ult_day$max, format = "%Y-%m-%d") # SE
+      return(c(data = ult_day, se = ult_se))
 }
 
 
 
 # DenguedbConnect ---------------------------------------------------------------------
 #'@description  Opens a connection to the Project database. 
-#'@title Returns the connection to the database. 
+#'@title Returns the connection to the database.
+#'@export 
+#'@param pass password
 #'@return "PostgreSQLConnection" object   
 #'@examples
-#'con <- DenguedbConnect()
+#'con <- DenguedbConnect(pass)
 #'dbListTables(con) 
 #'dbDisconnect(con)
 
-DenguedbConnect <- function(){
+DenguedbConnect <- function(pass){
       dbname <- "dengue"
       user <- "dengueadmin"
-      password <- "aldengue"
+      password <- pass
       host <- "localhost"
       
       dbConnect(dbDriver("PostgreSQL"), user=user,
@@ -266,16 +364,19 @@ DenguedbConnect <- function(){
 #'@description  calculates the verification digit of brazilian municipalities. Required 
 #'to convert 6 digits to 7 digits geocodes. 
 #'@title convert 6 to 7 digits geocodes. 
+#'@export
 #'@return 7 digits municipality geocode.   
 #'@examples
 #'sevendigitgeocode(330455)
+#'sevendigitgeocode(3304557)
 
 sevendigitgeocode <- function(dig){
+      
       peso <- c(1, 2, 1, 2, 1, 2, 0)
       soma <- 0
       digchar <- strsplit(as.character(dig),"")[[1]]
       ndig <- length(digchar)
-
+      if (ndig == 7) return(dig)
       if (ndig!=6) stop("this funtion receives 6 digits geocodes only")
       
       for (i in 1:6){
@@ -290,22 +391,25 @@ sevendigitgeocode <- function(dig){
 
 # nafill ------------------------------------
 #'@description  collection of imputation procedures 
-#'@title methods to substitute NAs.Use the function na.approx from package zoo. 
+#'@title methods to substitute NAs. Use the function na.approx from package zoo. 
+#'@export
 #'@param v vector with missing elements.
 #'@param rule rule for filling the missing cells. "zero" just fills them with 0; "linear"
-#' interpolate using tzoo::na.approx. In this case, the tails are not filled. If "arima", then it interpolates using
+#' interpolate using zoo::na.approx. In this case, the tails are not filled. If "arima", then it interpolates using
 #' linear and extrapolates using arima (calling AlertTools::temp.predict) 
-#'@param maxgap maximum number of consecutive NAs to fill. Longer gaps will be left i=unchanged. Only works for rule = "zero"
+#'@param maxgap maximum number of consecutive NAs to fill. Longer gaps will be left unchanged. Only works for rule = "zero"
 #' or "linear"
-#'@return vector with replaced NA.
+#'@return vector 
 #'@examples
 #'# Interpolation:
 #'v <- c(1,2,3,NA,5,6,NA,NA,9,10,NA,NA)
 #'nafill(v, rule = "zero")
 #'nafill(v, rule = "linear")
 #'# Inter using linear and Extrapolation using arima
-#'head(cliSBCB)
-#'nafill(cliSBCB[,3], rule= "arima")
+#'cliSBCB <- getWU(station = "SBCB")
+#'summary(cliSBCB)
+#'cliSBCB <- getWU(station = "SBCB") %>%
+#'           mutate(nafill("temp_min", rule = "arima")) 
 
 nafill <- function(v, rule, maxgap = 4, verbose = F){
       Nna = sum(is.na(v))
@@ -322,6 +426,7 @@ nafill <- function(v, rule, maxgap = 4, verbose = F){
 # temp.predict ------------------------------------
 #'@description  function for extrapolating temperature using arima  
 #'@title Fit arima to fill in missing data at the end of temperature time series. 
+#'@export
 #'@param v vector with temperature data.
 #'@return vector with replaced NA.
 #'@examples
@@ -338,7 +443,7 @@ temp.predict <- function(v, plotar = FALSE){
       
       if(Nna > 0){
             
-            # Para saber os coeficientes da parte ARIMA atraves de criterios de selecao 
+            # Para saber os coeficientes da parte ARIMA atraves de criterios de selecao automatica:
             #automatica:
             c.a<-auto.arima(x,max.p=5,max.q=5,max.P=5,max.Q=5)$arma
             # Modelo considerando a sazonalidade, e a parte ARIMA sugerida anteriormente:
@@ -368,40 +473,56 @@ temp.predict <- function(v, plotar = FALSE){
 # getRegionais ------------------------------------
 #'@description  consult database to get list of regionais 
 #'@title get list of regionais. 
+#'@export
 #'@param uf full name of the state.
+#'@param cities cities' geocodes
 #'@param sortedby the options are: 'a' alphabetically, 'id' regional id number, if available 
 #'@param database name of the database
 #'@return vector with names of the regionais.
 #'@examples
 #'getRegionais(uf="Rio de Janeiro")
+#'getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro")
 #'getRegionais(uf="Rio de Janeiro", sortedby = 'id')
 
-getRegionais <- function(uf, sortedby = "a", datasource=con){
+getRegionais <- function(cities = NULL, uf, sortedby = "a", datasource=con, complete = FALSE){
       
-      sqlquery = paste("SELECT nome_regional, id_regional, uf 
+      assert_that(!missing(uf), msg = "getRegionais: please specify uf. Ex. uf = \"Ceará\" ")
+      
+      sqlquery = paste("SELECT municipio_geocodigo, nome_regional, id_regional, uf 
                   FROM \"Dengue_global\".\"Municipio\" 
                   INNER JOIN \"Dengue_global\".regional_saude
                   ON municipio_geocodigo = geocodigo
                   where uf = '", uf, "'", sep="")
       
       d = dbGetQuery(datasource, sqlquery)    
-      if (nrow(d) == 0) stop(paste("Banco de dados nao tem regionais para o estado ", uf))
+      assert_that(nrow(d) > 0, msg = (paste("getRegionais: Database does not have the health areas for ", uf)))
       
-      if(sortedby == 'a') out <- sort(unique(d$nome_regional)) 
-      if(sortedby == 'id') {
-            out <- unique(d[order(d$id_regional),"nome_regional"])
-            if (any(is.na(d$id_regional))) {
-                  warning("getRegionais: codigo das regionais nao encontrado, trocando argummento para sortedby = 'a'")
-                  out <- sort(unique(d$nome_regional))
+      if(!is.null(cities)) {
+            d <- d %>% filter(municipio_geocodigo %in% cities)
+            assert_that(nrow(d) == length(cities), msg = (paste("getRegionais: Database does not have 
+                                                                the health districts for all listed cities in", uf)))
+            return(d$nome_regional)
+            
+      } else{
+            if(sortedby == 'a') out <- sort(unique(d$nome_regional)) 
+            if(sortedby == 'id') {
+                  out <- unique(d[order(d$id_regional),"nome_regional"])
+                  if (any(is.na(d$id_regional))) {
+                        warning("getRegionais: codigo das regionais nao encontrado, trocando argummento para sortedby = 'a'")
+                        out <- sort(unique(d$nome_regional))
+                  }
+                  
             }
-            }
-      out
+            return(out)
+      }
+      
 }
 
 
 # getCidades ------------------------------------
 #'@description  consult database to get list of cities 
 #'@title get list of cities. 
+#'@export
 #'@param uf full name of the state.
 #'@param regional full name of the regional.
 #'@param datasource name of the database
@@ -433,202 +554,179 @@ getCidades <- function(regional, uf, datasource=con){
 }
 
 
-# write.parameters ------------------------------------
+# write_parameters ------------------------------------
 #'@description  Write the alert parameters for each city into the database, to be used in the update.alert. 
 #'Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_posseason",
 #'"limiar_epidemico, "estacao_wu_sec".  City must be already in the regionais table.
 #'@title City's parameterization. 
-#'@param params vector of the names of the params to be inserted in the table. Default: params = c("codigo_estacao_wu", 
-#'"limiar_preseason", "limiar_posseason","limiar_epidemico, "estacao_wu_sec"). It can be a subset of the default. 
-#'@param tab data.frame with the values for each city. It must have a column named "municipio_geocodigo",
-#'plus other columns named as in newpars. 
-#'@return nothing.
+#'@export
+#'@param params vector of the names of the params to be inserted in the table. Limiar is given as incidence. 
+#'It can be a subset of the default. 
+#'@return the new line in the parameters table 
 #'@examples
-#'newpars = c("limiar_preseason", "limiar_posseason","estacao_wu_sec")
-#'res = write.parameters(newpars,tab)
+#'params = data.frame(municipio_geocodigo = 3506003,limiar_preseason = 4.50243, limiar_posseason = 3.962566, 
+#'limiar_epidemico = 67.72364, varcli = "temp_min", clicrit = 22, cid10 = "A90", codmodelo = "Af") 
+#'res = write_parameters(newpars)
 
-write.parameters<-function(params, tab, senha){
+write_parameters<-function(city, cid10, params, overwrite = FALSE, senha){
       
-      out = senha#readline("Essa funcao ira mudar o funcionamento do alerta e requer senha do banco de dados:")
+      # checking inputs
+      assert_that(class(params) == "data.frame", 
+                  msg = "write.parameters: params should be a data.frame")
       
-      conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin",
-                       password=out, dbname="dengue")
+      assert_that(nrow(params) == 1 , 
+                  msg = "write.parameters write one line only")
       
-      vars = names(tab)
-      nrows = dim(tab)[1]
+      assert_that(cid10 %in% c("A90","A92.0","A92.8"), 
+                  msg = paste("write.parameters: not prepared for cid10 = ",params$cid10))
       
-      # check if tab columns are correct
-      stopifnot("municipio_geocodigo"%in%vars)
-      for(i in params) stopifnot(i%in%vars)
+      assert_that(all(c("municipio_geocodigo","cid10") %in% names(params)), 
+                  msg = paste("write.parameters: params must contain municipio_geocodigo, cid10"))
       
-      if(nchar(tab$municipio_geocodigo[1]) == 6) {for (i in 1:nrows) 
-            tab$municipio_geocodigo[i] <- sevendigitgeocode(tab$municipio_geocodigo[i])}
-
-      # string com vetor de nomes das variaveis
-      varnames <- paste("(", params[1], sep="")
-      for (j in params[-1]) varnames <- paste(varnames, j, sep=",")
-      varnames <- paste(varnames, ")", sep="")
+      # check if city is already in the system (Regional table)
+      conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin", password=senha, dbname="dengue")
       
-      # identificando as variaveis string 
-      p1 <- ifelse(any(params == "codigo_estacao_wu"), which(params == "codigo_estacao_wu"), NA)
-      p2 <- ifelse(any(params == "estacao_wu_sec"), which(params == "estacao_wu_sec"), NA)
-      stringvars = as.vector(na.exclude(c(p1,p2)))           
+      sql1 = paste("SELECT * from \"Dengue_global\".regional_saude SET  
+                               WHERE municipio_geocodigo = ",city, sep="")      
+      cityregtable = try(dbGetQuery(conn, sql1))
       
-      for (li in 1:nrows){
-            linha = ""
-            cid = tab$municipio_geocodigo[li]
-            
-            # check if city is new
-            update_sql = paste("SELECT * from \"Dengue_global\".regional_saude SET  
-                               WHERE municipio_geocodigo = ",cid,sep="")      
-            cityline = try(dbGetQuery(conn, update_sql))
-            if (nrow(cityline)==0) {# city not implemented
-                  message(paste("geocode", cid, "not implemented in Infodengue. Use insertCityinAlerta()") )
-                  next
-            }
-            
-            for (i in 1:length(params)) {
-                  if (i %in% stringvars & !is.na(as.character(tab[li,params[i]]))) 
-                        value = paste(params[i],"='", as.character(tab[li,params[i]]), "'", sep="")
-                        
-                  else value = paste(params[i],"=", as.character(tab[li,params[i]]), sep="")
-                  
-                  linha = ifelse (i>1, paste(linha, value, sep=","), paste(linha, value, sep=""))
-            }
-            linha = gsub("NA","NULL",linha)
-            
-            update_sql = paste("UPDATE \"Dengue_global\".regional_saude SET ", linha, 
-                               " WHERE municipio_geocodigo = ",cid,sep="")      
-            
-            try(dbGetQuery(conn, update_sql))
+      assert_that(nrow(cityregtable)>0, 
+                  msg = paste("geocode", city, "not implemented in Infodengue. Use insertCityinAlerta()") )
+      
+      # Next step, check if there are any parameters for this cid10?      
+      sql2 = paste("SELECT * from \"Dengue_global\".parameters SET  
+                               WHERE municipio_geocodigo = ",city," AND cid10 = $$",
+                                cid10,"$$", sep="")      
+      
+      parline = try(dbGetQuery(conn, sql2))
+      
+      assert_that(nrow(parline) < 2, 
+                  msg = paste("parameter table has something wrong. more than one line for", 
+                                               params$cid10, "for city", city, "."))
+      
+      # now let's write the data
+      # if line does not exist, create one with the cid and geocode:
+      if(nrow(parline) == 1 & overwrite == FALSE){
+            message("the following parameters were found. Rerun with overwrite = T to replace them")
+            print(parline)
+            return(parline)
       }
-      dbReadTable(conn, c("Dengue_global","regional_saude"))
+      
+      if(nrow(parline == 0)){
+            linha = paste(as.character(params$municipio_geocodigo), ",\'",params$cid10, "\'",sep="")
+            sql = paste("insert into \"Dengue_global\".parameters (municipio_geocodigo, cid10) values(", linha ,")")
+            dbGetQuery(conn, sql)    
+      }
+      
+      vars <- params %>% select(-c("municipio_geocodigo", "cid10"))
+      nvars <- length(vars)
+      for (i in 1:nvars) {
+            linha = paste(vars_names[i], " = '", vars[[i]], "'", sep = "")
+            update_sql = paste("UPDATE \"Dengue_global\".parameters SET ", linha , " WHERE municipio_geocodigo = ", params$municipio_geocodigo,
+                               " AND cid10 = \'", cid10, "\'", sep="")      
+            try(dbGetQuery(con, update_sql))
+      }
+             
       dbDisconnect(conn)
+      
 }
 
 # read.parameters ------------------------------------
-#'@description  Read the alert parameters for a set of  cities from the database, to be used in the update.alert. 
-#'Currently, the parameters are:"codigo_estacao_wu", "limiar_preseason", "limiar_posseason",
-#'"limiar_epidemico, "estacao_wu_sec".  
-#'@title Get city alert parameters. 
-#'@param city geocode
-#'@param region regional's name
-#'@param state state's name
+#'@description  Read the alert parameters for a set of cities from the database, to be used in the infodengue pipeline. 
+#'Currently, the parameters are: "limiar_preseason" (pre-season incidence threshold calculated using MEM), 
+#'"limiar_posseason" (pos-season incidence threshold), "limiar_epidemico"(epidemic threshold), "varcli" (name of the critical 
+#'meteorological variable), "clicrit" (critical value of the meteorological variable), "cid10",
+#'"codmodelo" (name of the heuristic decision model, see serCriteria()). These parameters are specified when the city is initiated 
+#'in the pipeline.
+#'@title Get city-level alert parameters for the infodengue pipeline.
+#'@export 
+#'@param cities cities' geocodes. Tip: find them using getCidades(). 
+#'@param cid10 Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"
 #'@param datasource SQL connection to the database
 #'@return dataframe with all parameters
 #'@examples
-#'read.parameters(city = 3118601, datasource = con)
-#'read.parameters(region="Norte", state = "Rio de Janeiro", datasource = con)
-#'read.parameters(state = "Rio de Janeiro", datasource = con)
-#'read.parameters(datasource = con) #set no filter to get all cities
+#'read.parameters(cities = 3118601, cid10 = "A90")
+#'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+#'read.parameters(cities = cid$municipio_geocodigo, cid10 = "A90")
 
-read.parameters<-function(city, region, state, datasource){
+read.parameters<-function(cities, cid10 = "A90", datasource=con){
       
-      vars  = " geocodigo, nome, nome_regional, id_regional, uf, populacao, codigo_estacao_wu, 
-                estacao_wu_sec,limiar_preseason, limiar_posseason, limiar_epidemico,varcli,tcrit,ucrit "
-
-            # Getting metadata from table regional_saude
-      if(!missing (city)) { # if updating a single city
-            if(nchar(city) == 6) city <- sevendigitgeocode(city) 
+      cities <- sapply(cities, function(x) sevendigitgeocode(x))
+      if(cid10 != "A90")print("tab de parametros so tem dengue. Usando-os.")
+      cid10 = "A90"
+      # reading parameters from database
+      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      comando = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
+                        "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
             
+      dd <- dbGetQuery(datasource,comando)
             
-            sql = paste("SELECT ",vars, " FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo
-                        where geocodigo = '", city, "'", sep=" ")
-            dd <- dbGetQuery(datasource,sql)
-            
-      }
+      assert_that(all(cities %in% dd$municipio_geocodigo),msg = ("check if cities and cid10 are in the parameter table"))      
       
-      if (!missing(region)){ # if one or more regionais
-            regionais = region
-            sql1 = paste("'", regionais[1], sep = "")
-            ns = length(regionais)
-            if (ns > 1) for (i in 2:ns) sql1 = paste(sql1, regionais[i], sep = "','")
-            sql1 <- paste(sql1, "'", sep = "")
-            
-            sql = paste("SELECT ", vars, " FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo
-                        where nome_regional IN (",sql1,")",sep="")
-            dd <- dbGetQuery(con,sql)
-            if (dim(dd)[1]==0) stop(paste("A regional",region, "nao foi achada. 
-                                          Verifique se escreveu certo (por extenso)"))
-            
-            if(length(unique(dd$uf)) > 1){
-                  if (missing(state)) stop(cat("Existe mais de uma regional com esse nome. 
-                                          Especifique o estado (por extenso):", unique(dd$uf)))
-                  dd <- subset(dd, uf == state)
-            }
-      }
-      
-      if((missing(city) & missing(region) & !missing(state))){ # state level
-            sql = paste("SELECT ",vars, " FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo
-                        where uf = '", state, "'", sep="")
-            dd <- dbGetQuery(datasource,sql)
-      }
-      
-      if((missing(city) & missing(region) & missing(state))){
-            sql = paste("SELECT ",vars, " FROM \"Dengue_global\".\"Municipio\" 
-                        INNER JOIN \"Dengue_global\".regional_saude
-                        ON municipio_geocodigo = geocodigo", sep="")
-            dd <- dbGetQuery(datasource,sql)
-      }
-      dd
+      return(dd)
 }
       
+# getWUstation ------------------------------------------
+#'@description  Get the meteorological stations associated with one or more cities
+#'@title get meteorological stations
+#'@export
+#'@param cities vector with geocodes
+#'@param datasource connection to the project database
+#'@return data.frame
+#'@examples
+#'getWUstation(cities = 3304557)
+#'cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
+#'getWUstation(cities = cidades$municipio_geocodigo)
 
+getWUstation <- function(cities, datasource = con){
+      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+                       \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
+                       ")" , sep="")
+      city_table <- dbGetQuery(datasource,comando)
+      return(city_table)
+}
 
-# insertCityinAlerta ------------------------------------
+# insert_city_infodengue ------------------------------------
 #'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 
 #'the delay model and write.parameters
-#'@title Initial setup of a new city in the alerta system.
+#'@title Initial setup of a new city in the alerta system. Insert into tables Regionais. 
+#'@export
 #'@param city geocode of the city. Mandatory 
 #'@param id_regional numerical id of the 'Regional da saude'
 #'@param regional name of the 'Regional da saude'
-#'@param estacao_wu_sec main weather station
 #'@return to be defined
 #'@examples
-#'insertCityinAlerta(city=3200300, id_regional=0, regional = "ES-MN-AlfredoChaves")
+#'insert_city_infodengue(geocodigo = 3506003, id_regional=6, regional = "Bauru", )
 
-insertCityinAlerta<-function(city,id_regional,regional,senha){
+insert_city_infodengue<-function(geocodigo ,id_regional, regional, datasource=con){
       
-      out = senha #readline("Digite a senha do banco de dados:")
-      
-      conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin",
-                        password=out, dbname="dengue")
       
       # check if city is really new
-      if(nchar(city) == 6) city <- sevendigitgeocode(city)   
+      if(nchar(geocodigo) == 6) geocodigo <- sevendigitgeocode(geocodigo)   
       consult_sql = paste("SELECT * from \"Dengue_global\".regional_saude SET  
-                               WHERE municipio_geocodigo = ",city,sep="")      
-      cityline = try(dbGetQuery(conn, consult_sql))
+                               WHERE municipio_geocodigo = ",geocodigo,sep="")      
+      cityline = try(dbGetQuery(datasource, consult_sql))
       
       if (nrow(cityline)!=0) {
             message("city already implemented. Nothing done.")
+            if(any(is.na(cityline))) message("Use write.parameters() to set the alert parameters.")
+            return(cityline)
       }
       else{
-            el1 = as.character(city)
+            el1 = as.character(geocodigo)
             el2 = as.character(id_regional)
             el3 = paste("'",regional,"'",sep="")
             linha = paste(el1,el2,el3,sep=",")
-            sqlinsert = paste("insert into \"Dengue_global\".\"regional_saude\" (municipio_geocodigo, id_regional, 
+            sqlinsert1 = paste("insert into \"Dengue_global\".\"regional_saude\" (municipio_geocodigo, id_regional, 
                       nome_regional) values(", linha ,")")
-            try(dbGetQuery(conn, sqlinsert))   
-            cityline = try(dbGetQuery(conn, consult_sql))
-      }
-      dbDisconnect(conn)
+            
+            try(dbGetQuery(datasource, sqlinsert1))
+            }
+      
+       
       cityline
 }
       
       
      
-      
-
-
-#'lastDBdate(tab="tweet", city=330240)
-#'lastDBdate(tab="sinan", city=330240)
-#'lastDBdate(tab="clima_wu", station="SBAF")  
-

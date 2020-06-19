@@ -5,15 +5,16 @@
 
 
 # adjustIncidence ---------------------------------------------------------------------
-#'@description Often, there is a delay between symptom onset and notification. This function 
-#'adjust the time series of reported cases by adding the cases that will be reported in the future.
-#'It requires knowing the probability of notification per week passed. This function assumes a stationary
-#'notification process, there is, no influence of covariates or any temporal inhomogeneity.   
-#'@title Adjust incidence data correcting for the notification delay.
+#'@description This function estimate the time series of reported cases by adding the cases that will be reported in the future.
+#'Two methods were implemented, the "fixedprob" requires knowing the probability of notification per week passed. This function assumes a stationary
+#'notification process, there is, no influence of covariates or any temporal inhomogeneity.  The "bayesian"
+#'is dynamic. 
+#'@title Correct incidence data with notification delay (nowcasting).
 #'@param obj data.frame with crude weekly cases (not adjusted). This data.frame comes from the getCases
 #' function (if withdivision = FALSE), of getCases followed by casesinlocality (if dataframe is available
 #' per bairro)  
-#'@param method "fixedprob" for fixed delay prob per week; "bayesian" for the dynamic model 
+#'@param method "fixedprob" for fixed delay prob per week; "bayesian" for the 
+#'dynamic model . If "none" just repeats case values
 #'@param pdig for the "fixedprob" method. It is a vector of probability of been typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
 #'The length of the vector corresponds to the maximum delay. After day, it is assumed that p = 1. The default
 #'was obtained from Rio de Janeiro. 
@@ -24,16 +25,16 @@
 #'predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'res = getCases(city = 2305001, datasource=con) 
-#'head(res)
-#'resfit<-adjustIncidence(obj=res)
+#'d <- getCases(cities = 3302205) 
+#'head(d)
+#'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
 #' # bayesian
-#'resfit<-adjustIncidence(obj=res,method="bayesian",datasource=con)
+#'resfit<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
 #'tail(resfit)
 
-adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), Dmax=12, nyears = 3, 
-                          datasource, lastSE=NA){
+adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
+                          Dmax=12, nyears = 3, datasource = con, lastSE=NA){
       
   # checking if only one city in obj
   ncities <- length(unique(obj$cidade)) 
@@ -41,14 +42,17 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   le = length(obj$casos) 
   lse = length(obj$SE) 
   
-  obj$pdig <- NA
-  obj$tcasesICmin <- NA
-  obj$tcasesmed <- NA
-  obj$tcasesICmax <- NA
+  # checking if only one locality
+  
+  
+  obj$tcasesICmin <- obj$casos
+  obj$tcasesmed <- obj$casos
+  obj$tcasesICmax <- obj$casos
   
   
   if (method == "fixedprob"){
         # creating the proportion vector
+        obj$pdig <- NA
         lp <- length(pdig)
         
         if(le > lp) {obj$pdig <- c(rep(1, times = (le - lp)), rev(pdig))
@@ -59,13 +63,14 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
         corr <- function(lamb,n=500) sort(rpois(n,lambda=lamb))[c(02,50,97)] # calcula 95% IC e mediana estimada da parte estocastica 
         
         for(i in 1:length(obj$casos)) obj[i,c("tcasesICmin","tcasesmed","tcasesICmax")] <- corr(lamb = lambda[i]) + obj$casos[i]
-  }
+        obj %>% mutate(pdig=NULL)
+         }
   
  if (method == "bayesian"){
        thisyear <- floor(obj$SE[lse]/100)
        # Leo's functions
-       dados <- getdelaydata(cities=unique(obj$cidade), years = (thisyear-nyears):thisyear, cid10 = obj$CID10[1], 
-                             datasource=con)
+       dados <- getdelaydata(cities=unique(obj$cidade), years = (thisyear-nyears):thisyear, 
+                             cid10 = obj$CID10[1], datasource=con)
        
        res <- delaycalc(dados, lastSE=lastSE)
        outp <- fitDelay.inla(res, Dmax = Dmax)
@@ -79,6 +84,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        obj$tcasesICmax[(le-nweeks+1):le]<-delay[4,]
  }   
  
+  if(method=="none") message("nowcasting not done, returning the original counts")
+  
   obj
 }
 
@@ -343,54 +350,40 @@ dd
 #'@title Get delay data for one or more cities for delay analysis
 #'@param cities vector with geocodes
 #'@param cid10 disease code, Default is dengue. "A92.0" for chik, "A92.8" for zika
-#'@param lastday last day of reporting (digitacao)
+#'@param lastday last digitation day
 #'@param years vector with set of years for analysis. Default (NULL) is to get all years of data available.
 #'@param datasource valid connection to database
 #'@return list with d = data.frame with data.
 #'@examples
-#'dados <- getdelaydata(cities=3304557, years=c(2016, 2017), cid10="A92", lastday = "2017-06-05" ,datasource=con)  # Not run without connection
+#'dados <- getdelaydata(cities=3302403, years=c(2017, 2018), cid10="A90", datasource=con)  # Not run without connection
 
-getdelaydata <- function(cities, years = NULL, cid10 = "A90",  lastday = Sys.Date(), datasource){
+getdelaydata <- function(cities, years = NULL, cid10 = "A90", lastday = Sys.Date(), 
+                         datasource = con){
       
       ncities = length(cities)
-      nyears = length(years)
+      cities <- sapply(cities, function(x) sevendigitgeocode(x))
       
-      
-      if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
       
       #dealing with synonimous cid
       if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
       if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"} # chik
       if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- c("A92.8")} #zika
       
-      if (class(datasource) == "PostgreSQLConnection"){
-            
-            sql1 = paste("'", cities[1], sep = "")
-            if (ncities > 1) for (i in 2:ncities) sql1 = paste(sql1, cities[i], sep = "','")
-            sql1 <- paste(sql1, "'", sep = "")
-            
-            lcid <- length(cid)
-            cid10command <- paste("'", cid[1], sep="")
-            if (lcid > 1) for (i in 2:lcid) cid10command = paste(cid10command, cid[i], sep = "','")
-            cid10command <- paste(cid10command, "'", sep = "")
-            
-            if (nyears == 0){# means that all years will be included in the analysis
-                  sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
-                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo IN(", cid10command,") 
+      # reading notification data form the database ----------------------------
+      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
+      
+      comando <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
+                       "' AND municipio_geocodigo IN (", sqlcity, 
+                       ") AND cid10_codigo IN(", sqlcid,")", sep="")
                                      AND dt_digita <='", lastday,"'")
-            } else { # filter some years
-                  sql2 = paste("'", years[1], sep = "")
-                  if(nyears > 1) for (i in 2:nyears) sql2 = paste(sql2, years[i], sep = "','")
-                  sql2 <- paste(sql2, "'", sep = "")
-                  
-                  sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, se_notif, dt_digita from \"Municipio\".\"Notificacao\" WHERE
-                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo IN(", cid10command, ") AND ano_notif IN (",sql2,") AND 
-                                     dt_digita <= '", lastday,"'")      
-            }
-            
-            dd <- dbGetQuery(datasource,sqlselect)
-            
-      } else {stop("getdelaydata: requires a valid PostgreSQLConnection")}
+      
+      if (!missing(years)) {  # selecting some years
+            sqlyears = paste("'", str_c(years, collapse = "','"),"'", sep="")
+            comando <- paste(comando, "AND ano_notif IN (",sqlyears,")")
+      }
+      dd <- dbGetQuery(datasource,comando)
+      
       
       if(nrow(dd) == 0){
             message(paste("getdelaydata: found no data for the request:", sqlselect ))
@@ -398,7 +391,7 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90",  lastday = Sys.Dat
       } else {
             dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
             dd$cid10 <- cid10
-            #dd[,-dd$se_notif]
+           
             
             # Removing records with missing dt_digita
             nb <- nrow(dd)
@@ -408,8 +401,11 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90",  lastday = Sys.Dat
                           " out of ",nb, "notifications" ))
             
             # Create SE_digit
-            dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
-            dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
+            #dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
+            #dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
+            dd$SE_digit <- daySEday(dd$dt_digita)$SE
+            dd$ano_digit <- floor(dd$SE_digit/100)
+            dd$se_digit <- dd$SE_digit - dd$ano*100
             dd
       }
 }
@@ -432,7 +428,7 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90",  lastday = Sys.Dat
 #'@return list with d = data.frame with the epidemiological weeks; delay.tbl and delay.week 
 #'are internal objects used for plotting. Author Leo Bastos
 #'@examples
-#'dados <- getdelaydata(cities=2305001, datasource=con)
+#'dados <- getdelaydata(cities=3304557, datasource=con)
 #'res = delaycalc(dados)  
 #'head(res$d)  # data
 #'head(res$delay.tbl)  # running matrix
@@ -529,6 +525,7 @@ fitDelay.inla <- function(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar 
       
       if(!all(c("d","delay.tbl","delay.week") %in% names(obj))) stop("fitDeday.inla: argument obj seems wrong")
       require(INLA)
+      INLA:::inla.dynload.workaround()
       message("fitting..")
       # creating a continuous sequence of weeks within the study period (#aqui da para otimizar)
       delay.week <- paste0("d",0:Dmax)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_tools.R
 \name{nafill}
 \alias{nafill}
-\title{methods to substitute NAs.Use the function na.approx from package zoo.}
+\title{methods to substitute NAs. Use the function na.approx from package zoo.}
 \usage{
 nafill(v, rule, maxgap = 4, verbose = F)
 }
@@ -10,14 +10,14 @@ nafill(v, rule, maxgap = 4, verbose = F)
 \item{v}{vector with missing elements.}
 
 \item{rule}{rule for filling the missing cells. "zero" just fills them with 0; "linear"
-interpolate using tzoo::na.approx. In this case, the tails are not filled. If "arima", then it interpolates using
+interpolate using zoo::na.approx. In this case, the tails are not filled. If "arima", then it interpolates using
 linear and extrapolates using arima (calling AlertTools::temp.predict)}
 
-\item{maxgap}{maximum number of consecutive NAs to fill. Longer gaps will be left i=unchanged. Only works for rule = "zero"
+\item{maxgap}{maximum number of consecutive NAs to fill. Longer gaps will be left unchanged. Only works for rule = "zero"
 or "linear"}
 }
 \value{
-vector with replaced NA.
+vector
 }
 \description{
 collection of imputation procedures
@@ -28,6 +28,8 @@ v <- c(1,2,3,NA,5,6,NA,NA,9,10,NA,NA)
 nafill(v, rule = "zero")
 nafill(v, rule = "linear")
 # Inter using linear and Extrapolation using arima
-head(cliSBCB)
-nafill(cliSBCB[,3], rule= "arima")
+cliSBCB <- getWU(station = "SBCB")
+summary(cliSBCB)
+cliSBCB <- getWU(station = "SBCB") \%>\%
+          mutate(nafill("temp_min", rule = "arima")) 
 }

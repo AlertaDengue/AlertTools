@@ -4,16 +4,28 @@
 \alias{getCases}
 \title{Get Case Data and aggregate per week and area}
 \usage{
-getCases(city, lastday = Sys.Date(), cid10 = "A90", datasource)
+getCases(
+  cities,
+  lastday = Sys.Date(),
+  cid10 = "A90",
+  dataini = "notific",
+  completetail = NA,
+  datasource = con
+)
 }
 \arguments{
-\item{city}{city's geocode.}
+\item{cities}{cities' geocode.}
+
+\item{lastday}{last day. Default is the last available. Format: "yyyy-mm-dd"}
 
 \item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8",}
 
-\item{datasource}{PostgreSQLConnection to project database .}
+\item{dataini}{"notific" if data aggregated by notification date or "sinpri" if data aggregated
+if aggregated by date of first symptoms}
 
-\item{finalday}{last day. Default is the last available.}
+\item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
+
+\item{datasource}{PostgreSQLConnection to project database.}
 }
 \value{
 data.frame with the data aggregated per week according to disease onset date.
@@ -22,8 +34,10 @@ data.frame with the data aggregated per week according to disease onset date.
 Create weekly time series from case data from server. The source is the SINAN.
 }
 \examples{
-dC0 = getCases(city = 330455, lastday ="2018-03-10", datasource = con) # dengue
-dC0 = getCases(city = 3302205, datasource = con) # dengue, until last day available
-dC0 = getCases(city = 2304400, cid10= "A923", datasource = con) # zika 
-head(dC0)
+d <- getCases(cities = 3300936) # dengue
+d <- getCases(cities = 3300936, completetail = 0) # dengue
+d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
+cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+d <- getCases(cities = cid$municipio_geocodigo, datasource = con, dataini = "sinpri") 
+tail(d)
 }

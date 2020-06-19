@@ -64,7 +64,7 @@ Rtoriginal<-function(obj, count = "casos", meangt, CI = "beta", alpha = .95, a0 
 #'ratio between two Poissons (see Luis Max documentation). 
 #'@title Computes the effective reproductive number using alternative 
 #'distributions for the generation interval.
-#'@param object with the format of getcases. A data.frame with variables "casos" and "SE".
+#'@param object a data.frame with variables "casos" and "SE", ideally from getCases().
 #'@param meangt if gtdist = "delta" it is the exact period between primary and 
 #'secondary infections). If gtdist = "normal", it is the mean generation time.
 #'@param sdgt if gtdist = "normal", it is the standard deviation of the generation time 
@@ -73,16 +73,15 @@ Rtoriginal<-function(obj, count = "casos", meangt, CI = "beta", alpha = .95, a0 
 #'  
 #'@return data.frame with estimated Rt and confidence intervals. 
 #'@examples
-#'res = getCases(city = c(330455), withdivision = FALSE, datasource="data/sinan.rda") # Rio de Janeiro
+#'d <- getCases(cities = 3302205, lastday ="2018-03-10") # dengue
 #' # Rt original
-#'rt<-Rtoriginal(obj = res, count = "casos", meangt=3)
+#'rt<-Rtoriginal(obj = d, count = "casos", meangt=3)
 #'plot(rt$Rt, type="l", xlab = "weeks", ylab = "Rt")
-#'lines(rt$lwr,lty=3)
-#'lines(rt$upr,lty=3)
+#'lines(rt$lwr,lty=3); lines(rt$upr,lty=3)
 #'abline(h = 1, col = 2)
 #' # Rt delta and normal
-#'rtdelta<-Rt(obj = res, count = "casos", gtdist="delta", meangt=3)
-#'rtnorm<-Rt(obj = res, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
+#'rtdelta<-Rt(obj = d, count = "casos", gtdist="delta", meangt=3)
+#'rtnorm<-Rt(obj = d, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
 #'lines(rtdelta$Rt, col = 3)
 #'lines(rtdelta$lwr,lty = 3, col = 3)
 #'lines(rtdelta$upr,lty = 3, col = 3)
@@ -143,5 +142,126 @@ betaconf <- function(alpha = .95, x, n, a = 1, b = 1, CP = "FALSE"){
 
 
 # R = theta/(1-theta)
-ll <- function(x) x/(1-x)
+ll <- function(x) {x/(1-x)}
+
+
+################# NEW
+# Function for parameter in Extrinsic Incubation Period
+lambdaEIP<-function(T,v=4.3,beta0=7.9,betat=-0.21,Tbar=0) v/exp(beta0+betat*(T-Tbar))  
+
+# Function for parameter in Intrinsic Incubation Period
+lambdaIIP<-function(v=16,beta0=1.78) v/exp(beta0) 
+
+
+#GenTimeDist -----------------------------------------------------------------------
+#' @title Calculates temperature dependent generation time distribution
+#' @description  Function to produce matrix of generation time distribution that depends on temperature.
+#' For details, see the reference Codeco et al (2018).
+#' @param serTemp : Temperature series
+#' @param GT.max : maximum number of weeks to consider for generation time
+#' @param cid10 "A90" for dengue (default), "A92": chikungunya, "A92.8": zika. 
+#' @param smooth "sinusoidal" (default) or "raw"  
+#' @return matrix with generation time distributions per week, one row per week, one column per SE. 
+#' @references Codeco et al (2018) https://doi.org/10.1016/j.epidem.2018.05.011
+#' @examples 
+#'cli = getWU(stations = 'SBGL', vars=c("temp_med"), datasource=con) %>%
+#'      mutate(temp_med = nafill(temp_med, rule = "arima")) 
+#'gt <- GenTimeDist(cli$temp_med[1:50])
+#'contour(gt, ylab="time", xlab="generation time (week)")
+
+GenTimeDist <- function(serTemp, cid10 = "A90", GT.max = 10, smooth = "sinusoidal", nc = 1){
+      
+      #disease-specific parameters --------------------
+      if (cid10 == "A90"){ # dengue
+            par_a=c(16, 4.3, 1, 1)
+            par_b=c(1/2.69821, 1/0.4623722, 1, 1)
+            } else if (cid10 == "A92") {
+                  message("no generation time parameters for chikungunya, using dengue's")
+                  par_a=c(16, 4.3, 1, 1)
+                  par_b=c(1/2.69821, 1/0.4623722, 1, 1)
+            } else if (cid10 == "A92.8"){
+                  message("no generation time parameters for zika, using dengue's")
+                  par_a=c(16, 4.3, 1, 1)
+                  par_b=c(1/2.69821, 1/0.4623722, 1, 1)
+            }
+      
+      Tmax = length(serTemp)
+      tt = 1:Tmax
+      
+      if(any(is.na(serTemp))) {
+            message("temp must not contain NA. Use nafill()")
+      }
+      # raw temperature data or smoothed data?
+      if(smooth == "sinusoidal"){
+            mod <- lm(serTemp ~ sin(2*pi/52*tt)+cos(2*pi/52*tt))
+            serie <- predict(mod)
+      } else {
+            serie <- serTemp
+      }
+      
+      # function calculates the distribution in a given week x
+      evalGenTimeDist <- function(x, serT=serie, a=par_a, b=par_b) {
+            mxx <- int_sum_gamma_T(1, a, b, Temp=serT[x:(Tmax+GT.max+1)], t=tt[x:(Tmax+GT.max+1)], max=GT.max, unitscale=7)
+            mxx$pdf
+      }
+      # for all weeks...
+      gt <- parallel::mcmapply(evalGenTimeDist, tt, mc.cores=nc)
+      class(gt) <- "generationtime"
+      gt
+}
+
+
+
+#applyGenTimeDist ---------------------------------------------------------------
+#' @title Calculate matrix of generation time distribution for cities in infodengue
+#' @description Calculate the generation time for cities or from meteorological stations 
+#' @param  cities : vector of geocodes 
+#' @param stations : vector of meteorological stations
+#' @param cid10 : "A90" for dengue, "A92" for chikungunya, "A92.8" for zika
+#' @param  ini : initial date (Date or epidemiological week) 
+#' @param end : final date (Date or epidemiological week)
+#' @param datasource : sql connection
+#' @return list of generation time distributions matrices 
+#' @examples 
+#'cid <- getCidades(uf="Rio de Janeiro")$municipio_geocodigo
+#'gt <- applyGenTimeDist(stations = c("SBGL","SBJR"), cid10 = "A90")
+#'system.time(gt <- applyGenTimeDist(cities = cid, cid10 = "A90"))
+
+applyGenTimeDist <- function(cities, stations, cid10 = "A90", datasource = con,...){
+       
+      #pars_table <- read.parameters(cities = cities, cid10 = cid10, datasource = datasource)
+      
+      # Look for the stations associated with the provided cities --------------------
+      
+      if(missing(stations) & !missing(cities)){
+            sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+            comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+                        \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
+                             ")" , sep="")
+            city_table <- dbGetQuery(datasource,comando)
+            estacoes <- unique(c(city_table$estacao_wu_sec, city_table$codigo_estacao_wu))     
+      } else if(!missing(stations) & missing(cities)){
+            estacoes <- stations
+      } else if(!missing(stations) & !missing(cities)){
+            message("the function receives either cities or stations, not both")
+            return(NULL)
+      }
+      
+      # Reading the names of the meterological stations for each city
+       print("usando dados de clima das estacoes:")
+       print(estacoes)
+       
+       # Reading the meteorological data
+       #print('Obtendo os dados de clima...')
+       cliwu <- getWU(stations = estacoes, vars = "temp_med", datasource=datasource)%>%
+                  mutate(temp_med = nafill(temp_med, rule = "arima"))
+       
+       gt <- cliwu %>%
+             split(.$estacao) %>%
+             map(~GenTimeDist(.$temp_med))
+             
+       
+       gt
+ }
+
 
