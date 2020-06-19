@@ -376,8 +376,7 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", lastday = Sys.Date
       comando <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
                        "' AND municipio_geocodigo IN (", sqlcity, 
                        ") AND cid10_codigo IN(", sqlcid,")", sep="")
-                                     AND dt_digita <='", lastday,"'")
-      
+                                     
       if (!missing(years)) {  # selecting some years
             sqlyears = paste("'", str_c(years, collapse = "','"),"'", sep="")
             comando <- paste(comando, "AND ano_notif IN (",sqlyears,")")

@@ -714,8 +714,9 @@ map_Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
       coords[1,1] <- -43.19
       coords[2,2] <- -22.945
       #text(coords,label=mapa@data$COD_AP_SMS,cex=0.6)
-      legend("bottom",fill=cores,c("atividade baixa","condicoes favoraveis transmissao","transmissao sustentada","atividade alta"),bty="n",cex=0.6)
+      legend("bottom",fill=cores,c("atividade baixa","condicoes favoraveis transmissao",
                                    "transmissao sustentada","atividade alta"),bty="n",cex=0.6)
+                                   
       par(cex.main=0.7)
       title(paste0( "Mapa MRJ por APs \n"," Semana ",substr(ultima_se,5,6)," de ",
                     substr(ultima_se,1,4)),line=-1)
@@ -872,7 +873,7 @@ tabela_historico <- function(obj, versao = Sys.Date()){
 #'write_alerta(restab)
 
 write_alerta<-function(d, datasource = con){
-            versao_modelo,id)"
+            
       
       # check input
       assert_that(class(d) == "data.frame", msg = "write_alerta: d is not a data.frame. d should
