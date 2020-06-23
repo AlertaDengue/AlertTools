@@ -89,7 +89,7 @@ mun_list <- getCidades(uf = "Minas Gerais", datasource=con)$municipio_geocodigo
 thresMG <- infodengue_apply_mem(mun_list=mun_list,database=con)
 
 A nice way to visualize the calculated thresholds
-plot(thresCE) 
+plot(thresMG) 
 
 Write to database instead of returning object requires password:
 thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10], write='db')
