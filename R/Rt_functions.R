@@ -70,7 +70,7 @@ Rtoriginal<-function(obj, count = "casos", meangt, CI = "beta", alpha = .95, a0 
 #'@param sdgt if gtdist = "normal", it is the standard deviation of the generation time 
 #'distribution.
 #'@param CI Model used to compute the confidence interval. Possible choice: "beta". 
-#'  
+#'@export  
 #'@return data.frame with estimated Rt and confidence intervals. 
 #'@examples
 #'d <- getCases(cities = 3302205, lastday ="2018-03-10") # dengue
