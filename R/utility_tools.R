@@ -476,19 +476,24 @@ temp.predict <- function(v, plotar = FALSE){
 #'@export
 #'@param uf full name of the state.
 #'@param cities cities' geocodes
-#'@param sortedby the options are: 'a' alphabetically, 'id' regional id number, if available 
+#'@param sortedby the options are: 'a' alphabetically, 'id' regional id number (only valid for regional), 
+#'if available
+#'@param macroreg TRUE if getRegionais should return macroreg instead of reg. Default: False  
 #'@param database name of the database
 #'@return vector with names of the regionais.
 #'@examples
 #'getRegionais(uf="Rio de Janeiro")
+#'getRegionais(uf="Minas Gerais")
+#'getRegionais(uf="Minas Gerais", macroreg = TRUE)
 #'getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro")
+#'getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro", macroreg = TRUE)
 #'getRegionais(uf="Rio de Janeiro", sortedby = 'id')
 
-getRegionais <- function(cities = NULL, uf, sortedby = "a", datasource=con, complete = FALSE){
+getRegionais <- function(cities = NULL, uf, sortedby = "a", macroreg = FALSE, datasource=con, complete = FALSE){
       
       assert_that(!missing(uf), msg = "getRegionais: please specify uf. Ex. uf = \"Ceará\" ")
       
-      sqlquery = paste("SELECT municipio_geocodigo, nome_regional, id_regional, uf 
+      sqlquery = paste("SELECT municipio_geocodigo, nome_regional, id_regional, nome_macroreg, uf 
                   FROM \"Dengue_global\".\"Municipio\" 
                   INNER JOIN \"Dengue_global\".regional_saude
                   ON municipio_geocodigo = geocodigo
@@ -501,18 +506,29 @@ getRegionais <- function(cities = NULL, uf, sortedby = "a", datasource=con, comp
             d <- d %>% filter(municipio_geocodigo %in% cities)
             assert_that(nrow(d) == length(cities), msg = (paste("getRegionais: Database does not have 
                                                                 the health districts for all listed cities in", uf)))
-            return(d$nome_regional)
+            if(macroreg){
+                  return(d$nome_macroreg)
+            } else {
+                  return(d$nome_regional)
+            }
             
       } else{
-            if(sortedby == 'a') out <- sort(unique(d$nome_regional)) 
-            if(sortedby == 'id') {
-                  out <- unique(d[order(d$id_regional),"nome_regional"])
-                  if (any(is.na(d$id_regional))) {
-                        warning("getRegionais: codigo das regionais nao encontrado, trocando argummento para sortedby = 'a'")
-                        out <- sort(unique(d$nome_regional))
-                  }
+            if(macroreg){
+                  out <- sort(unique(d$nome_macroreg))
+                  if(sortedby == 'id') msg("macroreg does not have id. Returning in alphabetic order")
                   
+            } else{
+                  if(sortedby == 'a') out <- sort(unique(d$nome_regional))
+                  if(sortedby == 'id') {
+                        out <- unique(d[order(d$id_regional),"nome_regional"])
+                        if (any(is.na(d$id_regional))) {
+                              warning("getRegionais: codigo das regionais nao encontrado, trocando argummento para sortedby = 'a'")
+                              out <- sort(unique(d$nome_regional))
+                        }
+                        
+                  }
             }
+            
             return(out)
       }
       
@@ -529,12 +545,13 @@ getRegionais <- function(cities = NULL, uf, sortedby = "a", datasource=con, comp
 #'@return vector with names of the cities.
 #'@examples
 #'getCidades(regional = "Metropolitana I", uf="Rio de Janeiro",datasource=con)
+#'getCidades(uf="Minas Gerais",datasource=con)
 
 getCidades <- function(regional, uf, datasource=con){
       
       if(missing(uf)) stop("getCidades requer nome da uf por extenso")
       if(!missing(regional)){
-            sqlquery = paste("SELECT municipio_geocodigo, nome, nome_regional, uf 
+            sqlquery = paste("SELECT municipio_geocodigo, nome, nome_regional, nome_macroreg, uf 
                   FROM \"Dengue_global\".\"Municipio\" 
                   INNER JOIN \"Dengue_global\".regional_saude
                   ON municipio_geocodigo = geocodigo
