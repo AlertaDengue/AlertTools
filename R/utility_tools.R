@@ -559,7 +559,7 @@ getCidades <- function(regional, uf, datasource=con){
       }
       
       if(missing(regional)){
-            sqlquery = paste("SELECT municipio_geocodigo, nome, nome_regional, uf 
+            sqlquery = paste("SELECT municipio_geocodigo, nome, nome_regional, nome_macroreg, uf 
                   FROM \"Dengue_global\".\"Municipio\" 
                   INNER JOIN \"Dengue_global\".regional_saude
                   ON municipio_geocodigo = geocodigo
