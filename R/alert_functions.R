@@ -78,20 +78,22 @@ setCriteria <- function(rule=NULL, values=NULL,
                   assert_that(values[["varcli"]] == "temp_min" | values[["varcli2"]] == "temp_min",
             msg = "setcriteria: Af and AsAw require temp_min")
                   tm <- names(values)[which(values == "temp_min")]
-                  if(tm == "clicrit")  values[["temp_crit"]] <- values$clicrit
-                  if(tm == "clicrit2") values[["temp_crit"]] <- values$clicrit2
+                  if(tm == "varcli")  values <- c(values, "temp_crit" = values[["clicrit"]])
+                  if(tm == "varcli2") values[["temp_crit"]] <- c(values, "temp_crit" = values[["clicrit2"]])
       }
       
       if (rule[1] %in% c("Aw", "AsAw")){
             assert_that(values[["varcli"]] == "umid_max" | values[["varcli2"]] == "umid_max",
                         msg = "setcriteria: Aw and AsAw require umid_max")
             um <- names(values)[which(values == "umid_max")]
-            if(um == "clicrit")  {values[["umid_crit"]] <- values$clicrit}
-            if(um == "clicrit2")  values[["umid_crit"]] <- values$clicrit2}
+            if(um == "varcli")   values <- c(values, "umid_crit" = values[["clicrit"]])
+            if(um == "varcli2")  values <- c(values, "umid_crit" = values[["clicrit2"]])
       
-            if(class(values) == "data.frame") { # handling values from read.parameters
+            if(class(values) == "data.frame") 
+                  { # handling values from read.parameters
             values <- unlist(sapply(names(values),function(x) values[[x]])) 
             }
+      }
             
             criteria <- lapply(criteria, function(x) c(str_replace_all(x[1], values), x[c(2,3)]))
       }
