@@ -630,14 +630,24 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, senha){
             return(parline)
       }
       
-      if(nrow(parline == 0)){
+      if(nrow(parline) == 0){ #
+       message(paste("no previous param found. Inserting new param line for city", params$municipio_geocodigo))
        linha = paste(as.character(params$municipio_geocodigo), ",\'",params$cid10, "\'",sep="")
        sql = paste("insert into \"Dengue_global\".parameters (municipio_geocodigo, cid10) values(", linha ,")")
        dbGetQuery(conn, sql)    
+       
+       # check if was correctly created
+       parline_now = try(dbGetQuery(conn, sql2))
+       
+       assert_that(nrow(parline_now) == 1, 
+                   msg = paste("parameter table has something wrong. number of lines for ", 
+                               params$cid10, "for city", city, "is:", nrow(parline_now) ))
       }
       
       vars <- params %>% select(-c("municipio_geocodigo", "cid10"))
       nvars <- length(vars)
+      
+      # updating parameter values
       
       for (i in 1:nvars) {
             linha = paste(names(vars)[i], " = '", vars[[i]], "'", sep = "")
