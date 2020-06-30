@@ -237,6 +237,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@param nowcasting  "fixedprob" for static model, "bayesian" for the dynamic model.
 #'"none" for not doing nowcast (default) 
 #'@param completetail if sinan data is older than final_day, fill in the tail with NA (default) or 0.  
+#'@param dataini "notif" (default) or "sinpri" 
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param datasource posgreSQL connection to project's database
 #'@return data.frame with the week condition and the number of weeks within the 
@@ -251,9 +252,13 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'restab <- tabela_historico(res)
+#'
+#'res <- pipe_infodengue(cities = 3141009, cid10 = "A90", 
+#'finalday= "2020-01-23",nowcasting="none")
+#'tail(tabela_historico(res))
 
 pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
-                            narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, completetail = NA){
+                            narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, completetail = NA, dataini = "notif"){
       
      
       
@@ -289,7 +294,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       } else { # if city contains data already
             if(all(c("municipio_geocodigo","limiar_preseason",
                      "limiar_posseason","limiar_epidemico",
-                     "varcli","clicrit","cid10","codmodelo") %in% names(cities))) {
+                     "varcli","clicrit","varcli2","clicrit2","cid10","codmodelo") %in% names(cities))) {
                   message("using user's provided parameters")
             
                   pars_table <- cities
@@ -307,18 +312,18 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       
       # Reading the names of the meterological stations for each city
       sqlcity = paste("'", str_c(cidades, collapse = "','"),"'", sep="")
-      comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+      comando <- paste("SELECT id, nome_regional, nome_macroreg, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
                        \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
                        ")" , sep="")
       city_table <- dbGetQuery(datasource,comando)
       
-      estacoes <- unique(c(city_table$estacao_wu_sec, city_table$codigo_estacao_wu))
+      estacoes <- na.omit(unique(c(city_table$estacao_wu_sec, city_table$codigo_estacao_wu)))
       print("usando dados de clima das estacoes:")
       print(estacoes)
       
       # Reading the meteorological data
       #print('Obtendo os dados de clima...')
-      varscli <- unique(pars_table$varcli)
+      varscli <- na.omit(unique(c(pars_table$varcli, pars_table$varcli2)))
       
       cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday)
       
@@ -335,30 +340,32 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       }
       
       
-      
-       # para cada cidade ...
+      # para cada cidade ...
       
       ## FUN  calc.alerta (internal)
       calc.alerta <- function(x){  #x = cities[i]
             # params
             parcli.x <- city_table[city_table$municipio_geocodigo == x, c("codigo_estacao_wu", "estacao_wu_sec")]      
-            varcli.x <- pars_table$varcli[city_table$municipio_geocodigo == x]
+            varcli.x <- na.omit(c(pars_table$varcli[city_table$municipio_geocodigo == x],
+                                pars_table$varcli2[city_table$municipio_geocodigo == x]))
             
-            # escolhe a melhor serie meteorologica para a cidade, 
+            # escolhe a melhor serie meteorologica para a cidade, usando apenas a primeira var 
             cli.x <- bestWU(series = list(cliwu[cliwu$estacao == parcli.x[[1]],],
-                                          cliwu[cliwu$estacao == parcli.x[[2]],]), var = varcli.x)
+                                          cliwu[cliwu$estacao == parcli.x[[2]],]), var = varcli.x[1])
             
             # se nenhuma estacao tiver dados (cli.x = NULL), 
-            propNA <- sum(is.na(cli.x[,varcli.x]))/nrow(cli.x)
+            propNA <- sum(is.na(cli.x[,varcli.x[1]]))/nrow(cli.x[1])
             
-            lastdatewu <- ifelse(propNA < 1, cli.x$SE[max(which(is.na(cli.x[,varcli.x])==FALSE))],
+            lastdatewu <- ifelse(propNA < 1, cli.x$SE[max(which(is.na(cli.x[,varcli.x[1]])==FALSE))],
                                  NA)
             print(paste("Rodando alerta para ", x, "usando estacao", cli.x$estacao[1],
                         "(ultima leitura:", lastdatewu,")"))
             
             # climate data interpolation using arima (if there is any data) 
-            if(!is.null(narule) & !is.na(lastdatewu)) cli.x[,varcli.x] <- nafill(cli.x[,varcli.x], 
-                                                                                 rule = narule) 
+            if(!is.null(narule) & !is.na(lastdatewu)){
+                  cli.x[,varcli.x[1]] <- nafill(cli.x[,varcli.x[1]], rule = narule) 
+                  if(length(varcli.x) == 2) cli.x[,varcli.x[2]] <- nafill(cli.x[,varcli.x[2]], rule = narule) 
+            } 
             
             # casos + nowcasting + Rt + incidencia 
             
