@@ -34,7 +34,7 @@
 #'tail(resfit)
 
 adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
-                          Dmax=12, nyears = 3, datasource = con, lastSE=NA){
+                          Dmax=12, nyears = 1, datasource = con, lastSE=NA){
       
   # checking if only one city in obj
   ncities <- length(unique(obj$cidade)) 

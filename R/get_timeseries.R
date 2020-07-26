@@ -181,7 +181,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'@param datasource PostgreSQLConnection to project database. 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
-#'d <- getCases(cities = 3300936) # dengue
+#'d <- getCases(cities = 4314902) # dengue
 #'d <- getCases(cities = 3300936, completetail = 0) # dengue
 #'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")

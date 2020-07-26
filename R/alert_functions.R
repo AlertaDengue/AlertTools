@@ -371,7 +371,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             
             cas.x <- casos %>% 
                   filter(cidade == x) %>%
-                  adjustIncidence(method = nowcasting) %>%
+                  adjustIncidence(method = nowcasting,  nyears = 1) %>%
                   Rt(count = "tcasesmed",gtdist="normal", meangt=3, sdgt = 1) %>%
                   mutate(inc = tcasesmed/pop*100000)  %>%
                   arrange(SE)
@@ -840,7 +840,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'@description Function to write the alert results into the database. 
 #'@export
 #'@param obj object created by the pipeline.
-#'@param ini_se first week of the table. Default is the first date in obj.To do.
+#'@param ini_se first week of the table. Default is the first date in obj.
 #'@param last_se last week of the table. Default is the last date in obj. To do.
 #'@param versao Default is current's date
 #'@return data.frame with the data to be written. 
@@ -850,7 +850,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'finalday= "2013-01-10")
 #'restab <- tabela_historico(res)
 
-tabela_historico <- function(obj, versao = Sys.Date()){
+tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
       
       # --------- create single data.frame ------------------#
       # if object created by pipe_infodengue():
@@ -861,6 +861,15 @@ tabela_historico <- function(obj, versao = Sys.Date()){
             data <- obj$data
             indices <- obj$indices
       }
+      
+      # ---------- filtering dates -------------------------#
+      if(missing(iniSE)) iniSE <- min(data$SE)
+      if(missing(lastSE)) lastSE <- max(data$SE)
+      
+      data <- data %>%
+            filter(SE >= iniSE & SE <= lastSE)
+      indices <- indices %>%
+            filter(SE >= iniSE & SE <= lastSE)
       
       # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
       gera_id <- function(x) paste(data$cidade[x], data$Localidade_id[x], data$SE[x], 
