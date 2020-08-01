@@ -864,6 +864,11 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
       }
       d <- cbind(data, indices)
       
+      # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
+      gera_id <- function(x) paste(data$cidade[x], data$Localidade_id[x], data$SE[x], 
+                                   as.character(julian(versao)), sep="")
+      id <- sapply(1:nrow(data), gera_id) 
+      
       # ---------- filtering dates -------------------------#
       if(missing(iniSE)) iniSE <- min(d$SE)
       if(missing(lastSE)) lastSE <- max(d$SE)
@@ -881,7 +886,7 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                    data_iniSE = SE2date(SE)$ini,
                    nivel = indices$level,
                    versao_modelo = as.character(versao),
-                   id = 0)
+                   id = id)
       d$Rt[is.na(d$Rt)] <- 0
       
       d
