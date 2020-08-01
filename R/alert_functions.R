@@ -848,7 +848,8 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2013-01-10")
-#'restab <- tabela_historico(res)
+#'restab <- tabela_historico(res) 
+#'tail(restab)
 
 tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
       

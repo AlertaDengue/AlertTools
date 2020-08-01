@@ -25,5 +25,6 @@ Function to write the alert results into the database.
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 finalday= "2013-01-10")
-restab <- tabela_historico(res)
+restab <- tabela_historico(res) 
+tail(restab)
 }
