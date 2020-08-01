@@ -991,7 +991,7 @@ write_alerta<-function(d, datasource = con){
 #'criter <- setCriteria(rule="Af", values = params)
 #'alerio2 <- alertaRio(naps = c(1,2), crit = criter, datasource=con, se = 201201)
 #'res <- write_alertaRio(alerio2, write="no")
-#'tail(res)
+#'tail(res)  
 
 write_alertaRio<-function(obj, write = "no", datasource = con, version = Sys.Date()){
       

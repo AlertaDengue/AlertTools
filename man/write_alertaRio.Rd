@@ -25,5 +25,5 @@ params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseas
 criter <- setCriteria(rule="Af", values = params)
 alerio2 <- alertaRio(naps = c(1,2), crit = criter, datasource=con, se = 201201)
 res <- write_alertaRio(alerio2, write="no")
-tail(res)
+tail(res)  
 }
