@@ -9,7 +9,7 @@ adjustIncidence(
   method = "fixedprob",
   pdig = plnorm((1:20) * 7, 2.5016, 1.1013),
   Dmax = 12,
-  nyears = 3,
+  nyears = 1,
   datasource = con,
   lastSE = NA
 )
@@ -44,8 +44,8 @@ is dynamic.
 }
 \examples{
 # fixedprob
-d <- getCases(cities = 3302205) 
-head(d)
+d <- getCases(cities = 4314902, data = "sinpri") 
+tail(d)
 resfit<-adjustIncidence(obj = d)
 tail(resfit)
 # bayesian

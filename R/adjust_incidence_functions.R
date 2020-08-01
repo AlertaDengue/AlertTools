@@ -25,8 +25,8 @@
 #'predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'d <- getCases(cities = 3302205) 
-#'head(d)
+#'d <- getCases(cities = 4314902, data = "sinpri") 
+#'tail(d)
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
 #' # bayesian

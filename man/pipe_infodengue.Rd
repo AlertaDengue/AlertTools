@@ -15,7 +15,8 @@ pipe_infodengue(
   writedb = FALSE,
   datasource = con,
   userinput = FALSE,
-  completetail = NA
+  completetail = NA,
+  dataini = "notif"
 )
 }
 \arguments{
@@ -39,6 +40,8 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 \item{datasource}{posgreSQL connection to project's database}
 
 \item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
+
+\item{dataini}{"notif" (default) or "sinpri"}
 }
 \value{
 data.frame with the week condition and the number of weeks within the 
@@ -57,4 +60,8 @@ dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)
 res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
 restab <- tabela_historico(res)
+
+res <- pipe_infodengue(cities = 3141009, cid10 = "A90", 
+finalday= "2020-01-23",nowcasting="none")
+tail(tabela_historico(res))
 }

@@ -4,14 +4,14 @@
 \alias{tabela_historico}
 \title{Write the alert object into the database.}
 \usage{
-tabela_historico(obj, versao = Sys.Date())
+tabela_historico(obj, iniSE, lastSE, versao = Sys.Date())
 }
 \arguments{
 \item{obj}{object created by the pipeline.}
 
 \item{versao}{Default is current's date}
 
-\item{ini_se}{first week of the table. Default is the first date in obj.To do.}
+\item{ini_se}{first week of the table. Default is the first date in obj.}
 
 \item{last_se}{last week of the table. Default is the last date in obj. To do.}
 }

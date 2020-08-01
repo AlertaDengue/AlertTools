@@ -856,28 +856,20 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
       # if object created by pipe_infodengue():
       if(class(obj)=="list" & class(obj[[1]])=="alerta"){
             data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
-            indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices      
+            indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices
+
       } else if (class(obj)=="alerta"){ #if object created directly by fouralert()
             data <- obj$data
             indices <- obj$indices
       }
+      d <- cbind(data, indices)
       
       # ---------- filtering dates -------------------------#
-      if(missing(iniSE)) iniSE <- min(data$SE)
-      if(missing(lastSE)) lastSE <- max(data$SE)
+      if(missing(iniSE)) iniSE <- min(d$SE)
+      if(missing(lastSE)) lastSE <- max(d$SE)
       
-      data <- data %>%
-            filter(SE >= iniSE & SE <= lastSE)
-      indices <- indices %>%
-            filter(SE >= iniSE & SE <= lastSE)
-      
-      # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
-      gera_id <- function(x) paste(data$cidade[x], data$Localidade_id[x], data$SE[x], 
-                                   as.character(julian(versao)), sep="")
-      id <- sapply(1:nrow(data), gera_id) 
-      
-      # modifying column names and adding some new cols for writing
-      d<- data %>%
+      d <- d %>%
+            filter(SE >= iniSE & SE <= lastSE) %>% 
             rename(municipio_geocodigo = cidade,
                    municipio_nome = nome,
                    p_inc100k =inc,
@@ -889,7 +881,7 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                    data_iniSE = SE2date(SE)$ini,
                    nivel = indices$level,
                    versao_modelo = as.character(versao),
-                   id = id)
+                   id = 0)
       d$Rt[is.na(d$Rt)] <- 0
       
       d

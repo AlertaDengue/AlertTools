@@ -34,7 +34,7 @@ data.frame with the data aggregated per week according to disease onset date.
 Create weekly time series from case data from server. The source is the SINAN.
 }
 \examples{
-d <- getCases(cities = 3300936) # dengue
+d <- getCases(cities = 4314902) # dengue
 d <- getCases(cities = 3300936, completetail = 0) # dengue
 d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
