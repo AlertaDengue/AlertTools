@@ -442,8 +442,9 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90", iniSE = 201001,
       if(missing(se)) se = data2SE(days = Sys.Date(), format = "%Y-%m-%d")
       
       # getting parameters and criteria
-      pars <- read.parameters(3304557, cid10 = cid10)
-      crit <- setCriteria(rule = "Af", values = pars)
+      crit.x <- read.parameters(3304557, cid10 = cid10)
+      crit.x.vector <- structure(as.character(crit.x), names = as.character(names(crit.x))) # dataframe -> vector
+      crit <- setCriteria(rule = "Af", values = crit.x.vector)
       
       # reading data
       message("lendo dados ...")
