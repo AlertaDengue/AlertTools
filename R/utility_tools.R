@@ -780,13 +780,14 @@ setWUstation <- function(st, UF, senha){
 #'@title Initial setup of a new city in the alerta system. Insert into tables Regionais. 
 #'@export
 #'@param city geocode of the city. Mandatory 
-#'@param id_regional numerical id of the 'Regional da saude'
-#'@param regional name of the 'Regional da saude'
+#'@param id_regional numerical id of the 'Regional da saude'.Mandatory
+#'@param regional name of the 'Regional da saude'.Mandatory
+#'@param macroreg name of the 'MacroRegional da saude'.Mandatory
 #'@return to be defined
 #'@examples
-#'insert_city_infodengue(geocodigo = 3506003, id_regional=6, regional = "Bauru", )
+#'insert_city_infodengue(geocodigo = 1111111, id_regional=1, regional = "teste", macroreg = "teste")
 
-insert_city_infodengue<-function(geocodigo ,id_regional, regional, datasource=con){
+insert_city_infodengue<-function(geocodigo ,id_regional, regional, macroreg, datasource=con){
       
       
       # check if city is really new
@@ -804,9 +805,10 @@ insert_city_infodengue<-function(geocodigo ,id_regional, regional, datasource=co
             el1 = as.character(geocodigo)
             el2 = as.character(id_regional)
             el3 = paste("'",regional,"'",sep="")
-            linha = paste(el1,el2,el3,sep=",")
+            el4 = paste("'",macroreg,"'",sep="")
+            linha = paste(el1,el2,el3,el4,sep=",")
             sqlinsert1 = paste("insert into \"Dengue_global\".\"regional_saude\" (municipio_geocodigo, id_regional, 
-                      nome_regional) values(", linha ,")")
+                      nome_regional, nome_macroreg) values(", linha ,")")
             
             try(dbGetQuery(datasource, sqlinsert1))
             }
