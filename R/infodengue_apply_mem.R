@@ -43,8 +43,8 @@
 #' Generate thresholds for Rio de Janeiro, Curitiba and Vitoria, using the whole history. 
 #' Return object instead of writing to data base:
 #' mun_list <- c(4106902, 3205309)
-#' mun_list <- getCidades(uf = "Minas Gerais", datasource=con)$municipio_geocodigo
-#' thresMG <- infodengue_apply_mem(mun_list=mun_list,database=con)
+#' mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
+#' thresMA <- infodengue_apply_mem(mun_list,database=con)
 #' 
 #' A nice way to visualize the calculated thresholds
 #' plot(thresMG) 
@@ -78,7 +78,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
   } else {
     df.pop <- df.pop[df.pop$municipio_geocodigo %in% mun_list,]
   }
-  mun_list <- split(mun_list, ceiling(seq_along(mun_list)/300))
+  mun_list <- split(mun_list, ceiling(seq_along(mun_list)/20))
   
   # Prepare output data table
   #thresholds.table <-   data.table('municipio_geocodigo'=integer(), 'ano_inicio'=integer(), 'ano_fim'=integer(),
@@ -87,7 +87,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
  
    # Run by chuncks:
   for (mun_chunck in mun_list){
-        
+        print(mun_chunck)
     # Read historical cases table
     df.inc <- read.cases(start_year, end_year, mun_list=mun_chunck)
     effec_start_year <- min(round(df.inc$SE/100))

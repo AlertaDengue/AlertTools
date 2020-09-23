@@ -48,13 +48,13 @@ setCriteria <- function(rule=NULL, values=NULL,
       
             if(rule[1] == "Af"){
                   criteria <- list(
-                  crity = c("temp_min > temp_crit | inc > limiar_preseason", 3, 3), #3,2
+                  crity = c("temp_min > temp_crit & inc > limiar_preseason", 3, 3), #3,2
                   crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
                   critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
             )} 
             if (rule[1] == "Aw"){
                    criteria = list(
-                         crity = c("umid_max > umid_crit | inc > limiar_preseason", 3, 2), #3,2
+                         crity = c("umid_max > umid_crit & inc > limiar_preseason", 3, 2), #3,2
                    crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
                    critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
                    )}
@@ -256,7 +256,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'res <- pipe_infodengue(cities = 3141009, cid10 = "A90", 
 #'finalday= "2020-01-23",nowcasting="none")
 #'tail(tabela_historico(res))
-
+res <- pipe_infodengue(cities = 2111300, cid10 = "A90", nowcasting="none")
 pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, completetail = NA, dataini = "notif"){
       
