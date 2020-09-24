@@ -48,19 +48,19 @@ setCriteria <- function(rule=NULL, values=NULL,
       
             if(rule[1] == "Af"){
                   criteria <- list(
-                  crity = c("temp_min > temp_crit & inc > limiar_preseason", 3, 3), #3,2
-                  crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
+                  crity = c("temp_min > temp_crit & inc > 0", 3, 2), #3,2
+                  crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 2), #3,2
                   critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
             )} 
             if (rule[1] == "Aw"){
                    criteria = list(
-                         crity = c("umid_max > umid_crit & inc > limiar_preseason", 3, 2), #3,2
-                   crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
+                         crity = c("umid_max > umid_crit & inc > 0", 3, 2), #3,2
+                   crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 2), #3,2
                    critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
                    )}
             if(rule[1] == "AsAw"){
                   criteria = list(
-                        crity = c("temp_min > temp_crit & umid_max > umid_crit | inc > limiar_preseason", 3, 2), #3,2
+                        crity = c("temp_min > temp_crit & umid_max > umid_crit & inc > 0", 3, 2), #3,2
                         crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
                         critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
                   )}
