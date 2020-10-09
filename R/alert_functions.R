@@ -252,7 +252,6 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'restab <- tabela_historico(res)
-#'
 #'res <- pipe_infodengue(cities = 3141009, cid10 = "A90", 
 #'finalday= "2020-01-23",nowcasting="none")
 #'tail(tabela_historico(res))
@@ -323,7 +322,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       # Reading the meteorological data
       #print('Obtendo os dados de clima...')
       varscli <- na.omit(unique(c(pars_table$varcli, pars_table$varcli2)))
-      
+      #varscli <- c("umid_max", "temp_min")
       cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday)
       
       # Reading Cases
@@ -836,8 +835,9 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 
 
 #tabela_historico --------------------------------------------------------------------
-#'@title Write the alert object into the database.
-#'@description Function to write the alert results into the database. 
+#'@title Convert the alert object into a data.frame and calculate indicators 
+#'@description Function to organize the alert results for easy reading and inserting 
+#'in the database. Also computes receptivity, transmission and incidence levels.
 #'@export
 #'@param obj object created by the pipeline.
 #'@param ini_se first week of the table. Default is the first date in obj.
@@ -845,7 +845,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'@param versao Default is current's date
 #'@return data.frame with the data to be written. 
 #'@examples
-#'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
+#'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro", datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2013-01-10")
 #'restab <- tabela_historico(res) 
@@ -878,11 +878,11 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
             filter(SE >= iniSE & SE <= lastSE) %>% 
             rename(municipio_geocodigo = cidade,
                    municipio_nome = nome,
-                   p_inc100k =inc,
                    casos_est = tcasesmed,
                    casos_est_min = tcasesICmin,
                    casos_est_max = tcasesICmax) %>%
             mutate(p_rt1 = ifelse(is.na(p1),0,p1),
+                   p_inc100k =casos_est/pop*1e5,
                    Localidade_id  = ifelse(is.na(localidade),0,localidade),
                    data_iniSE = SE2date(SE)$ini,
                    nivel = indices$level,
@@ -890,7 +890,25 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                    id = id)
       d$Rt[is.na(d$Rt)] <- 0
       
-      d
+      pars <- read.parameters(d$municipio_geocodigo, cid10 = d$CID10[1])
+      
+      d <- d %>%   # new stuff
+            rename(
+            receptivo = cytrue,  # weeks with receptive conditions
+            transmissao = cotrue)   # weeks with sustained transm
+      
+      d1 <- d %>%
+            left_join(pars[2:5]) %>%
+            mutate(  # compating estimated incidence with thresholds
+                  nivel_inc = case_when(
+                        p_inc100k < limiar_preseason ~ 0,
+                        p_inc100k >= limiar_preseason & p_inc100k < limiar_epidemico ~ 1,
+                        p_inc100k > limiar_epidemico ~ 2
+                  )
+            )
+      
+
+ 
 }
 
 #write_alerta --------------------------------------------------------------------
@@ -907,10 +925,9 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2016-08-12",nowcasting="none")
 #'restab <- tabela_historico(res) 
-#'write_alerta(restab)
+#'write_alerta(restab[1,])
 
 write_alerta<-function(d, datasource = con){
-            
       
       # check input
       assert_that(class(d) == "data.frame", msg = "write_alerta: d is not a data.frame. d should
@@ -921,7 +938,8 @@ write_alerta<-function(d, datasource = con){
       
       dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
                     "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
-                    "nivel","id","versao_modelo","municipio_nome","Rt", "pop", "tweet")
+                    "nivel","id","versao_modelo","municipio_nome","Rt", "pop", "tweet",
+                    "receptivo","transmissao","nivel_inc")
       dcolumns1 <-c("temp_min", "umid_max")
       
       assert_that(all(dcolumns %in% names(d)), msg = paste("write_alerta: check if d contains
@@ -929,9 +947,10 @@ write_alerta<-function(d, datasource = con){
       assert_that(any(dcolumns1 %in% names(d)), msg = paste("write_alerta: check if d contains
                                                            climate variable in", dcolumns1))
       
-             sepvarnamesR <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
+      sepvarnamesR <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
                              "casos","tweet","tempmin","umidmax","municipio_geocodigo","Rt", "p_rt1","pop",
-                             "p_inc100k","Localidade_id","nivel","versao_modelo","id")
+                             "p_inc100k","Localidade_id","nivel","versao_modelo","id",
+                             "receptivo","transmissao","nivel_inc")
       # nomes das tabelas para salvar os historicos:
       if(cid10=="A90") {tabela <-  "Historico_alerta"; constr.unico = "alertas_unicos"}
       if(cid10=="A92.0") {tabela <-  "Historico_alerta_chik"; constr.unico = "alertas_unicos_chik"}
@@ -952,19 +971,25 @@ write_alerta<-function(d, datasource = con){
       # ------ sql command
       varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
                           "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
-                          "nivel","id","versao_modelo","municipio_nome","\"Rt\"", "pop", "tweet", "tempmin", "umidmax")
+                          "nivel","id","versao_modelo","municipio_nome","\"Rt\"", "pop", "tweet",
+                          "receptivo","transmissao","nivel_inc", "tempmin", "umidmax")
       
       varnames.sql <- str_c(varnamesforsql, collapse = ",")
       updates = str_c(paste(varnamesforsql,"=excluded.",varnamesforsql,sep=""),collapse=",") # excluidos, se duplicado
       
-      
       escreve_linha <- function(li){
             vetor <- dados[li,]
             vetor$municipio_nome = gsub(vetor$municipio_nome, pattern = "'", replacement = "''")
-            linha = paste0(vetor$SE,",'",as.character(vetor$data_iniSE),"',", str_c(vetor[1,c("casos_est","casos_est_min","casos_est_max",
-                  "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","), ",'", 
-                  as.character(vetor$versao_modelo),"','",as.character(vetor$municipio_nome),"',", 
-                          str_c(vetor[1,c("Rt","pop","tweet")], collapse = ","))
+            linha = paste0(vetor$SE,",'",
+                           as.character(vetor$data_iniSE), "',", 
+                           str_c(vetor[1,c("casos_est","casos_est_min","casos_est_max",
+                  "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","),",'",
+                  as.character(vetor$versao_modelo),"','",
+                  as.character(vetor$municipio_nome),"',",
+                  str_c(vetor[1,c("Rt","pop","tweet")], collapse = ","), ",",
+                  str_c(vetor[1,c("receptivo","transmissao","nivel_inc")], collapse = ",")
+                  )
+            
             if("temp_min" %in% names(vetor)) linha = paste0(linha,",", vetor$temp_min, ",","NA")
             if("umid_max" %in% names(vetor)) linha = paste0(linha,",", "NA", ",", vetor$umid_max)
             linha = gsub("NA","NULL",linha)
