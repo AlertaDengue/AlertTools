@@ -85,8 +85,8 @@ as incidence. The alert model uses incidence.
 Generate thresholds for Rio de Janeiro, Curitiba and Vitoria, using the whole history. 
 Return object instead of writing to data base:
 mun_list <- c(4106902, 3205309)
-mun_list <- getCidades(uf = "Minas Gerais", datasource=con)$municipio_geocodigo
-thresMG <- infodengue_apply_mem(mun_list=mun_list,database=con)
+mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
+thresMA <- infodengue_apply_mem(mun_list,database=con)
 
 A nice way to visualize the calculated thresholds
 plot(thresMG) 

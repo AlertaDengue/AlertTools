@@ -2,7 +2,7 @@
 % Please edit documentation in R/alert_functions.R
 \name{tabela_historico}
 \alias{tabela_historico}
-\title{Write the alert object into the database.}
+\title{Convert the alert object into a data.frame and calculate indicators}
 \usage{
 tabela_historico(obj, iniSE, lastSE, versao = Sys.Date())
 }
@@ -19,12 +19,19 @@ tabela_historico(obj, iniSE, lastSE, versao = Sys.Date())
 data.frame with the data to be written.
 }
 \description{
-Function to write the alert results into the database.
+Function to organize the alert results for easy reading and inserting 
+in the database. Also computes receptivity, transmission and incidence levels.
 }
 \examples{
-cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
+# Several cities at once:
+cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro", datasource = con)
 res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 finalday= "2013-01-10")
+restab <- tabela_historico(res) 
+tail(restab)
+# Once city:
+res <- pipe_infodengue(cities = 3304557, cid10 = "A90", 
+finalday= "2015-01-10")
 restab <- tabela_historico(res) 
 tail(restab)
 }

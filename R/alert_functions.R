@@ -233,6 +233,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@param narule how to treat missing climate data. Do nothing (default), "zero" fills 
 #'with zeros, "linear" for linear interpolation, "arima" for inter and extrapolation.
 #'@param finalday if provided, uses only disease data reported up to that day
+#'@param iniSE first date of the disease data. Default = 201501. Minimum = 201001. 
 #'@param datarelatorio epidemiological week
 #'@param nowcasting  "fixedprob" for static model, "bayesian" for the dynamic model.
 #'"none" for not doing nowcast (default) 
@@ -255,7 +256,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'res <- pipe_infodengue(cities = 3141009, cid10 = "A90", 
 #'finalday= "2020-01-23",nowcasting="none")
 #'tail(tabela_historico(res))
-pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
+pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201501, nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, completetail = NA, dataini = "notif"){
       
      
@@ -845,9 +846,15 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'@param versao Default is current's date
 #'@return data.frame with the data to be written. 
 #'@examples
+#'# Several cities at once:
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro", datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2013-01-10")
+#'restab <- tabela_historico(res) 
+#'tail(restab)
+#'# Once city:
+#'res <- pipe_infodengue(cities = 3304557, cid10 = "A90", 
+#'finalday= "2015-01-10")
 #'restab <- tabela_historico(res) 
 #'tail(restab)
 
@@ -880,14 +887,13 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                    municipio_nome = nome,
                    casos_est = tcasesmed,
                    casos_est_min = tcasesICmin,
-                   casos_est_max = tcasesICmax) %>%
+                   casos_est_max = tcasesICmax,
+                   nivel = level) %>%
             mutate(p_rt1 = ifelse(is.na(p1),0,p1),
                    p_inc100k =casos_est/pop*1e5,
                    Localidade_id  = ifelse(is.na(localidade),0,localidade),
                    data_iniSE = SE2date(SE)$ini,
-                   nivel = indices$level,
-                   versao_modelo = as.character(versao),
-                   id = id)
+                   versao_modelo = as.character(versao))
       d$Rt[is.na(d$Rt)] <- 0
       
       pars <- read.parameters(d$municipio_geocodigo, cid10 = d$CID10[1])

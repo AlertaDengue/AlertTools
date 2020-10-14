@@ -9,7 +9,7 @@ pipe_infodengue(
   cid10 = "A90",
   datarelatorio,
   finalday = Sys.Date(),
-  iniSE = 201001,
+  iniSE = 201501,
   nowcasting = "none",
   narule = NULL,
   writedb = FALSE,
@@ -28,6 +28,8 @@ and all parameters, these will replace the database's parameters.}
 \item{datarelatorio}{epidemiological week}
 
 \item{finalday}{if provided, uses only disease data reported up to that day}
+
+\item{iniSE}{first date of the disease data. Default = 201501. Minimum = 201001.}
 
 \item{nowcasting}{"fixedprob" for static model, "bayesian" for the dynamic model.
 "none" for not doing nowcast (default)}
@@ -60,7 +62,6 @@ dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)
 res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
 restab <- tabela_historico(res)
-
 res <- pipe_infodengue(cities = 3141009, cid10 = "A90", 
 finalday= "2020-01-23",nowcasting="none")
 tail(tabela_historico(res))
