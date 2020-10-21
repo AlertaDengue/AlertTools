@@ -253,7 +253,7 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
                    pop=populacao) 
       
       SElastcase <- max(st$SE[st$casos > 0], na.rm = TRUE)
-      st$casos[(is.na(st$casos) & st$SE < SElastcase)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
+      st$casos[(is.na(st$casos) & st$SE <= SElastcase)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
       if(!is.na(completetail)) st$casos[st$SE > SElastcase] <- completetail
       
       if(any(is.na(st$pop)))warning("getCases function failed to import pop data for one or more cities", cities)

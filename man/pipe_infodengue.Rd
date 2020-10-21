@@ -54,9 +54,9 @@ wrap of functions used by Infodengue.
 }
 \examples{
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
-finalday= "2020-01-23",nowcasting="none")
-head(tabela_historico(res))
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1:2], cid10 = "A90",
+nowcasting="none", completetail = 0)
+tail(tabela_historico(res))
 # User's parameters
 dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)
 res <- pipe_infodengue(cities = dd, cid10 = "A90", 
