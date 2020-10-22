@@ -48,21 +48,21 @@ setCriteria <- function(rule=NULL, values=NULL,
       
             if(rule[1] == "Af"){
                   criteria <- list(
-                  crity = c("temp_min > temp_crit & inc > 0", 3, 2), #3,2
-                  crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 2), #3,2
-                  critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
+                  crity = c("temp_min > temp_crit & inc > 0", 3, 0), #3,2
+                  crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
+                  critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
             )} 
             if (rule[1] == "Aw"){
                    criteria = list(
-                         crity = c("umid_max > umid_crit & inc > 0", 3, 2), #3,2
-                   crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 2), #3,2
-                   critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
+                         crity = c("umid_max > umid_crit & inc > 0", 3, 0), #3,2
+                   crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
+                   critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
                    )}
             if(rule[1] == "AsAw"){
                   criteria = list(
-                        crity = c("temp_min > temp_crit & umid_max > umid_crit & inc > 0", 3, 2), #3,2
-                        crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 2), #3,2
-                        critr = c("inc > limiar_epidemico & casos > 5", 2, 2) #2,2
+                        crity = c("temp_min > temp_crit & umid_max > umid_crit & inc > 0", 3, 0), #3,2
+                        crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 0), #3,2
+                        critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
                   )}
        # user defined rules      
       } else {  
@@ -150,8 +150,8 @@ fouralert <- function(obj, crit, miss="last",dy=4){
       delay_turnoff <- lapply(crit, function(x) as.numeric(x[[3]]))
       
       # checking delays 
-      assert_that(all(sapply(c(delay_turnon, delay_turnoff), is.count)),
-                  msg = "fouralert: delays are mispecified")
+      #assert_that(all(sapply(c(delay_turnon, delay_turnoff), is.count)),
+      #            msg = "fouralert: delays are mispecified")
 
      # fun to accumulate conditions 
       accumcond <- function(vec,lag){
@@ -253,10 +253,9 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'restab <- tabela_historico(res)
-#'res <- pipe_infodengue(cities = 3141009, cid10 = "A90", 
-#'finalday= "2020-01-23",nowcasting="none")
+#'res <- pipe_infodengue(cities = 3143302, cid10 = "A90",completetail = 0, nowcasting="none")
 #'tail(tabela_historico(res))
-pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201501, nowcasting="none", 
+pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, completetail = NA, dataini = "notif"){
       
      
