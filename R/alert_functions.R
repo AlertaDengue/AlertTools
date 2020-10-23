@@ -847,11 +847,11 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'@examples
 #'# Several cities at once:
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro", datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
-#'finalday= "2013-01-10")
-#'restab <- tabela_historico(res) 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1:3], cid10 = "A90", 
+#'finalday= "2018-01-10")
+#'restab <- tabela_historico(res, iniSE = 201701) 
 #'tail(restab)
-#'# Once city:
+#'# One city:
 #'res <- pipe_infodengue(cities = 3304557, cid10 = "A90", 
 #'finalday= "2015-01-10")
 #'restab <- tabela_historico(res) 
@@ -874,11 +874,11 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
       # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
       gera_id <- function(x) paste(data$cidade[x], data$Localidade_id[x], data$SE[x], 
                                    as.character(julian(versao)), sep="")
-      id <- sapply(1:nrow(data), gera_id) 
+      d$id <- sapply(1:nrow(data), gera_id) 
       
       # ---------- filtering dates -------------------------#
-      if(missing(iniSE)) iniSE <- min(d$SE)
-      if(missing(lastSE)) lastSE <- max(d$SE)
+      if(missing(iniSE)) iniSE <- 0
+      if(missing(lastSE)) lastSE <- 300000
       
       d <- d %>%
             filter(SE >= iniSE & SE <= lastSE) %>% 
@@ -913,7 +913,7 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
             )
       
 
- 
+ d1
 }
 
 #write_alerta --------------------------------------------------------------------
@@ -930,7 +930,7 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2016-08-12",nowcasting="none")
 #'restab <- tabela_historico(res) 
-#'write_alerta(restab[1,])
+#'write_alerta(restab)
 
 write_alerta<-function(d, datasource = con){
       
@@ -947,8 +947,8 @@ write_alerta<-function(d, datasource = con){
                     "receptivo","transmissao","nivel_inc")
       dcolumns1 <-c("temp_min", "umid_max")
       
-      assert_that(all(dcolumns %in% names(d)), msg = paste("write_alerta: check if d contains
-                                                           columns", dcolumns))
+      assert_that(all(dcolumns %in% names(d)), msg = "write_alerta: check if d contains required
+                                                           columns")
       assert_that(any(dcolumns1 %in% names(d)), msg = paste("write_alerta: check if d contains
                                                            climate variable in", dcolumns1))
       
