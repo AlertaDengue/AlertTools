@@ -24,5 +24,5 @@ cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 finalday= "2016-08-12",nowcasting="none")
 restab <- tabela_historico(res) 
-write_alerta(restab[1,])
+write_alerta(restab[1:2,])
 }

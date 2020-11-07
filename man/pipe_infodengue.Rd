@@ -9,7 +9,7 @@ pipe_infodengue(
   cid10 = "A90",
   datarelatorio,
   finalday = Sys.Date(),
-  iniSE = 201501,
+  iniSE = 201001,
   nowcasting = "none",
   narule = NULL,
   writedb = FALSE,
@@ -62,7 +62,6 @@ dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)
 res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
 restab <- tabela_historico(res)
-res <- pipe_infodengue(cities = 3141009, cid10 = "A90", 
-finalday= "2020-01-23",nowcasting="none")
+res <- pipe_infodengue(cities = 3143302, cid10 = "A90",completetail = 0, nowcasting="none")
 tail(tabela_historico(res))
 }
