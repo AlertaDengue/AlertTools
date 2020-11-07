@@ -925,11 +925,12 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
 #'@param datasource posgreSQL conn to project's database
 #'@return the same data.frame from the input
 #'@examples
-#'# Parameters for the model
+#'# Parameters for the model 
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
 #'finalday= "2016-08-12",nowcasting="none")
-#'restab <- tabela_historico(res) 
+#'restab <- tabela_historico(res)
+#'# NOT RUN 
 #'write_alerta(restab[1:2,])
 
 write_alerta<-function(d, datasource = con){
@@ -952,10 +953,6 @@ write_alerta<-function(d, datasource = con){
       assert_that(all(dcolumns %in% names(d)), msg = "write_alerta: check if d contains required
                                                            columns")
       
-      #sepvarnamesR <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
-      #                       "casos","tweet","tempmin","umidmax","municipio_geocodigo","Rt", "p_rt1","pop",
-      #                       "p_inc100k","Localidade_id","nivel","versao_modelo","id",
-      #                       "receptivo","transmissao","nivel_inc")
       # nomes das tabelas para salvar os historicos:
       if(cid10=="A90") {tabela <-  "Historico_alerta"; constr.unico = "alertas_unicos"}
       if(cid10=="A92.0") {tabela <-  "Historico_alerta_chik"; constr.unico = "alertas_unicos_chik"}
