@@ -951,8 +951,6 @@ write_alerta<-function(d, datasource = con){
 
       assert_that(all(dcolumns %in% names(d)), msg = "write_alerta: check if d contains required
                                                            columns")
-      assert_that(any(dcolumns1 %in% names(d)), msg = paste("write_alerta: check if d contains
-                                                           climate variable in", dcolumns1))
       
       #sepvarnamesR <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
       #                       "casos","tweet","tempmin","umidmax","municipio_geocodigo","Rt", "p_rt1","pop",
