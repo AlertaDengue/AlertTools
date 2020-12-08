@@ -71,9 +71,9 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        resfit<-bayesnowcasting(dados, Dmax)
        message("bayesnowcasting done")
        # adding to the alert data obj
-       obj$tcasesICmin[(le-Dmax+1):le]<-resfit$LI
-       obj$tcasesmed[(le-Dmax+1):le]<-resfit$Mean
-       obj$tcasesICmax[(le-Dmax+1):le]<-resfit$LS
+       obj$tcasesICmin[(le-Dmax):le]<-resfit$LI
+       obj$tcasesmed[(le-Dmax):le]<-resfit$Mean
+       obj$tcasesICmax[(le-Dmax):le]<-resfit$LS
  }   
  
   if(method=="none") message("nowcasting not done, returning the original counts")
