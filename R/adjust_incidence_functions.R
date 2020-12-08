@@ -34,16 +34,14 @@
 #'tail(resfit)
 
 adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
-                          Dmax=12, nyears = 1, datasource = con, lastSE=NA){
-      
+                          Dmax=10, nyears = 2, datasource = con, lastSE=NA){
+  
+  city <- unique(obj$cidade)  
+  cid <- obj$CID10[1]
   # checking if only one city in obj
-  ncities <- length(unique(obj$cidade)) 
-  if (ncities > 1) stop("Function adjustIncidence: only runs for a city at a time")
-  le = length(obj$casos) 
-  lse = length(obj$SE) 
+  assert_that(length(city) == 1, msg = "adjustIncidence only works for one city at a time.")
   
-  # checking if only one locality
-  
+  le = nrow(obj) 
   
   obj$tcasesICmin <- obj$casos
   obj$tcasesmed <- obj$casos
@@ -67,20 +65,15 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
          }
   
  if (method == "bayesian"){
-       dados <- getdelaydata(cities=unique(obj$cidade), years = (thisyear-nyears):thisyear, 
-                             cid10 = obj$CID10[1], datasource=con)
-       
-       res <- delaycalc(dados, lastSE=lastSE)
-       outp <- fitDelay.inla(res, Dmax = Dmax)
-       delay <- prob.inc(outp, plotar = FALSE)
-       
+       message("computing nowcasting...")
+       dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, datasource = datasource)
+       message("bayesnowcasting...")
+       resfit<-bayesnowcasting(dados, Dmax)
+       message("bayesnowcasting done")
        # adding to the alert data obj
-       nweeks <- dim(delay)[2]
-       obj$tcasesICmin <- obj$casos; 
-       obj$tcasesICmax <- obj$casos; obj$tcasesmed <- obj$casos
-       obj$tcasesICmin[(le-nweeks+1):le]<-delay[3,]
-       obj$tcasesmed[(le-nweeks+1):le]<-round(delay[2,])
-       obj$tcasesICmax[(le-nweeks+1):le]<-delay[4,]
+       obj$tcasesICmin[(le-Dmax+1):le]<-resfit$LI
+       obj$tcasesmed[(le-nweeks+1):le]<-resfit$Mean
+       obj$tcasesICmax[(le-nweeks+1):le]<-resfit$LS
  }   
  
   if(method=="none") message("nowcasting not done, returning the original counts")
@@ -238,7 +231,7 @@ pred.dengue.summy
 #'@examples
 #'dados <- getdelaydata(cities=3106200, nyears=2, cid10="A90", datasource=con)  # Not run without connection
 
-getdelaydata <- function(cities, nyears = 2, cid10 = "A90", lastday = Sys.Date(), 
+getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(), 
                          datasource = con){
   
   ncities = length(cities)
