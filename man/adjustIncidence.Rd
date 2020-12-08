@@ -8,8 +8,8 @@ adjustIncidence(
   obj,
   method = "fixedprob",
   pdig = plnorm((1:20) * 7, 2.5016, 1.1013),
-  Dmax = 12,
-  nyears = 1,
+  Dmax = 10,
+  nyears = 2,
   datasource = con,
   lastSE = NA
 )

@@ -10,6 +10,7 @@
 #'notification process, there is, no influence of covariates or any temporal inhomogeneity.  The "bayesian"
 #'is dynamic. 
 #'@title Correct incidence data with notification delay (nowcasting).
+#'@export
 #'@param obj data.frame with crude weekly cases (not adjusted). This data.frame comes from the getCases
 #' function (if withdivision = FALSE), of getCases followed by casesinlocality (if dataframe is available
 #' per bairro)  

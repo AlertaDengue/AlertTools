@@ -3,6 +3,7 @@
 export(DenguedbConnect)
 export(Rt)
 export(SE2date)
+export(adjustIncidence)
 export(alertaRio)
 export(bestWU)
 export(data2SE)
