@@ -67,8 +67,6 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
          }
   
  if (method == "bayesian"){
-       thisyear <- floor(obj$SE[lse]/100)
-       # Leo's functions
        dados <- getdelaydata(cities=unique(obj$cidade), years = (thisyear-nyears):thisyear, 
                              cid10 = obj$CID10[1], datasource=con)
        
@@ -78,7 +76,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        
        # adding to the alert data obj
        nweeks <- dim(delay)[2]
-       obj$tcasesICmin <- obj$casos; obj$tcasesICmax <- obj$casos; obj$tcasesmed <- obj$casos
+       obj$tcasesICmin <- obj$casos; 
+       obj$tcasesICmax <- obj$casos; obj$tcasesmed <- obj$casos
        obj$tcasesICmin[(le-nweeks+1):le]<-delay[3,]
        obj$tcasesmed[(le-nweeks+1):le]<-round(delay[2,])
        obj$tcasesICmax[(le-nweeks+1):le]<-delay[4,]
@@ -90,90 +89,208 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 }
 
 
-
-
-# fitDelayModel ---------------------------------------------------------------------
-#'@description Fit lognormal model to the notification delay and return the parameters. See
-#'details in doi: http://dx.doi.org/10.1101/046193     
-#'@title Fit lognormal model to the notification delay
-#'@param cities geocode of one of more cities. If more than one city, a single model is fitted to the whole dataset.  
-#'@param period range of dates for the analysis. Format: c("2010-01-01","2015-12-31"). 
-#'Default is the whole period available. 
-#'@param datasource sql connection
-#'@param plotar if TRUE, show plot of the fitted model
-#'@return object with a summary of the analysis and suggestion of best model
+# bayesnowcasting ---------------------------------------------------------------------
+#'@description This function estimate the Bayesian nowcast (new version)
+#'@title Correct incidence data with notification delay (nowcasting).
+#'@param obj data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita 
+#'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
+#'@return data.frame with median and 95percent confidence interval for the 
+#'predicted cases-to-be-notified)
 #'@examples
-#'con <- DenguedbConnect()
-#'res1<-fitDelayModel(cities=330240, datasource=con)
-#'res<-fitDelayModel(cities=330240, period=c("2013-01-01","2016-01-01"), datasource=con)
-#'# Parameters are
-#'list(meanlog=res$icoef[1], sdlog=exp(res$icoef[2]))
+#' # bayesian
+#'dd <- getdelaydata(cities=3106200, nyears=2, cid10="A90", datasource=con)
+#'resfit<-bayesnowcasting(dd)
+#'tail(resfit)
 
-#fitDelayModel<-function(cities, period, plotar = TRUE, datasource=con, verbose=TRUE){
-#      
-#      ncities = length(cities)
-#      if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
-#      
-#      if (class(datasource) == "PostgreSQLConnection"){
-#            
-#            sql1 = paste("'", cities[1], sep = "")
-#            if (ncities > 1) for (i in 2:ncities) sql1 = paste(sql1, cities[i], sep = "','")
-#            sql1 <- paste(sql1, "'", sep = "")
-#            
-#            sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, dt_digita from \"Municipio\".\"Notificacao\" WHERE municipio_geocodigo IN(", sql1, ")")
-#            dd <- dbGetQuery(datasource,sqlselect)
-#            
-#      }
-      
-#      if (dim(dd)[1]==0) {
-#            if(verbose==TRUE) message(paste("No notification in this(these) cities"))
-#            return(NULL)
-#            
-#      } else {
-            
-#            # seleciona periodo
-#            if (!missing(period)) dd<-subset(dd, (dd$dt_notific > as.Date(period[1]) & (dd$dt_notific > as.Date(period[2]))))
-            
-            # calcula o tempo de atraso
-#            dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_notific)
-            
-#            nrow.before <- dim(dd)[1] 
-            # check if there is na 
-#            nas <- sum(is.na(dd$diasdigit))
-#            if(nas>0) dd <-dd[-which(is.na(dd$diasdigit)==TRUE),]
-            
-            # check if there are negative times!!
-#            negs <- sum(dd$diasdigit<0)
-#            if(negs>0) dd <-dd[-which(dd$diasdigit<0),]
-            
-            # further remove records with more than 6 mo delay
-#            dd <-dd[-which(dd$diasdigit>180 | dd$diasdigit == 0),] # 
-#            nrow.after <- dim(dd)[1]
-#            loss <- nrow.before - nrow.after
-            
-#            if(verbose==TRUE) message(paste(loss, "cases removed for lack of information or delay > 6 months. Number of cases is ",nrow.after))
-            
-#            if (dim(dd)[1]==0) {
-#                  if(verbose==TRUE)  message(paste("No cases left."))
-#                  return(NULL)
-#            }
-            # Models
-#            dd$status<-TRUE
-#            y <- Surv(time=dd$diasdigit, event=dd$status==TRUE)
-#            km <- survfit(y~1, data = dd)
-#            mlognorm<-survreg(y~1,dist="lognormal",x=TRUE,y=TRUE,model=TRUE)
-            
-#            if(plotar == TRUE){
-#                  par(mar=c(1,1,1,1))
-#                  plot(km,xlim=c(0,60),xlab="", ylab="")
-#                  meanlog=mlognorm$icoef[1]; sdlog=exp(mlognorm$icoef[2])
-#                  lines(0:60,(1-plnorm(0:60,meanlog,sdlog)), lwd=3,col=3)
-                  
-#            }
-            
-#            return(mlognorm)                  
-#      }
-#}
+bayesnowcasting <- function(d, Dmax = 10){
+  
+  # check input
+   #d contains columns
+  
+  d <- d %>% mutate(
+    dt_notific_epiweek = epiweek(dt_notific), 
+    dt_notific_aux =  as.numeric(format(as.Date(dt_notific), "%w")),
+    dt_notific_week = dt_notific + 6 - dt_notific_aux,
+    dt_notific_epiyear = epiyear(dt_notific), 
+    dt_digita_epiweek = epiweek(dt_digita),
+    dt_digita_epiyear = epiyear(dt_digita),
+    delay_epiweek = ifelse( dt_digita_epiyear == dt_notific_epiyear,
+                            as.numeric(dt_digita_epiweek - dt_notific_epiweek),
+                            as.numeric(dt_digita_epiweek - dt_notific_epiweek) + 52
+    )
+  ) 
+  
+  # casos observados por semama
+  obs <- d %>%
+    group_by(dt_notific_week) %>%
+    summarize(casos = n())
+  
+  Inicio <- min(d$dt_notific_week)
+  # Ultimo dia com notificacao ou digitacao
+  #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
+  Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
+  Fim <- Fim + 6 - as.numeric(format(as.Date(Fim), "%w")) # why?
+
+    # contruindo a matriz de atraso - running triang
+  tibble(Date = c(Inicio,Fim) ) %>% 
+    mutate(Weekday = weekdays(Date) )
+
+  tbl.dates <- tibble(dt_notific_week = seq(Inicio, Fim, by = 7)) %>% 
+    rowid_to_column(var = "Time")
+  Today = max(tbl.dates$Time)
+  
+  dados.ag <- d %>% 
+    filter( dt_digita <= Fim) %>% 
+    mutate(
+      delay_epiweek = ifelse(delay_epiweek > Dmax, NA, delay_epiweek)
+    ) %>% 
+    drop_na(delay_epiweek) %>% 
+    group_by(dt_notific_week, delay_epiweek) %>% 
+    dplyr::summarise(
+      Casos = n()
+    ) %>% # View()
+    # Passando para o formato wide
+    spread(key = delay_epiweek, value = Casos) %>%  # View()
+    # Adicianoando todas as data, algumas semanas nao houveram casos
+    full_join( 
+      y = tbl.dates, 
+      by = "dt_notific_week" ) %>% # View() 
+    # Voltando para o formato longo
+    gather(key = "Delay", value = Casos, -dt_notific_week, -Time) %>% # View()
+    mutate(
+      Delay = as.numeric(Delay),
+      # Preparing the run-off triangle
+      Casos = ifelse( 
+        test = (Time + Delay) <= Today, 
+        yes = replace_na(Casos, 0), 
+        no = NA)
+    ) %>% #View()
+    dplyr::rename( Date = dt_notific_week) %>%  #ungroup() %>% 
+    # Sorting by date
+    dplyr::arrange(Date) 
+  
+  
+  dados.ag.full <- d %>% 
+    group_by(dt_notific_week) %>% 
+    dplyr::summarise(
+      Total = n()
+    ) %>% # View()
+    # Adicianoando todas as data, algumas semanas nao houveram casos
+    right_join( 
+      y = tbl.dates, 
+      by = "dt_notific_week" ) %>% # View() 
+    mutate(
+      Total = replace_na(Total, 0)
+    ) %>% # View()
+    dplyr::rename( Date = dt_notific_week) %>%  #ungroup() %>% 
+    # Sorting by date
+    dplyr::arrange(Date) 
+  
+# Model equation
+model.dengue <- Casos ~ 1 + 
+  f(Time, model = "rw2", constr = T
+    #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+    #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+  ) +
+  f(Delay, model = "rw1", constr = T
+    # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+    #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+  )  + 
+  # Efeito tempo-atraso
+  f(TimeDelay, model = "iid", constr = T
+    #   hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+  )
+
+
+output.dengue <- nowcast.INLA(
+  model.day = model.dengue,
+  dados.ag = dados.ag %>%
+    mutate(TimeDelay = paste(Time, Delay))
+)
+
+pred.dengue <- nowcasting(output.dengue, dados.ag, 
+                          Dm = Dmax, Fim = max(dados.ag$Date))
+
+
+pred.dengue.summy <- pred.dengue %>% group_by(Date) %>% 
+  dplyr::summarise( Mean = mean(Casos),
+                    Median = median(Casos), 
+                    LI = quantile(Casos, probs = 0.025),
+                    LS = quantile(Casos, probs = 0.975)
+  ) %>%
+  left_join(obs, by = c("Date" = "dt_notific_week"))
+
+pred.dengue.summy$SE <- daySEday(pred.dengue.summy$Date)$SE
+
+pred.dengue.summy
+}
+
+
+# getdelaydata ------------------------------------------------------------------
+#'@description Gets delay data for one or more cities. Internal function used in the delay fitting using inla. 
+#'@title Get delay data for one or more cities for delay analysis
+#'@param cities vector with geocodes
+#'@param cid10 disease code, Default is dengue. "A92.0" for chik, "A92.8" for zika
+#'@param lastday last digitation day
+#'@param nyears number of years of data used for fitting: Default = 2 years
+#'@param datasource valid connection to database
+#'@return list with d = data.frame with data.
+#'@examples
+#'dados <- getdelaydata(cities=3106200, nyears=2, cid10="A90", datasource=con)  # Not run without connection
+
+getdelaydata <- function(cities, nyears = 2, cid10 = "A90", lastday = Sys.Date(), 
+                         datasource = con){
+  
+  ncities = length(cities)
+  #cities <- sapply(cities, function(x) sevendigitgeocode(x))
+  
+  #dealing with synonimous cid
+  if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
+  if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"} # chik
+  if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- c("A92.8")} #zika
+  
+  # reading notification data form the database ----------------------------
+  sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+  sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
+  
+  firstday <- lastday - nyears * 365
+  
+  comando <- paste("SELECT municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita
+                       from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
+                   "' AND dt_digita > '",firstday, "' AND municipio_geocodigo IN (", sqlcity, 
+                   ") AND cid10_codigo IN(", sqlcid,")", sep="")
+  
+  dd <- dbGetQuery(datasource,comando)
+  
+  
+  if(nrow(dd) == 0){
+    message(paste("getdelaydata: found no data for the request:", sqlselect ))
+    return(NULL)
+  } else {
+    #dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
+    #dd$cid10 <- cid10
+    
+    
+    # Removing records with missing dt_digita
+    nb <- nrow(dd)
+    dd <- dd[!is.na(dd$dt_digita),]
+    na.dtdigita <- nb - nrow(dd)
+    if (na.dtdigita > 0) message(paste("getdelaydata: number of records with missing dates: ",na.dtdigita,
+                                       " out of ",nb, "notifications" ))
+    
+    # Create SE_digit
+    #dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
+    #dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
+    #dd$SE_digit <- daySEday(dd$dt_digita)$SE
+    #dd$ano_digit <- floor(dd$SE_digit/100)
+    #dd$se_digit <- dd$SE_digit - dd$ano*100
+    dd
+  }
+}
+
+
+
+## OLD STUFF ----
 
 # fitDelayModel ---------------------------------------------------------------------
 #'@description Fit lognormal model to the notification delay and return the parameters. 
@@ -195,82 +312,82 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'# Parameters are
 #'list(meanlog=res$icoef[1], sdlog=exp(res$icoef[2]))
 
-fitDelayModel<-function(cities, period, plotar = TRUE, cid10 = "A90", datasource, verbose=TRUE, inidate="dt_notific"){
-      
-      ncities = length(cities)
-      if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
-      
-      if (class(datasource) == "PostgreSQLConnection"){
-            
-            sql1 = paste("'", cities[1], sep = "")
-            if (ncities > 1) for (i in 2:ncities) sql1 = paste(sql1, cities[i], sep = "','")
-            sql1 <- paste(sql1, "'", sep = "")
-            cid10command <- paste("'", cid10,"'", sep="")             
-            
-            sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, dt_sin_pri, dt_digita from \"Municipio\".\"Notificacao\" WHERE
-                               municipio_geocodigo IN(", sql1, ") AND cid10_codigo = ", cid10command)
-            dd <- dbGetQuery(datasource,sqlselect)
-            
-      }
-      
-      if (dim(dd)[1]==0) {
-            if(verbose==TRUE) message(paste("No notification in this(these) cities"))
-            return(NULL)
-            
-      } else {
-            
-            # seleciona periodo e calcula tempo de atraso
-            if (!missing(period)){
-                  if (inidate=="dt_notific") {
-                        dd<-subset(dd, (dd$dt_notific > as.Date(period[1]) & (dd$dt_notific > as.Date(period[2]))))
-                        dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_notific)
-                  }
-                  if (inidate == "dt_sin_pri") {
-                        dd<-subset(dd, (dd$dt_sin_pri > as.Date(period[1]) & (dd$sin_pri > as.Date(period[2]))))
-                        dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_sin_pri)
-                  }
-            } 
-            else{
-                  if (inidate=="dt_notific")  dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_notific)
-                  if (inidate == "dt_sin_pri") dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_sin_pri)
-            }
-            
-            
-            nrow.before <- dim(dd)[1] 
-            nzero = sum(dd$diasdigit ==0 ); n180 = sum(dd$diasdigit>180)
-            # check if there is na or time 0 (this model does not fit to delay = 0)
-            if(sum(is.na(dd$diasdigit))>0) dd <-dd[-which(is.na(dd$diasdigit)==TRUE),]
-            dd <-dd[-which(dd$diasdigit>180 | dd$diasdigit == 0),] # remove records with more than 6 mo dela
-            nrow.after <- dim(dd)[1]
-            loss <- nrow.before - nrow.after
-            
-            if(verbose==TRUE) {
-                  message(paste(loss, "cases removed for lack of information, delay = 0 or delay > 6 months. Number of cases for the analysis is ",nrow.after))
-                  message(paste(nzero, "removed because delay=0 and", n180 , "removed because delay > 180 days" ))
-                  
-            }
-            
-            if (dim(dd)[1]==0) {
-                  if(verbose==TRUE)  message(paste("No cases left."))
-                  return(NULL)
-            }
-            # Models
-            dd$status<-TRUE
-            y <- Surv(time=dd$diasdigit, event=dd$status==TRUE)
-            km <- survfit(y~1, data = dd)
-            mlognorm<-survreg(y~1,dist="lognormal",x=TRUE,y=TRUE,model=TRUE)
-            
-            if(plotar == TRUE){
-                  par(mar=c(4,3,1,1))
-                  plot(km,xlim=c(0,60),ylab="",xlab="days")
-                  meanlog=mlognorm$icoef[1]; sdlog=exp(mlognorm$icoef[2])
-                  lines(0:60,(1-plnorm(0:60,meanlog,sdlog)), lwd=3,col=3)
-                  
-            }
-            
-            return(mlognorm)                  
-      }
-}
+#fitDelayModel<-function(cities, period, plotar = TRUE, cid10 = "A90", datasource, verbose=TRUE, inidate="dt_notific"){
+#      
+#      ncities = length(cities)
+#      if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
+#      
+#      if (class(datasource) == "PostgreSQLConnection"){
+#            
+#            sql1 = paste("'", cities[1], sep = "")
+#            if (ncities > 1) for (i in 2:ncities) sql1 = paste(sql1, cities[i], sep = "','")
+#            sql1 <- paste(sql1, "'", sep = "")
+#             cid10command <- paste("'", cid10,"'", sep="")             
+#             
+#             sqlselect <- paste("SELECT municipio_geocodigo, ano_notif, dt_notific, dt_sin_pri, dt_digita from \"Municipio\".\"Notificacao\" WHERE
+#                                municipio_geocodigo IN(", sql1, ") AND cid10_codigo = ", cid10command)
+#             dd <- dbGetQuery(datasource,sqlselect)
+#             
+#       }
+#       
+#       if (dim(dd)[1]==0) {
+#             if(verbose==TRUE) message(paste("No notification in this(these) cities"))
+#             return(NULL)
+#             
+#       } else {
+#             
+#             # seleciona periodo e calcula tempo de atraso
+#             if (!missing(period)){
+#                   if (inidate=="dt_notific") {
+#                         dd<-subset(dd, (dd$dt_notific > as.Date(period[1]) & (dd$dt_notific > as.Date(period[2]))))
+#                         dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_notific)
+#                   }
+#                   if (inidate == "dt_sin_pri") {
+#                         dd<-subset(dd, (dd$dt_sin_pri > as.Date(period[1]) & (dd$sin_pri > as.Date(period[2]))))
+#                         dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_sin_pri)
+#                   }
+#             } 
+#             else{
+#                   if (inidate=="dt_notific")  dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_notific)
+#                   if (inidate == "dt_sin_pri") dd$diasdigit<-as.numeric(dd$dt_digita-dd$dt_sin_pri)
+#             }
+#             
+#             
+#             nrow.before <- dim(dd)[1] 
+#             nzero = sum(dd$diasdigit ==0 ); n180 = sum(dd$diasdigit>180)
+#             # check if there is na or time 0 (this model does not fit to delay = 0)
+#             if(sum(is.na(dd$diasdigit))>0) dd <-dd[-which(is.na(dd$diasdigit)==TRUE),]
+#             dd <-dd[-which(dd$diasdigit>180 | dd$diasdigit == 0),] # remove records with more than 6 mo dela
+#             nrow.after <- dim(dd)[1]
+#             loss <- nrow.before - nrow.after
+#             
+#             if(verbose==TRUE) {
+#                   message(paste(loss, "cases removed for lack of information, delay = 0 or delay > 6 months. Number of cases for the analysis is ",nrow.after))
+#                   message(paste(nzero, "removed because delay=0 and", n180 , "removed because delay > 180 days" ))
+#                   
+#             }
+#             
+#             if (dim(dd)[1]==0) {
+#                   if(verbose==TRUE)  message(paste("No cases left."))
+#                   return(NULL)
+#             }
+#             # Models
+#             dd$status<-TRUE
+#             y <- Surv(time=dd$diasdigit, event=dd$status==TRUE)
+#             km <- survfit(y~1, data = dd)
+#             mlognorm<-survreg(y~1,dist="lognormal",x=TRUE,y=TRUE,model=TRUE)
+#             
+#             if(plotar == TRUE){
+#                   par(mar=c(4,3,1,1))
+#                   plot(km,xlim=c(0,60),ylab="",xlab="days")
+#                   meanlog=mlognorm$icoef[1]; sdlog=exp(mlognorm$icoef[2])
+#                   lines(0:60,(1-plnorm(0:60,meanlog,sdlog)), lwd=3,col=3)
+#                   
+#             }
+#             
+#             return(mlognorm)                  
+#       }
+# }
 
 # updateDelayModel ---------------------------------------------------------------------
 #'@description Apply the fitDelayModel to all or a subset of cities.
@@ -291,123 +408,59 @@ fitDelayModel<-function(cities, period, plotar = TRUE, cid10 = "A90", datasource
 #'res<-updateDelayModel(ufs="Rio de Janeiro", period=c("2013-01-01","2016-01-01"), datasource=con)
 #'res<-updateDelayModel(ufs="Rio de Janeiro", period=c("2013-01-01","2016-01-01"), regional=TRUE, datasource=con)
 
-updateDelayModel <- function(cities, ufs, period, datasource, plotar=FALSE, write, verbose=FALSE, regional=FALSE){
-     
-     if (!(class(datasource) == "PostgreSQLConnection")) stop("please provide a sql connection")
-     
-      # all cities of the requested states       
-     nufs <- length(ufs)
-     dd <- getCidades(uf = ufs[1],datasource = datasource)
-     if(nufs>1) for (i in 2:nufs) dd <- rbind(dd, getCidades(uf = ufs[i], datasource=datasource))
-     
-     #set of cities, if requested
-     if(!missing(cities)) {
-           ncities = length(cities)
-           if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
-           
-           # check if all cities are within the defined states
-           if(!all(cities %in% dd$municipio_geocodigo)) stop("Check your specification. Mismatch btw citiesand states")
-    
-           dd <- subset(dd, dd$municipio_geocodigo %in% cities)
-     }
-     
-     dd$casos <- NA
-     dd$meanlog <- NA
-     dd$sdlog <- NA
-     
-     for (i in 1:dim(dd)[1]){
-             mod <- fitDelayModel(cities=dd$municipio_geocodigo[i], plotar=plotar, verbose=verbose, datasource=datasource)
-             if (!is.null(mod)){
-                   dd$meanlog[i] <- mod$icoef[1]
-                   dd$sdlog[i] <- mod$icoef[2]
-                   dd$casos[i] <- summary(mod)$n
-             }
-             if (plotar==TRUE) legend("topright",legend = dd$nome[i],bty="n",cex=0.7)
-     }
-     
-     if(regional == TRUE){
-           dd$meanlogR <- NA
-           dd$sdlogR <- NA
-           
-           listaregs <- unique(dd$nome_regional)
-           for(j in listaregs){
-                 modreg <- fitDelayModel(cities=dd$municipio_geocodigo[dd$nome_regional == j], plotar=plotar, verbose=verbose, datasource=datasource)
-                 dd$meanlogR[dd$nome_regional == j] <- modreg$icoef[1]
-                 dd$sdlogR[dd$nome_regional == j] <- modreg$icoef[2]
-           }
-      
-           
-     }
-dd
-}
-
+# updateDelayModel <- function(cities, ufs, period, datasource, plotar=FALSE, write, verbose=FALSE, regional=FALSE){
+#      
+#      if (!(class(datasource) == "PostgreSQLConnection")) stop("please provide a sql connection")
+#      
+#       # all cities of the requested states       
+#      nufs <- length(ufs)
+#      dd <- getCidades(uf = ufs[1],datasource = datasource)
+#      if(nufs>1) for (i in 2:nufs) dd <- rbind(dd, getCidades(uf = ufs[i], datasource=datasource))
+#      
+#      #set of cities, if requested
+#      if(!missing(cities)) {
+#            ncities = length(cities)
+#            if(nchar(cities)[1] == 6) for (i in 1:ncities) cities[i] <- sevendigitgeocode(cities[i])
+#            
+#            # check if all cities are within the defined states
+#            if(!all(cities %in% dd$municipio_geocodigo)) stop("Check your specification. Mismatch btw citiesand states")
+#     
+#            dd <- subset(dd, dd$municipio_geocodigo %in% cities)
+#      }
+#      
+#      dd$casos <- NA
+#      dd$meanlog <- NA
+#      dd$sdlog <- NA
+#      
+#      for (i in 1:dim(dd)[1]){
+#              mod <- fitDelayModel(cities=dd$municipio_geocodigo[i], plotar=plotar, verbose=verbose, datasource=datasource)
+#              if (!is.null(mod)){
+#                    dd$meanlog[i] <- mod$icoef[1]
+#                    dd$sdlog[i] <- mod$icoef[2]
+#                    dd$casos[i] <- summary(mod)$n
+#              }
+#              if (plotar==TRUE) legend("topright",legend = dd$nome[i],bty="n",cex=0.7)
+#      }
+#      
+#      if(regional == TRUE){
+#            dd$meanlogR <- NA
+#            dd$sdlogR <- NA
+#            
+#            listaregs <- unique(dd$nome_regional)
+#            for(j in listaregs){
+#                  modreg <- fitDelayModel(cities=dd$municipio_geocodigo[dd$nome_regional == j], plotar=plotar, verbose=verbose, datasource=datasource)
+#                  dd$meanlogR[dd$nome_regional == j] <- modreg$icoef[1]
+#                  dd$sdlogR[dd$nome_regional == j] <- modreg$icoef[2]
+#            }
+#       
+#            
+#      }
+# dd
+# }
+# 
 
 ###########################################
 ## Leo's delay model
-
-# getdelaydata ------------------------------------------------------------------
-#'@description Gets delay data for one or more cities. Internal function used in the delay fitting using inla. 
-#'@title Get delay data for one or more cities for delay analysis
-#'@param cities vector with geocodes
-#'@param cid10 disease code, Default is dengue. "A92.0" for chik, "A92.8" for zika
-#'@param lastday last digitation day
-#'@param years vector with set of years for analysis. Default (NULL) is to get all years of data available.
-#'@param datasource valid connection to database
-#'@return list with d = data.frame with data.
-#'@examples
-#'dados <- getdelaydata(cities=3302403, years=c(2017, 2018), cid10="A90", datasource=con)  # Not run without connection
-
-getdelaydata <- function(cities, years = NULL, cid10 = "A90", lastday = Sys.Date(), 
-                         datasource = con){
-      
-      ncities = length(cities)
-      cities <- sapply(cities, function(x) sevendigitgeocode(x))
-      
-      
-      #dealing with synonimous cid
-      if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
-      if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"} # chik
-      if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- c("A92.8")} #zika
-      
-      # reading notification data form the database ----------------------------
-      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
-      sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
-      
-      comando <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
-                       "' AND municipio_geocodigo IN (", sqlcity, 
-                       ") AND cid10_codigo IN(", sqlcid,")", sep="")
-                                     
-      if (!missing(years)) {  # selecting some years
-            sqlyears = paste("'", str_c(years, collapse = "','"),"'", sep="")
-            comando <- paste(comando, "AND ano_notif IN (",sqlyears,")")
-      }
-      dd <- dbGetQuery(datasource,comando)
-      
-      
-      if(nrow(dd) == 0){
-            message(paste("getdelaydata: found no data for the request:", sqlselect ))
-            return(NULL)
-      } else {
-            dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
-            dd$cid10 <- cid10
-           
-            
-            # Removing records with missing dt_digita
-            nb <- nrow(dd)
-            dd <- dd[!is.na(dd$dt_digita),]
-            na.dtdigita <- nb - nrow(dd)
-            if (na.dtdigita > 0) message(paste("getdelaydata: number of records with missing dates: ",na.dtdigita,
-                          " out of ",nb, "notifications" ))
-            
-            # Create SE_digit
-            #dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
-            #dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
-            dd$SE_digit <- daySEday(dd$dt_digita)$SE
-            dd$ano_digit <- floor(dd$SE_digit/100)
-            dd$se_digit <- dd$SE_digit - dd$ano*100
-            dd
-      }
-}
 
 
 # delaycalc ---------------------------------------------------------------------
@@ -432,264 +485,78 @@ getdelaydata <- function(cities, years = NULL, cid10 = "A90", lastday = Sys.Date
 #'head(res$d)  # data
 #'head(res$delay.tbl)  # running matrix
 
-delaycalc <- function(d, nt_year = "ano_notif", nt_week = "se_notif",
-                      dg_year = "ano_digit", dg_week = "se_digit",
-                      SE = "SE_notif", lastSE=NA,
-                      truncweeks = 25, verbose = TRUE){
-      
-      # Checking if there is more than one city
-      ncities <- length(unique(d$municipio_geocodigo))
-      if(ncities != 1)stop("delaycalc error: delay function can only be applied to one city at a time.") 
-      
-      dd <- d[,c(SE, nt_year, nt_week, dg_year, dg_week)]
-      names(dd)<-c("SE", "nt_year", "nt_week", "dg_year", "dg_week")
-      
-      rm(d)
-
-      # Remove data uploaded later than lastSE, if any:
-      if (is.na(lastSE)){
-            lastdate <- max(dd$SE)      
-      } else {
-            lastdate <- lastSE
-      }
-      lastdate.year <- as.integer(lastdate/100)
-      lastdate.week <- as.integer(lastdate-100*lastdate.year)
-      dd <- dd[100*dd$dg_year + dd$dg_week <= lastdate, ]
-      
-      # Calculating delay time in epiweeks
-      dd$DelayWeeks <- dd$dg_week - dd$nt_week +
-            (dd$dg_year - dd$nt_year)*as.integer(sapply(dd$nt_year,lastepiweek))
-      
-
-      # Number of notifications greater than truncweeks
-      if (verbose==TRUE){
-      
-            message(paste("number of notifications with delay greater than",truncweeks,"weeks =",
-                    sum(dd$DelayWeeks >= truncweeks, na.rm = T),"in",length(dd$DelayWeeks),". They will be excluded.")) 
-      }
-      
-      dd <- na.exclude(dd[dd$DelayWeeks <= truncweeks, ])
-      
-      # Prepare filled epiweeks data frame:
-      # # Fill all epiweeks:
-      fyear <- min(dd$nt_year)
-      fweek <- min(dd$nt_week[dd$nt_year == fyear])
-      years.list <- c(fyear:lastdate.year)
-      df.epiweeks <- data.frame(SE=character())
-      for (y in years.list){
-            epiweeks <- c()
-            fweek <- ifelse(y > fyear, 1, fweek)
-            lweek <- ifelse(y < lastdate.year, as.integer(lastepiweek(y)), lastdate.week)
-            for (w in c(fweek:lweek)){
-                  epiweeks <- c(epiweeks, paste0(y,sprintf('%02d', w)))
-            }
-            df.epiweeks <- rbind(df.epiweeks, data.frame(list(SE=epiweeks)))
-      }
-      rownames(df.epiweeks) <- df.epiweeks$SE
-      
-      aux <- tapply(dd$DelayWeeks >= 0 , INDEX = dd$SE, FUN = sum, na.rm = T)
-      delay.tbl <- data.frame(Notifications = aux[order(rownames(aux))])
-      
-      for(k in 0:truncweeks){  
-            aux <- tapply(dd$DelayWeeks == k, INDEX = dd$SE, FUN = sum, na.rm = T)
-            delay.tbl[paste("d",k, sep="")] <- aux[order(rownames(aux))]
-      }
-      
-      delay.week <- paste("d",0:truncweeks, sep="")
-      
-      # Fill missing epiweeks (the ones wiht zero notifications):
-      delay.tbl <- merge(df.epiweeks, delay.tbl, by=0, all.x=T)
-      delay.tbl[is.na(delay.tbl)] <- 0
-      rownames(delay.tbl) <- delay.tbl$Row.names
-      
-      list(d = dd, delay.tbl = delay.tbl[, c('SE', 'Notifications', delay.week)], delay.week = delay.week)
-}
-
-
-
-# fitDelay.inla ---------------------------------------------------------------------
-#'@description Fit model  Y ~ 1 + f(Time, model = "rw1") + f(Delay, model = "rw1") to object created by delaycalc.
-#'@title Fit INLA model to notification delay.
-#'@param obj object with observed delays, produced by delaycalc().
-#'@param Tactual today's date used for estimation. 
-#'@param Dmax maximum delay allowed (in weeks).
-#'@return list containing the fitted model (out), the data, arguments and some objects to be used
-#'by other auxiliary functions. 
-#'@examples
-#'res <- delaycalc(dados)
-#'outp<-fitDelay.inla(res)
+# delaycalc <- function(d, nt_year = "ano_notif", nt_week = "se_notif",
+#                       dg_year = "ano_digit", dg_week = "se_digit",
+#                       SE = "SE_notif", lastSE=NA,
+#                       truncweeks = 25, verbose = TRUE){
+#       
+#       # Checking if there is more than one city
+#       ncities <- length(unique(d$municipio_geocodigo))
+#       if(ncities != 1)stop("delaycalc error: delay function can only be applied to one city at a time.") 
+#       
+#       dd <- d[,c(SE, nt_year, nt_week, dg_year, dg_week)]
+#       names(dd)<-c("SE", "nt_year", "nt_week", "dg_year", "dg_week")
+#       
+#       rm(d)
+# 
+#       # Remove data uploaded later than lastSE, if any:
+#       if (is.na(lastSE)){
+#             lastdate <- max(dd$SE)      
+#       } else {
+#             lastdate <- lastSE
+#       }
+#       lastdate.year <- as.integer(lastdate/100)
+#       lastdate.week <- as.integer(lastdate-100*lastdate.year)
+#       dd <- dd[100*dd$dg_year + dd$dg_week <= lastdate, ]
+#       
+#       # Calculating delay time in epiweeks
+#       dd$DelayWeeks <- dd$dg_week - dd$nt_week +
+#             (dd$dg_year - dd$nt_year)*as.integer(sapply(dd$nt_year,lastepiweek))
+#       
+# 
+#       # Number of notifications greater than truncweeks
+#       if (verbose==TRUE){
+#       
+#             message(paste("number of notifications with delay greater than",truncweeks,"weeks =",
+#                     sum(dd$DelayWeeks >= truncweeks, na.rm = T),"in",length(dd$DelayWeeks),". They will be excluded.")) 
+#       }
+#       
+#       dd <- na.exclude(dd[dd$DelayWeeks <= truncweeks, ])
+#       
+#       # Prepare filled epiweeks data frame:
+#       # # Fill all epiweeks:
+#       fyear <- min(dd$nt_year)
+#       fweek <- min(dd$nt_week[dd$nt_year == fyear])
+#       years.list <- c(fyear:lastdate.year)
+#       df.epiweeks <- data.frame(SE=character())
+#       for (y in years.list){
+#             epiweeks <- c()
+#             fweek <- ifelse(y > fyear, 1, fweek)
+#             lweek <- ifelse(y < lastdate.year, as.integer(lastepiweek(y)), lastdate.week)
+#             for (w in c(fweek:lweek)){
+#                   epiweeks <- c(epiweeks, paste0(y,sprintf('%02d', w)))
+#             }
+#             df.epiweeks <- rbind(df.epiweeks, data.frame(list(SE=epiweeks)))
+#       }
+#       rownames(df.epiweeks) <- df.epiweeks$SE
+#       
+#       aux <- tapply(dd$DelayWeeks >= 0 , INDEX = dd$SE, FUN = sum, na.rm = T)
+#       delay.tbl <- data.frame(Notifications = aux[order(rownames(aux))])
+#       
+#       for(k in 0:truncweeks){  
+#             aux <- tapply(dd$DelayWeeks == k, INDEX = dd$SE, FUN = sum, na.rm = T)
+#             delay.tbl[paste("d",k, sep="")] <- aux[order(rownames(aux))]
+#       }
+#       
+#       delay.week <- paste("d",0:truncweeks, sep="")
+#       
+#       # Fill missing epiweeks (the ones wiht zero notifications):
+#       delay.tbl <- merge(df.epiweeks, delay.tbl, by=0, all.x=T)
+#       delay.tbl[is.na(delay.tbl)] <- 0
+#       rownames(delay.tbl) <- delay.tbl$Row.names
+#       
+#       list(d = dd, delay.tbl = delay.tbl[, c('SE', 'Notifications', delay.week)], delay.week = delay.week)
+# }
 
 
-fitDelay.inla <- function(obj, Tactual = nrow(obj$delay.tbl), Dmax = 12, plotar = FALSE){
-      
-      if(!all(c("d","delay.tbl","delay.week") %in% names(obj))) stop("fitDeday.inla: argument obj seems wrong")
-      require(INLA)
-      INLA:::inla.dynload.workaround()
-      message("fitting..")
-      # creating a continuous sequence of weeks within the study period (#aqui da para otimizar)
-      delay.week <- paste0("d",0:Dmax)
-      
-      delay.data.obs <- obj$delay.tbl[delay.week]
-      
-      # Time index of the unknown counts (Dmax+1,...,Tactual) 
-      index.time <- (Tactual-Dmax+1):Tactual
-      
-      delay.data.obs.trian <- delay.data.obs
-      
-      # Creating the run-off triangle data frame
-      delay.data.obs.trian[outer(1:Tactual, 0:Dmax, FUN = "+") > Tactual] <- NA
-      
-      # This function creates a data frame from the run-off triangle matrix to be used in INLA
-      make.df.trian <- function(M){
-            Time <- nrow(M)
-            Delay <- ncol(M)
-            aux.df <- data.frame(Y = as.vector(as.matrix(M)), 
-                                 Time = rep(x = 1:Time, times = Delay),
-                                 Delay = rep(x = 1:Delay, each=Time)
-            )
-            aux.df
-      }
-      
-      # Creating a data frame for INLA
-      delay.inla.trian <- make.df.trian(delay.data.obs.trian)
-      
-      # Find the missing values
-      index.missing <- which(is.na(delay.inla.trian$Y))      
-      
-      model <- Y ~ 1 + f(Time, model = "rw1") + f(Delay, model = "rw1")
-      
-      output <- inla(model, family = "nbinomial", data = delay.inla.trian,
-                     control.predictor = list(link = 1, compute = T),
-                     control.compute = list( config = T, waic=TRUE, dic=TRUE))
-      
-      c(WAIC = output$waic$waic, DIC = output$dic$dic)
-      
-      message("sampling...")
-      
-      delay.samples.list <- inla.posterior.sample(n = 1000, output)
-      
-      
-      # Sampling the missing triangule from inla output in vector format
-      aaa <- lapply(X = delay.samples.list, 
-                    FUN = function(x, idx = index.missing) rnbinom(n = idx, mu = exp(x$latent[idx]), size = x$hyperpar[1])
-      ) 
-      
-      
-      # Creating a vectorized version of the triangle matrix
-      delay.vec.trian <- inla.matrix2vector(as.matrix(delay.data.obs.trian[index.time,]))
-      
-      # Transforming back from the vector form to the matrix form
-      bbb <- lapply(aaa, FUN = function(xxx, data = delay.vec.trian){
-            data[which(is.na(data))] <- xxx
-            inla.vector2matrix(data, ncol = Dmax+1) } )
-      
-      
-      # Samples of {N_t : t=Tactual-Dmax+1,...Tactual}
-      ccc <- sapply(bbb, FUN = function(x) rowSums(x) )
-      
-      
-      Nt.true <- rowSums(delay.data.obs[index.time,])
-      Nt.obs <- rowSums(delay.data.obs.trian[index.time,], na.rm=T)
-      # Nt.forecast <- rowSums(matrix(output$summary.fitted.values$mean, ncol=Dmax+1)[index.time,])
-      
-      if (plotar == TRUE){
-            par(mfrow=c(1,1))
-            plot(index.time, Nt.true, ylim=range(Nt.true, Nt.obs), ylab="", xlab="",pch=16)
-            points(index.time, Nt.obs, pch=3)
-            #lines(index.time, Nt.forecast, col=2)
-            lines(index.time, rowMeans(ccc), col=2)
-            lines(index.time, apply(ccc,1,quantile,probs = 0.025), col=2, lty=2)
-            lines(index.time, apply(ccc,1,quantile,probs = 0.975), col=2, lty=2)
-            legend("topleft", c("Observed counts", "Real counts", "Posterior prediction",
-                                "95% CI limits"), pch=c(3,16,NA,NA), lty=c(NA,NA,1,2), col=c(1,1,2,2))
-            
-      }
-            
-      
-      list(out=output,post=ccc,Tactual=Tactual, Dmax=Dmax,delay.data.obs=delay.data.obs,
-           delay.data.obs.trian=delay.data.obs.trian)
-}
-
-
-# plot.inla.re ---------------------------------------------------------------------
-#'@description Plot the random effects of the delay model fitted using fitDelay.inla()
-#'@title plot delay and time random effects
-#'@param outputRE random effect components of the object created by the fitDelay.inla function
-#'@return graphs 
-#'@examples
-#'res = delaycalc(dados)
-#'outp<-fitDelay.inla(res)
-#'par(mfrow=c(2,1),mar=c(4,4,2,2))
-#'plot.inla.re(outp$out$summary.random$Time, xlab="semana epidemiologica")
-#'plot.inla.re(outp$out$summary.random$Delay, xlab="semana de atraso")
-
-
-plot.inla.re = function(outputRE, xlab){
-      plot( outputRE$mean, type = "n", ylim = range(outputRE[,c(4,6)]), ylab="", xlab=xlab )
-      polygon(x = c(outputRE$ID, rev(outputRE$ID)),
-              y = c(outputRE$'0.025quant', rev(outputRE$'0.975quant')),
-              border = "black", col = "gray")
-      lines(outputRE$mean, lty=1, lwd=2)
-      lines(x = range(outputRE$ID), y = rep(0,2), lty=2)
-      return(NULL)  
-}
-
-
-# prob.inc ---------------------------------------------------------------------
-#'@description predicted incidence using fitDelay.inla(). 
-#'@title posterior distribution of the incidence 
-#'@param obj created by the fitDelay.inla function
-#'@return table with mean, median, 2.5% and 97.5% incidence. Author. Leo Bastos
-#'@examples
-#'dados <- getdelaydata(cities=3302205, datasource=con)
-#'res = delaycalc(dados)
-#'outp<-fitDelay.inla(res)
-#'delay <- prob.inc(outp)
-
-prob.inc<-function(obj, plotar=T){
-      
-      if(!all(c("post", "Dmax", "delay.data.obs","Tactual","delay.data.obs.trian")
-         %in% names(obj)))stop("(bayesian delay fitting) argument obj seems wrong...")
-     
-      ccc <- obj$post
-      Dmax <- obj$Dmax
-      Tactual <-obj$Tactual
-      delay.data.obs.trian <- obj$delay.data.obs.trian
-      delay.data.obs <- obj$delay.data.obs
-      
-      # quantiles
-      post.sum = function(x,probs = c(0.5, 0.025,0.975)) c(mean = mean(x), quantile(x,probs))
-      
-      apply(ccc,1,FUN = post.sum)[,Dmax]
-      post.sum(ccc[Dmax,])
-      
-      post.prob = function(x, prob = c(100, 200)) c(Ps100 = mean(x < prob[1]), Pg200 = mean(x > prob[2]) ) 
-      
-      apply(ccc,1,FUN = post.prob, prob=c(500,1000))[,Dmax]
-      
-      teste <- apply(ccc, MARGIN = 1, post.sum)
-      
-      if(plotar == TRUE){
-            par(mfrow=c(1,1))
-            max.y <- max(teste[4,])  
-            plot(rowSums(delay.data.obs[1:Tactual ,] ), xlab  =  "", 
-                 ylab = "Casos", type = "n", axes=F, xlim = c(Tactual-24,Tactual), 
-                 ylim = c(0,max.y) )
-            polygon(x = c((Tactual-Dmax+1):Tactual,Tactual:(Tactual-Dmax+1)),
-                    y = c(teste[3,], rev(teste[4,])),
-                    border = 3, col = "lightgray", lty=3)
-            lines((Tactual-Dmax+1):Tactual, teste[1,], col=3, lty=3, lwd=2)
-            #lines(rowSums(delay.data.obs.trian[1:Tactual,], na.rm=T), col=2, lwd=2, lty=2)
-            lines(rowSums(delay.data.obs[1:Tactual,], na.rm=T), col=1, lwd=2)
-            axis(2)
-            xlabels <- rownames(outp$delay.data.obs)[Tactual-24:Tactual]
-            axis(1, at=seq(Tactual-24,Tactual,length.out = 6), 
-                 labels = xlabels[seq(1,24,length.out = 6)])
-            legend("topleft", c("Notificados", "Estimados"),
-                   lty=1:2, lwd=2, col=c(1,3))
-            
-      }
-      
-      teste
-}
 

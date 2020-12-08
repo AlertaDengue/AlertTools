@@ -817,5 +817,17 @@ insert_city_infodengue<-function(geocodigo ,id_regional, regional, macroreg, dat
       cityline
 }
       
-      
-     
+# berra - tryCatch fun
+berra <- function(expr){
+  tryCatch(expr,
+           error = function(e){
+             message("An error occurred:\n", e)
+           },
+           warning = function(w){
+             message("A warning occured:\n", w)
+           },
+           finally = {
+             message("Finally done!")
+           })
+}
+

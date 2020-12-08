@@ -262,7 +262,6 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
 }
 
 
-
 # read.cases --------------------------------------------------------------
 #' @title Function to extract case count for covered municipalities
 #' @description Function \code{read.cases} extract notification data from database 
