@@ -1,6 +1,6 @@
 # PROJETO ALERTA DENGUE -------------------------------------
 # Funcoes auxiliadoras para formatacao dados de clima do Alerta dengue
-# Claudia Codeco 2015
+# Claudia Codeco 2015 - 2020
 # -----------------------------------------------------------
 
 
@@ -157,7 +157,7 @@ lastepiweek <- function(ano){
 #'@return data.frame with SE and first day.
 #'@examples
 #'SE2date(se=201812)
-#'SE2date(se = c(201401:201409))
+#'SE2date(se = c(202001:202109))
 
 SE2date <- function(se){
       if(!class(se[1]) %in% c("numeric","integer")) stop("se should be numeric or integer")
@@ -177,7 +177,7 @@ SE2date <- function(se){
 #'@return data.frame with SE and first day.
 #'@examples
 #'daySEday(x=201812)
-#'daySEday(x = c(201401:201409)
+#'daySEday(x = c(202041:202104))
 #'daySEday(x = c("2015-12-23", "2015-10-23", "2014-10-16"))
 
 daySEday <- function(x, format = "%Y-%m-%d"){
@@ -213,8 +213,7 @@ daySEday <- function(x, format = "%Y-%m-%d"){
 #'@param to first week in format 201401
 #'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works from 2010 to 2020.
 #'@examples
-#'seqSE(201802, 202010)
-
+#'seqSE(202042, 202110)
 
 seqSE <- function(from, to){
       #load("R/sysdata.rda")
