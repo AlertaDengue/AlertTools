@@ -86,6 +86,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 # bayesnowcasting ---------------------------------------------------------------------
 #'@description This function estimate the Bayesian nowcast (new version)
 #'@title Correct incidence data with notification delay (nowcasting).
+#'@export
 #'@param obj data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita 
 #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
 #'@return data.frame with median and 95percent confidence interval for the 
@@ -223,6 +224,7 @@ pred.dengue.summy
 # getdelaydata ------------------------------------------------------------------
 #'@description Gets delay data for one or more cities. Internal function used in the delay fitting using inla. 
 #'@title Get delay data for one or more cities for delay analysis
+#'@export
 #'@param cities vector with geocodes
 #'@param cid10 disease code, Default is dengue. "A92.0" for chik, "A92.8" for zika
 #'@param lastday last digitation day
