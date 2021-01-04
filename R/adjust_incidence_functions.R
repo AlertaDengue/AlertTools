@@ -26,7 +26,7 @@
 #'predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'d <- getCases(cities = 4314902, data = "sinpri") 
+#'d <- getCases(cities = 2103307) 
 #'tail(d)
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
@@ -69,12 +69,16 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        message("computing nowcasting...")
        dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, datasource = datasource)
        message("bayesnowcasting...")
-       resfit<-bayesnowcasting(dados, Dmax)
-       message("bayesnowcasting done")
-       # adding to the alert data obj
-       obj$tcasesICmin[(le-Dmax):le]<-resfit$LI
-       obj$tcasesmed[(le-Dmax):le]<-resfit$Mean
-       obj$tcasesICmax[(le-Dmax):le]<-resfit$LS
+       
+       resfit<-try(bayesnowcasting(dados, Dmax))
+       
+       if(!is.null(resfit)){
+         message("bayesnowcasting done")
+         # adding to the alert data obj
+         obj$tcasesICmin[(le-Dmax):le]<-resfit$LI
+         obj$tcasesmed[(le-Dmax):le]<-resfit$Mean
+         obj$tcasesICmax[(le-Dmax):le]<-resfit$LS
+       } else {message("nowcasting failed, returning the original count")}
  }   
  
   if(method=="none") message("nowcasting not done, returning the original counts")
@@ -93,14 +97,21 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'predicted cases-to-be-notified)
 #'@examples
 #' # bayesian
-#'dd <- getdelaydata(cities=3106200, nyears=2, cid10="A90", datasource=con)
+#'dd <- getdelaydata(cities=2103307, nyears=2, cid10="A90", datasource=con)
 #'resfit<-bayesnowcasting(dd)
 #'tail(resfit)
 
 bayesnowcasting <- function(d, Dmax = 10){
   
-  # check input
+  # check input 
+  if(is.null(names(d))) {
+    message("bayesnowcasting: no data, returning NULL")
+    return(NULL)}    
+  
    #d contains columns
+  assert_that(all(c("municipio_geocodigo", "dt_notific", "dt_sin_pri", "dt_digita")
+              %in% names(d)), msg = "bayesnowcasting requires data with columns
+              municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita")
   
   d <- d %>% mutate(
     dt_notific_epiweek = epiweek(dt_notific), 
@@ -232,7 +243,7 @@ pred.dengue.summy
 #'@param datasource valid connection to database
 #'@return list with d = data.frame with data.
 #'@examples
-#'dados <- getdelaydata(cities=3106200, nyears=2, cid10="A90", datasource=con)  # Not run without connection
+#'dados <- getdelaydata(cities=4100905, nyears=2, cid10="A90", datasource=con)  # Not run without connection
 
 getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(), 
                          datasource = con){
@@ -241,7 +252,7 @@ getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(),
   #cities <- sapply(cities, function(x) sevendigitgeocode(x))
   
   #dealing with synonimous cid
-  if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
+  if (cid10 == "A90") cid <- "A90" # dengue, dengue hemorragica
   if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"} # chik
   if (cid10 %in% c("A92.8","A928")) {cid <- c("A92.8","A928"); cid10 <- c("A92.8")} #zika
   
@@ -260,7 +271,7 @@ getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(),
   
   
   if(nrow(dd) == 0){
-    message(paste("getdelaydata: found no data for the request:", sqlselect ))
+    message(paste("getdelaydata: found no", cid, "data for", sqlcity ))
     return(NULL)
   } else {
     #dd$SE_notif <- dd$ano_notif * 100 + dd$se_notif
