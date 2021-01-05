@@ -30,5 +30,5 @@ list with d = data.frame with data.
 Gets delay data for one or more cities. Internal function used in the delay fitting using inla.
 }
 \examples{
-dados <- getdelaydata(cities=3106200, nyears=2, cid10="A90", datasource=con)  # Not run without connection
+dados <- getdelaydata(cities=4100905, nyears=2, cid10="A90", datasource=con)  # Not run without connection
 }

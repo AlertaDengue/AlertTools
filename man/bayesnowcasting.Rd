@@ -20,7 +20,7 @@ This function estimate the Bayesian nowcast (new version)
 }
 \examples{
 # bayesian
-dd <- getdelaydata(cities=3106200, nyears=2, cid10="A90", datasource=con)
+dd <- getdelaydata(cities=3205002, nyears=2, cid10="A90", datasource=con)
 resfit<-bayesnowcasting(dd)
 tail(resfit)
 }
