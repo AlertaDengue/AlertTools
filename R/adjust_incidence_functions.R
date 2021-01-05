@@ -26,7 +26,7 @@
 #'predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'d <- getCases(cities = 2103307) 
+#'d <- getCases(cities = 2305308) 
 #'tail(d)
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
@@ -97,7 +97,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'predicted cases-to-be-notified)
 #'@examples
 #' # bayesian
-#'dd <- getdelaydata(cities=2103307, nyears=2, cid10="A90", datasource=con)
+#'dd <- getdelaydata(cities=3205002, nyears=2, cid10="A90", datasource=con)
 #'resfit<-bayesnowcasting(dd)
 #'tail(resfit)
 
@@ -219,10 +219,10 @@ pred.dengue <- nowcasting(output.dengue, dados.ag,
 
 
 pred.dengue.summy <- pred.dengue %>% group_by(Date) %>% 
-  dplyr::summarise( Mean = mean(Casos),
-                    Median = median(Casos), 
-                    LI = quantile(Casos, probs = 0.025),
-                    LS = quantile(Casos, probs = 0.975)
+  dplyr::summarise( Mean = mean(Casos, na.rm = TRUE),
+                    Median = median(Casos, na.rm = TRUE), 
+                    LI = quantile(Casos, probs = 0.025, na.rm = TRUE),
+                    LS = quantile(Casos, probs = 0.975, na.rm = TRUE)
   ) %>%
   left_join(obs, by = c("Date" = "dt_notific_week"))
 
