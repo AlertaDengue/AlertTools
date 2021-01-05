@@ -184,8 +184,8 @@ daySEday <- function(x, format = "%Y-%m-%d"){
       #load("R/sysdata.rda")
       n <- length(x)
             if(class(x[1]) %in% c("numeric","integer")) {
-            assert_that(all(x > 200952 & x < 202100), msg = "day2SE: SE format = 
-                        201612, btw 201001 and 202052")
+            assert_that(all(x > 200952 & x < 202200), msg = "day2SE: SE format = 
+                        201612, btw 201001 and 202152")
                   
             res <- data.frame(SE = x, ini = as.Date("1970-01-01"))
                   
@@ -194,7 +194,7 @@ daySEday <- function(x, format = "%Y-%m-%d"){
             
             }
       if(class(x[1]) == "character") x <- as.Date(x, format = format)
-      assert_that(all(x <= "2020/12/31" & x >= "2010/01/01"))
+      assert_that(all(x <= "2021/12/31" & x >= "2010/01/01"))
       res <- data.frame(SE = NA, ini = x)
       for (i in 1:n) res$SE[i] <- SE[which(SE$Inicio<=x[i] & SE$Termino >= x[i]), "SE"]
       return(res)
