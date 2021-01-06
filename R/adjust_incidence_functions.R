@@ -97,7 +97,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'predicted cases-to-be-notified)
 #'@examples
 #' # bayesian
-#'dd <- getdelaydata(cities=3205002, nyears=2, cid10="A90", datasource=con)
+#'dd <- getdelaydata(cities=2304608, nyears=2, cid10="A90", datasource=con)
 #'resfit<-bayesnowcasting(dd)
 #'tail(resfit)
 
@@ -107,6 +107,11 @@ bayesnowcasting <- function(d, Dmax = 10){
   if(is.null(names(d))) {
     message("bayesnowcasting: no data, returning NULL")
     return(NULL)}    
+  
+  if(nrow(d) < 50) {
+    message("bayesnowcasting: few data, returning NULL")
+    return(NULL)}    
+  
   
    #d contains columns
   assert_that(all(c("municipio_geocodigo", "dt_notific", "dt_sin_pri", "dt_digita")
