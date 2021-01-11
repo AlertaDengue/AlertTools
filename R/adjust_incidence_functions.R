@@ -48,6 +48,10 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   obj$tcasesmed <- obj$casos
   obj$tcasesICmax <- obj$casos
   
+  if(sum(tail(obj$casos, n = 52), na.rm = TRUE) <=50){
+    message("Few cases. Nowcasting not done")
+    return(obj)
+  } 
   
   if (method == "fixedprob"){
         # creating the proportion vector
@@ -93,15 +97,16 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'@export
 #'@param obj data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita 
 #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
+#'@param Fim date for the nowcasting (date). Default is today.
 #'@return data.frame with median and 95percent confidence interval for the 
 #'predicted cases-to-be-notified)
 #'@examples
 #' # bayesian
-#'dd <- getdelaydata(cities=2304608, nyears=2, cid10="A90", datasource=con)
+#'dd <- getdelaydata(cities=3129004, nyears=2, cid10="A90", datasource=con)
 #'resfit<-bayesnowcasting(dd)
 #'tail(resfit)
 
-bayesnowcasting <- function(d, Dmax = 10){
+bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date()){
   
   # check input 
   if(is.null(names(d))) {
@@ -139,8 +144,8 @@ bayesnowcasting <- function(d, Dmax = 10){
   Inicio <- min(d$dt_notific_week)
   # Ultimo dia com notificacao ou digitacao
   #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
-  Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
-  Fim <- Fim + 6 - as.numeric(format(as.Date(Fim), "%w")) # why?
+  #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
+  #Fim <- Fim + 6 - as.numeric(format(as.Date(Fim), "%w")) # why?
 
     # contruindo a matriz de atraso - running triang
   tibble(Date = c(Inicio,Fim) ) %>% 
@@ -229,7 +234,7 @@ pred.dengue.summy <- pred.dengue %>% group_by(Date) %>%
                     LI = quantile(Casos, probs = 0.025, na.rm = TRUE),
                     LS = quantile(Casos, probs = 0.975, na.rm = TRUE)
   ) %>%
-  left_join(obs, by = c("Date" = "dt_notific_week"))
+  left_join(obs, by = c("Date" = "dt_notific_week")) 
 
 pred.dengue.summy$SE <- daySEday(pred.dengue.summy$Date)$SE
 
