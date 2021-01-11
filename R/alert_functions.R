@@ -244,8 +244,8 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@return data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE.
 #'@examples
-#'cidades <- getCidades(uf = "Espírito Santo",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[73], cid10 = "A90",
+#'cidades <- getCidades(uf = "Ceará",datasource = con)
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[6], cid10 = "A90",
 #'nowcasting="bayesian", completetail = 0)
 #'tail(tabela_historico(res))
 #'# User's parameters
@@ -267,23 +267,23 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       }
       
       # check dates
-      last_sinan_date <- lastDBdate(tab = "sinan", cid10 = cid10, cities = cities)
-      print(paste("last sinan date for",cid10 ,"is", last_sinan_date$se))
+      #last_sinan_date <- lastDBdate(tab = "sinan", cid10 = cid10, cities = cities)
+      #print(paste("last sinan date for",cid10 ,"is", last_sinan_date$se))
       
-      assert_that(!is.na(last_sinan_date$se), msg = paste("no sinan data for cid10", cid10)) 
+      #assert_that(!is.na(last_sinan_date$se), msg = paste("no sinan data for cid10", cid10)) 
       
-      if(last_sinan_date$se < datarelatorio) {
-            
-            if (userinput){
-                  message(paste("last date in database is",last_sinan_date$se,
-                                ". Should I continue with SE =", datarelatorio,
-                                "? tecle Y if YES, or change to new date"))
-                  x <- scan("stdin", character(), n = 1)
-                   if(x!="Y") { 
-                         datarelatorio <- as.numeric(x)   
-                         } else {completetail <- 0} # complete the tail with zeros
-            } 
-      }
+      #if(last_sinan_date$se < datarelatorio) {
+      #      
+      #      if (userinput){
+      #            message(paste("last date in database is",last_sinan_date$se,
+      #                          ". Should I continue with SE =", datarelatorio,
+      #                          "? tecle Y if YES, or change to new date"))
+      #            x <- scan("stdin", character(), n = 1)
+      #             if(x!="Y") { 
+      #                   datarelatorio <- as.numeric(x)   
+      #                   } else {completetail <- 0} # complete the tail with zeros
+      #      } 
+      #}
       
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
       if (class(cities) %in% c("integer","numeric")) {
