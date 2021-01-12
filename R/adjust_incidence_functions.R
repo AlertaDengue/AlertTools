@@ -26,7 +26,7 @@
 #'predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'d <- getCases(cities = 3304706, completetail = 0) 
+#'d <- getCases(cities = 4127700, completetail = 0) 
 #'tail(d)
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
@@ -76,13 +76,13 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        message("bayesnowcasting...")
        
        Today <- SE2date(tail(obj$SE, n = 1))$ini + 4 # meio da semana
-       resfit<-try(bayesnowcasting(dados, Dmax,Fim = Today))
+       resfit<-bayesnowcasting(dados, Dmax,Fim = Today)
        
        if(!is.null(resfit)){
          message("bayesnowcasting done")
          # adding to the alert data obj
          obj$tcasesICmin[(le-Dmax):le]<-resfit$LI
-         obj$tcasesmed[(le-Dmax):le]<-resfit$Mean
+         obj$tcasesmed[(le-Dmax):le]<-resfit$Median
          obj$tcasesICmax[(le-Dmax):le]<-resfit$LS
        } else {message("nowcasting failed, returning the original count")}
  }   
@@ -104,7 +104,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'predicted cases-to-be-notified)
 #'@examples
 #' # bayesian
-#'dd <- getdelaydata(cities=3129004, nyears=2, cid10="A90", datasource=con)
+#'dd <- getdelaydata(cities=4127700, nyears=3, cid10="A90", datasource=con)
 #'resfit<-bayesnowcasting(dd)
 #'tail(resfit)
 

@@ -28,7 +28,6 @@ gg <- function(x, dados, idx, Fim.sat, Dmax){
 # Algorithm to get samples for the predictive distribution for the number of cases
 
 nowcasting <- function(output.day, dadosRio.ag, Dm, Fim){
-  
   index.missing = which(is.na(dadosRio.ag$Casos))
   
   
@@ -59,7 +58,9 @@ nowcasting <- function(output.day, dadosRio.ag, Dm, Fim){
 
 # Running INLA for the nowcasting model
 nowcast.INLA <- function(dados.ag, model.day,...){
-  output <- inla(formula = model.day, 
+  
+  output <- tryCatch(
+    {inla(formula = model.day, 
                  family = "nbinomial", 
                  data = dados.ag,
                  num.threads = 4,
@@ -70,7 +71,22 @@ nowcast.INLA <- function(dados.ag, model.day,...){
                  # hyper = list("theta" = list(
                  #   prior = "loggamma", param = c(1, 0.1)))
                  #   )
-  )
+  )},
+  error=function(cond) {
+    message("nowcast failed")
+    message("Here's the original error message:")
+    message(cond)
+    # Choose a return value in case of error
+    return(NULL)
+  },
+  warning=function(cond) {
+    message("nowcast failed")
+    message("Here's the original warning message:")
+    message(cond)
+    # Choose a return value in case of warning
+    return(NULL)
+  })
+  
   output
 }
 
