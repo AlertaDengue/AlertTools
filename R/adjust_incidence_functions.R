@@ -80,7 +80,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        resfit<-bayesnowcasting(dados, Dmax,Fim = Today)
        
        if(!is.null(resfit)){
-         if(resfit$Median > safelimit * sum(tail(obj$casos, n = 5))){
+         if(resfit$Median[le] > safelimit * sum(tail(obj$casos, n = 5))){
            message("nowcast estimate is too large, returning the original count.")
          } else {
            message("bayesnowcasting done")
