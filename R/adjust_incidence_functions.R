@@ -21,6 +21,7 @@
 #'was obtained from Rio de Janeiro. 
 #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
 #'@param nyears for the "bayesian" method. Number of years of data used for fitting the model  
+#'@param safelimit if median estimate is safelimit times sum(tail(cases, n=5)), nowcasting fails. 
 #'@param lastSE for the "bayesian" method. Last epidemiological week to be considered. If NA, will use last digitalization date.
 #'@return data.frame with pdig (proportion reported), median and 95percent confidence interval for the 
 #'predicted cases-to-be-notified)
@@ -35,7 +36,7 @@
 #'tail(resfit)
 
 adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
-                          Dmax=10, nyears = 2, datasource = con, lastSE=NA){
+                          Dmax=10, nyears = 2, datasource = con, lastSE=NA, safelimit = 5){
   
   city <- unique(obj$cidade)  
   cid <- obj$CID10[1]
@@ -79,11 +80,17 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        resfit<-bayesnowcasting(dados, Dmax,Fim = Today)
        
        if(!is.null(resfit)){
-         message("bayesnowcasting done")
-         # adding to the alert data obj
-         obj$tcasesICmin[(le-Dmax):le]<-resfit$LI
-         obj$tcasesmed[(le-Dmax):le]<-resfit$Median
-         obj$tcasesICmax[(le-Dmax):le]<-resfit$LS
+         if(resfit$Median > safelimit * sum(tail(obj$casos, n = 5))){
+           message("nowcast estimate is too large, returning the original count.")
+         } else {
+           message("bayesnowcasting done")
+           # adding to the alert data obj
+           
+           obj$tcasesICmin[(le-Dmax):le]<-resfit$LI
+           obj$tcasesmed[(le-Dmax):le]<-resfit$Median
+           obj$tcasesICmax[(le-Dmax):le]<-resfit$LS   
+         }
+        
        } else {message("nowcasting failed, returning the original count")}
  }   
  

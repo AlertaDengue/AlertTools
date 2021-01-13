@@ -11,7 +11,8 @@ adjustIncidence(
   Dmax = 10,
   nyears = 2,
   datasource = con,
-  lastSE = NA
+  lastSE = NA,
+  safelimit = 5
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ was obtained from Rio de Janeiro.}
 \item{nyears}{for the "bayesian" method. Number of years of data used for fitting the model}
 
 \item{lastSE}{for the "bayesian" method. Last epidemiological week to be considered. If NA, will use last digitalization date.}
+
+\item{safelimit}{if median estimate is safelimit times sum(tail(cases, n=5)), nowcasting fails.}
 }
 \value{
 data.frame with pdig (proportion reported), median and 95percent confidence interval for the 
@@ -44,7 +47,7 @@ is dynamic.
 }
 \examples{
 # fixedprob
-d <- getCases(cities = 2305308) 
+d <- getCases(cities = 4127700, completetail = 0) 
 tail(d)
 resfit<-adjustIncidence(obj = d)
 tail(resfit)
