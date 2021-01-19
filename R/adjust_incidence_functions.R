@@ -27,7 +27,7 @@
 #'predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'d <- getCases(cities = 4127700, completetail = 0) 
+#'d <- getCases(cities = 2304400, completetail = 0) 
 #'tail(d)
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
@@ -80,9 +80,15 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        resfit<-bayesnowcasting(dados, Dmax,Fim = Today)
        
        if(!is.null(resfit)){
-         if(resfit$Median[le] > safelimit * sum(tail(obj$casos, n = 5))){
+         if(tail(resfit$Median, n = 1) > 
+            safelimit * sum(tail(obj$casos, n = 5),na.rm = TRUE)){
            message("nowcast estimate is too large, returning the original count.")
          } else {
+           if(tail(resfit$LS, n = 1) > 
+              10 * safelimit * sum(tail(obj$casos, n = 5),na.rm = TRUE)){
+             message("upper limit nowcasting too large, returning t_cases_max = NA")
+             resfit$LS <- NA
+           }
            message("bayesnowcasting done")
            # adding to the alert data obj
            

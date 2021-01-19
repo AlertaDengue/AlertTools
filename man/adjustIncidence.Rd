@@ -47,7 +47,7 @@ is dynamic.
 }
 \examples{
 # fixedprob
-d <- getCases(cities = 4127700, completetail = 0) 
+d <- getCases(cities = 2304400, completetail = 0) 
 tail(d)
 resfit<-adjustIncidence(obj = d)
 tail(resfit)
