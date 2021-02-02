@@ -272,7 +272,7 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
 #' @param mun_list vector with the municipalities' 7 digit geocodes 
 #' @author Marcelo F C Gomes
 #' @examples
-#' dd <- read.cases(2010, 2018, mun_list = 3302403)
+#' dd <- read.cases(2010, 2020, mun_list = 4212650)
 
 read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
       sqlquery = paste0("SELECT dt_notific, se_notif, ano_notif, c.municipio_geocodigo
@@ -292,6 +292,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
       # In the database we have each single notification. So we'll have to aggregate 
       #later on We'll use an object name "weekly" from the start since we'll overwrite
       #it with the aggregate later.
+      
       df.cases.weekly <- dbGetQuery(conn = datasource, sqlquery, stringsAsFactors=FALSE)
       
       # Auxiliary function to correctly generate SE in the format YYYYWW from columns

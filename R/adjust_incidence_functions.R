@@ -50,7 +50,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   obj$tcasesICmax <- obj$casos
   
   if(sum(tail(obj$casos, n = 52), na.rm = TRUE) <= 50 | 
-         sum(tail(obj$casos, n = 4)) <= 5){
+         sum(tail(obj$casos, n = 4), na.rm = TRUE) <= 5){
     message("less than 50 cases in the last 12 months or less than 5 cases in the last month. Nowcasting not done")
     return(obj)
   } 

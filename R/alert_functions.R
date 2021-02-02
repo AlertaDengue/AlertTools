@@ -927,11 +927,13 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
 #'@examples
 #'# Parameters for the model 
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2016-08-12",nowcasting="none")
 #'restab <- tabela_historico(res)
 #'# NOT RUN 
-#'write_alerta(restab[1:2,])
+#'t1 <- Sys.time()
+#'write_alerta(restab)
+#'t2 <- Sys.time() - t1
 
 write_alerta<-function(d, datasource = con){
       
@@ -1002,8 +1004,13 @@ write_alerta<-function(d, datasource = con){
       }
       
       # escrevendo
-      1:nrow(d) %>% map(escreve_linha)
-      print("done")
+      try(dbGetQuery(datasource, "BEGIN TRANSACTION;"))  ##  start a transaction 
+      
+      1:nrow(d) %>% map(escreve_linha)  ## the  sql inserts will only be processed after the end of the transaction 
+      
+      try(dbGetQuery(datasource, "COMMIT TRANSACTION;")) ## finish the transaction and insert the lines 
+      ## in case of failure is possible to roll back (undo) 
+      ## ROLLBACK TRANSACTION;
 }
 
 

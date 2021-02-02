@@ -40,17 +40,18 @@
 #'  limiar_epidemico.}    
 #'    }
 #' @examples
-#' Generate thresholds for Rio de Janeiro, Curitiba and Vitoria, using the whole history. 
+#' Generate thresholds for municipalities using the whole history. 
 #' Return object instead of writing to data base:
-#' mun_list <- c(4106902, 3205309)
+#' mun_list <- c(4212650, 4200101,4216503,4214607,4212502,4218905,4212601,4214805,
+#' 4212650,4217006,4212700,4214706,4213104,4200804)
 #' mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
-#' thresMA <- infodengue_apply_mem(mun_list,database=con)
+#' thres <- infodengue_apply_mem(mun_list[1], database=con)
 #' 
 #' A nice way to visualize the calculated thresholds
 #' plot(thresMG) 
 #' 
 #' Write to database instead of returning object requires password:
-#' thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10], write='db')
+#' thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10])
 
 
 infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
@@ -65,19 +66,16 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
   
   #stopifnot(is.numeric(mun_list),"MEM: mun_list should be a numeric vector")       
   # Read population table
-  sqlquery = paste("SELECT  geocodigo as municipio_geocodigo, populacao
-  FROM  \"Dengue_global\".\"Municipio\" AS m 
-  INNER JOIN \"Dengue_global\".regional_saude as f
-  ON m.geocodigo = f.municipio_geocodigo")
-            
-  df.pop <- dbGetQuery(conn=con, sqlquery)
+  sqlcity = paste("'", str_c(mun_list, collapse = "','"),"'", sep="")
+  
+  comando <- paste0("SELECT geocodigo, populacao FROM 
+                   \"Dengue_global\".\"Municipio\" WHERE geocodigo
+                   IN (", sqlcity, ")")
+  
+  df.pop <- dbGetQuery(conn=con, comando)
+  names(df.pop)[1] <- "municipio_geocodigo"
   
   # Process data in chuncks for 300 municipalities at a time:
-  if (is.null(mun_list)){
-    mun_list <- unique(df.pop$municipio_geocodigo)
-  } else {
-    df.pop <- df.pop[df.pop$municipio_geocodigo %in% mun_list,]
-  }
   mun_list <- split(mun_list, ceiling(seq_along(mun_list)/20))
   
   # Prepare output data table
@@ -89,7 +87,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
   for (mun_chunck in mun_list){
         print(mun_chunck)
     # Read historical cases table
-    df.inc <- read.cases(start_year, end_year, mun_list=mun_chunck)
+    df.inc <- read.cases(start_year, end_year, mun_list=mun_chunck)  # o que acontece quando nao ha casos?
     effec_start_year <- min(round(df.inc$SE/100))
     # Build incidence
     df.inc <- merge.data.frame(df.inc, df.pop, by='municipio_geocodigo')
@@ -111,9 +109,9 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
     # Apply quantile method (new)
     quantile.tab <- df.inc %>% 
           group_by(municipio_geocodigo) %>%
-          summarise(quant_pre = max(mincases.pre, quantile(casos, probs = 0.10))/mean(populacao)*1e5,
-                    quant_pos = max(mincases.pre,quantile(casos, probs = 0.10))/mean(populacao)*1e5,
-                    quant_epidemico = max(mincases.epi,quantile(casos, probs = limiar.epidemico))/mean(populacao)*1e5)
+          summarise(quant_pre = max(mincases.pre, quantile(casos, probs = 0.10), na.rm = TRUE)/mean(populacao)*1e5,
+                    quant_pos = max(mincases.pre,quantile(casos, probs = 0.10), na.rm = TRUE)/mean(populacao)*1e5,
+                    quant_epidemico = max(mincases.epi,quantile(casos, probs = limiar.epidemico), na.rm = TRUE)/mean(populacao)*1e5)
     
     # Apply mem method
     thresholds.tab <- data.table(municipio_geocodigo=mun_chunck)
@@ -121,9 +119,11 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
     thresholds <- applymem(dfsimple, seasons, i.n.max=i.n.max, i.level.threshold=limiar.preseason,
                            i.level.intensity=limiar.epidemico,
                            i.type.curve=i.type.curve, i.type.threshold=i.type.threshold,
-                           i.type.intensity=i.type.intensity, ...)$dfthresholds#[base.cols]
-    thresholds.tab <- merge(thresholds.tab, thresholds, by='municipio_geocodigo', all=TRUE) # mem calcula limiar em incidencia
-    thresholds.tab <- merge(thresholds.tab, df.pop, by='municipio_geocodigo', all.x = TRUE) # agrega pop para calcular casos
+                           i.type.intensity=i.type.intensity)$dfthresholds#[base.cols]
+    if(class(thresholds == list())){
+      thresholds.tab <- merge(thresholds.tab, thresholds, by='municipio_geocodigo', all=TRUE) # mem calcula limiar em incidencia  
+    }
+      thresholds.tab <- merge(thresholds.tab, df.pop, by='municipio_geocodigo', all.x = TRUE) # agrega pop para calcular casos
     thresholds.tab <- merge(thresholds.tab, quantile.tab, by='municipio_geocodigo', all.x = TRUE) # agrega pop para calcular casos
     thresholds.tab <- thresholds.tab %>%
           mutate(mininc_pre = mincases.pre/populacao*1e5,
