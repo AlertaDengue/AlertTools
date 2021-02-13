@@ -16,34 +16,45 @@
 #' per bairro)  
 #'@param method "fixedprob" for fixed delay prob per week; "bayesian" for the 
 #'dynamic model . If "none" just repeats case values
-#'@param pdig for the "fixedprob" method. It is a vector of probability of been typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
-#'The length of the vector corresponds to the maximum delay. After day, it is assumed that p = 1. The default
-#'was obtained from Rio de Janeiro. 
+#'@param pdig for the "fixedprob" method. It is a vector of probability of been 
+#'typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
+#'The length of the vector corresponds to the maximum delay. After day, it is 
+#'assumed that p = 1. The default was obtained from Rio de Janeiro. 
 #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
 #'@param nyears for the "bayesian" method. Number of years of data used for fitting the model  
-#'@param safelimit if median estimate is safelimit times sum(tail(cases, n=5)), nowcasting fails. 
-#'@param lastSE for the "bayesian" method. Last epidemiological week to be considered. If NA, will use last digitalization date.
-#'@return data.frame with pdig (proportion reported), median and 95percent confidence interval for the 
-#'predicted cases-to-be-notified)
+#'@param safelimit if median estimate is larger than 'safelimit' times 
+#''sum(tail(cases, n=5))', nowcasting fails. 
+#'@param nowSE for the "bayesian" method. Epidemiological week to be considered 
+#'for the nowcast. If NA, the maximum SE in obj is used.
+#'@return data.frame with pdig (proportion reported), median and 95percent 
+#'confidence interval for the predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'d <- getCases(cities = 4126306, dataini = "sinpri", completetail = 0) 
+#'d <- getCases(cities = 4124053, dataini = "sinpri", completetail = 0) 
 #'tail(d)
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
 #' # bayesian
-#'resfit2<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
-#'tail(resfit)
+#'resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202105, datasource = con)
+#'tail(resfit2)
 
 adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
-                          Dmax=10, nyears = 2, datasource = con, lastSE=NA, safelimit = 5){
+                          Dmax=10, nyears = 2, datasource = con, nowSE=NA, safelimit = 5){
   
   city <- unique(obj$cidade)  
   cid <- obj$CID10[1]
   # checking if only one city in obj
   assert_that(length(city) == 1, msg = "adjustIncidence only works for one city at a time.")
-  
+
   le = nrow(obj) 
+  
+  # checking date
+  if(is.na(nowSE)) {
+    lastSE <- obj$SE[le]}   # last date in the input object
+  else{
+    assert_that(nowSE <= max(obj$SE), msg = "adjustIncidence: lastSE larger than max(obj$SE). Check input.")
+    obj <- subset(obj, SE <= nowSE)  # assigned input
+  }
   
   obj$tcasesICmin <- obj$casos
   obj$tcasesmed <- obj$casos
@@ -72,12 +83,12 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
          }
   
  if (method == "bayesian"){
-       message("computing nowcasting...")
-       dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, datasource = datasource)
+       message(paste("computing nowcasting for city ",city," date ",nowSE, "..."))
+       nowday <- SE2date(nowSE)$ini + 6
+       dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, lastday = nowday, datasource = datasource)
        message("bayesnowcasting...")
        
-       Today <- SE2date(tail(obj$SE, n = 1))$ini 
-       resfit<-bayesnowcasting(dados, Dmax,Fim = Today)
+       resfit<-bayesnowcasting(dados, Dmax,Fim = nowday)
        
        if(!is.null(resfit)){
          if(tail(resfit$Median, n = 1) > 
@@ -88,13 +99,18 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
               10 * safelimit * sum(tail(obj$casos, n = 5),na.rm = TRUE)){
              message("upper limit nowcasting too large, returning t_cases_max = NA")
              resfit$LS <- NA
+           expl <- which(resfit$LS > 10000)  # check if any LS was too big
+           resfit$LS[expl] <- NA
+           message("upper limit nowcarting too large in some dates, returning t_cases_max = NA")
            }
            message("bayesnowcasting done")
            # adding to the alert data obj
            
-           obj$tcasesICmin[(le-Dmax):le]<-resfit$LI
-           obj$tcasesmed[(le-Dmax):le]<-resfit$Median
-           obj$tcasesICmax[(le-Dmax):le]<-resfit$LS   
+           for(se in resfit$SE) {
+             rse <- which(resfit$SE == se)
+             obj[obj$SE == se, c("tcasesICmin", "tcasesmed", "tcasesICmax")] <- 
+               c(resfit$LI[rse], resfit$Median[rse], resfit$LS[rse])  
+           }
          }
         
        } else {message("nowcasting failed, returning the original count")}
