@@ -245,8 +245,8 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(uf = "Ceará",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[6], cid10 = "A90",
-#'nowcasting="bayesian", completetail = 0)
+#'res <- pipe_infodengue(cities = 4126306, cid10 = "A90",
+#'nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202105)
 #'tail(tabela_historico(res))
 #'# User's parameters
 #'dd <- read.parameters(cities = c(3200300)) %>% mutate(limiar_epidemico = 100)
@@ -328,7 +328,8 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       # Reading Cases
       print("Obtendo dados de notificacao ...")
       
-      casos <- getCases(cidades, lastday = finalday, cid10 = cid10, completetail = completetail) %>%
+      casos <- getCases(cidades, lastday = finalday, cid10 = cid10, 
+                        dataini = dataini, completetail = completetail) %>%
             mutate(inc = casos/pop*100000)
       
       # Reading tweets 

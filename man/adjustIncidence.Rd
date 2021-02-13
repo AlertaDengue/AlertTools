@@ -47,11 +47,11 @@ is dynamic.
 }
 \examples{
 # fixedprob
-d <- getCases(cities = 2304400, completetail = 0) 
+d <- getCases(cities = 4126306, dataini = "sinpri", completetail = 0) 
 tail(d)
 resfit<-adjustIncidence(obj = d)
 tail(resfit)
 # bayesian
-resfit<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
+resfit2<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
 tail(resfit)
 }

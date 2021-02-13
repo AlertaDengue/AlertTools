@@ -27,12 +27,12 @@
 #'predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'d <- getCases(cities = 2304400, completetail = 0) 
+#'d <- getCases(cities = 4126306, dataini = "sinpri", completetail = 0) 
 #'tail(d)
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
 #' # bayesian
-#'resfit<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
+#'resfit2<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
 #'tail(resfit)
 
 adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
@@ -76,7 +76,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, datasource = datasource)
        message("bayesnowcasting...")
        
-       Today <- SE2date(tail(obj$SE, n = 1))$ini + 4 # meio da semana
+       Today <- SE2date(tail(obj$SE, n = 1))$ini 
        resfit<-bayesnowcasting(dados, Dmax,Fim = Today)
        
        if(!is.null(resfit)){
@@ -117,9 +117,9 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'predicted cases-to-be-notified)
 #'@examples
 #' # bayesian
-#'dd <- getdelaydata(cities=4127700, nyears=3, cid10="A90", datasource=con)
+#'dd <- getdelaydata(cities=4126306, nyears=3, cid10="A90", datasource=con)
 #'resfit<-bayesnowcasting(dd)
-#'tail(resfit)
+#'resfit
 
 bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date()){
   
