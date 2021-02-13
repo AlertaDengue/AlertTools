@@ -50,7 +50,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   
   # checking date
   if(is.na(nowSE)) {
-    lastSE <- obj$SE[le]}   # last date in the input object
+    nowSE <- obj$SE[le]}   # last date in the input object
   else{
     assert_that(nowSE <= max(obj$SE), msg = "adjustIncidence: lastSE larger than max(obj$SE). Check input.")
     obj <- subset(obj, SE <= nowSE)  # assigned input
