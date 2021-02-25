@@ -35,7 +35,7 @@
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
 #' # bayesian
-#'resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202105, datasource = con)
+#'resfit2<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
 #'tail(resfit2)
 
 adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
@@ -133,7 +133,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'predicted cases-to-be-notified)
 #'@examples
 #' # bayesian
-#'dd <- getdelaydata(cities=4126306, nyears=3, cid10="A90", datasource=con)
+#'dd <- getdelaydata(cities=4126306, nyears=2, cid10="A90", datasource=con)
 #'resfit<-bayesnowcasting(dd)
 #'resfit
 

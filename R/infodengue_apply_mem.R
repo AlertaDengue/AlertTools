@@ -42,13 +42,13 @@
 #' @examples
 #' Generate thresholds for municipalities using the whole history. 
 #' Return object instead of writing to data base:
-#' mun_list <- c(4212650, 4200101,4216503,4214607,4212502,4218905,4212601,4214805,
+#' mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 #' 4212650,4217006,4212700,4214706,4213104,4200804)
 #' mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
-#' thres <- infodengue_apply_mem(mun_list[1], database=con)
+#' thres <- infodengue_apply_mem(mun_list[1:2], database=con)
 #' 
 #' A nice way to visualize the calculated thresholds
-#' plot(thresMG) 
+#' plot(thres) 
 #' 
 #' Write to database instead of returning object requires password:
 #' thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10])
@@ -116,22 +116,32 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
     # Apply mem method
     thresholds.tab <- data.table(municipio_geocodigo=mun_chunck)
     base.cols <- c('municipio_geocodigo', 'pre', 'pos', 'veryhigh')
-    thresholds <- applymem(dfsimple, seasons, i.n.max=i.n.max, i.level.threshold=limiar.preseason,
+    thresholds <- data.frame(municipio_geocodigo = mun_chunck,
+                            pre = NA_real_, pos = NA_real_, veryhigh = NA_real_,
+                            inicio = NA_real_, inicio.ic = NA_real_, 
+                            duracao = NA_real_, duracao.ic = NA_real_)
+    thresholdsMEM <- try(applymem(dfsimple, seasons, i.n.max=i.n.max, i.level.threshold=limiar.preseason,
                            i.level.intensity=limiar.epidemico,
                            i.type.curve=i.type.curve, i.type.threshold=i.type.threshold,
-                           i.type.intensity=i.type.intensity)$dfthresholds#[base.cols]
-    if(class(thresholds == list())){
+                           i.type.intensity=i.type.intensity)$dfthresholds)#[base.cols]
+    if(ncol(thresholdsMEM) > 1) thresholds <- thresholdsMEM
+    #if(class(thresholds == list())){
       thresholds.tab <- merge(thresholds.tab, thresholds, by='municipio_geocodigo', all=TRUE) # mem calcula limiar em incidencia  
-    }
+    #}
       thresholds.tab <- merge(thresholds.tab, df.pop, by='municipio_geocodigo', all.x = TRUE) # agrega pop para calcular casos
     thresholds.tab <- merge(thresholds.tab, quantile.tab, by='municipio_geocodigo', all.x = TRUE) # agrega pop para calcular casos
     thresholds.tab <- thresholds.tab %>%
           mutate(mininc_pre = mincases.pre/populacao*1e5,
                  mininc_pos = mincases.pos/populacao*1e5,
-                 mininc_epi = mincases.epi/populacao*1e5,
-                limiar_preseason = case_when(pre > mininc_pre ~ pre, TRUE ~ quant_pre),
-                 limiar_posseason = case_when(pos > mininc_pos ~ pos, TRUE ~ quant_pos),
-                 limiar_epidemico = case_when(veryhigh > mininc_epi ~ veryhigh, TRUE ~ quant_epidemico)) %>%
+                 mininc_epi = mincases.epi/populacao*1e5)
+    
+    thresholds.tab <- thresholds.tab %>%
+      mutate(limiar_preseason = case_when(
+                  as.numeric(is.na(pre)) == 0 & pre > mininc_pre ~ pre, TRUE ~ quant_pre),
+                 limiar_posseason = case_when(
+                   as.numeric(is.na(pos)) == 0 & pos > mininc_pos ~ pos, TRUE ~ quant_pos),
+                 limiar_epidemico = case_when(
+                   as.numeric(is.na(veryhigh)) == 0 &  veryhigh > mininc_epi ~ veryhigh, TRUE ~ quant_epidemico)) %>%
           rename(inc_preseason = pre,
                  inc_posseason = pos,
                  inc_epidemico = veryhigh)
