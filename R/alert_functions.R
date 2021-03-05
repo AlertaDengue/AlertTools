@@ -411,72 +411,71 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
 
 
 
-#alertaRio ---------------------------------------------------------------------
-#'@title 4 level alert Green-Yellow-Orange-Red for Rio de Janeiro.
+#pipe_infodengue_intra ---------------------------------------------------------------------
+#'@title 4 level alert Green-Yellow-Orange-Red for partitions within municipalities.
 #'@description Yellow is raised when environmental conditions required for
 #'positive mosquito population growth are detected, green otherwise.Orange 
 #'indicates evidence of sustained transmission, red indicates evidence of 
 #'an epidemic scenario.  
 #'@export
-#'@param naps subset of vector 0:9 corresponding to the id of the APS. Default is all of them.
+#'@param city geocode (one city at a time). Currently only works for Rio.
+#'@param locs subset of localities. Currently not used.  
 #'@param se last epidemiological week (format = 201401) 
 #'@param iniSE first epidemiological week
 #'@param cid10 default is A90 (dengue). Chik = A920.
 #'@param narule how to fill climate missing data (arima is the only option)
-#'@param delaymethod atribbute of adjuntincidence. "fixedprob" or "bayesian"
-#'@param pdig parameters for adjustIncidence = "fixedprob"
+#'@param delaymethod "none" (Default) or "bayesian"
+#'@param dataini "sinpri" or "notif". Default = "sinpri" 
 #'@param datasource name of the sql connection.
 #'@return list with an alert object for each APS.
 #'@examples
-#'alerio1 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A90")
-#'alerio2 <- alertaRio(naps = 0:2, se=201952, delaymethod="fixedprob", cid10 = "A920")
-#'delaymethod="fixedprob",verbose=FALSE,dataini = "sinpri")
-alertaRio <- function(naps = 0:9, se, cid10 = "A90", iniSE = 201001,
-                      delaymethod = "fixedprob", narule="arima", 
-                      pdig = c(2.5016,1.1013), datasource=con){
+#'alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
+#' cid10 = "A90", dataini = "sinpri")
+
+pipe_infodengue_intra <- function(city, locs, se, cid10 = "A90", iniSE = 201001,
+                      delaymethod = "none", narule="arima", 
+                      dataini = "sinpri", datasource=con){
       
-      assert_that(narule == "arima", msg = "alertaRio: arima is the only na fill method available")
-      assert_that(cid10 %in% c("A90","A920"), msg = "alertaRio: cid10 = A90 for dengue or cid10 = A920 for chik" )
+      assert_that(narule == "arima", msg = "alerta_intra: arima is the only na fill method available")
+      assert_that(cid10 %in% c("A90","A920","A92.8"), msg = "alerta_intra: check cid10" )
+      assert_that(length(city) == 1, msg = "alerta_intra: works for one city at a time.")
       
       if(missing(se)) se = data2SE(days = Sys.Date(), format = "%Y-%m-%d")
       
       # getting parameters and criteria
-      crit.x <- read.parameters(3304557, cid10 = cid10)
+      crit.x <- read.parameters(city, cid10 = cid10)
       crit.x.vector <- structure(as.character(crit.x), names = as.character(names(crit.x))) # dataframe -> vector
       crit <- setCriteria(rule = "Af", values = crit.x.vector)
       
       # reading data
       message("lendo dados ...")
-      print(paste("Ultimos registros de",cid10,":",
-                        lastDBdate("sinan", cities=3304557,cid10 = cid10)[["se"]]))
-      print(paste("Ultimos registros de tweets:",
-                        lastDBdate("tweet", cid10 = cid10, cities=3304557)$se))
+      #print(paste("Ultimos registros de",cid10,":",
+      #                  lastDBdate("sinan", cities=3304557,cid10 = cid10)[["se"]]))
+      #print(paste("Ultimos registros de tweets:",
+      #                  lastDBdate("tweet", cid10 = cid10, cities=3304557)$se))
       
-      
-      cas = getCasesinRio(APSid = naps, cid10 = cid10)
-      cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min")
+
+      cas = getCasesinRio(APSid = 0:9, cid10 = cid10,dataini = dataini)  ## need to change to include other cities
+      cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min") # too
       if(cid10 == "A90") {
-            tw <- getTweet(cities = 3304557, cid10="A90")[,c("SE","tweet")]
+            tw <- getTweet(cities = city, cid10="A90")[,c("SE","tweet")]
       }else {
             tw <- data.frame(SE = seqSE(from = min(cas$SE), to = max(cas$SE))$SE,
                                    tweet = NA)
       }
       
-                  
-      
       # nowcasting and Rt parameters 
       if(cid10=="A90") meangt = 3 # 3 weeks
       if(cid10=="A920") meangt = 2 # 2 weeks
-      if(delaymethod == "fixedprob") p <- plnorm(seq(7,20,by=7), pdig[1], pdig[2])
       
-      # output object 
+      # output object # too
       APS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
-               , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")[(naps + 1)]    
+               , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")
       res <- vector("list", length(APS))
       names(res) <- APS
       
       # Function to calculate alert per aps
-      calc.alertaRio <- function(aps){
+      calc.alertaintra <- function(aps){
             
             cli.aps <- cli %>%
                   filter(estacao == 
@@ -502,14 +501,14 @@ alertaRio <- function(naps = 0:9, se, cid10 = "A90", iniSE = 201001,
                         tail(y$indices$level,1)))
             y
       }      
-      
-      res <- lapply(naps, calc.alertaRio) %>% setNames(APS) # antes o nome era character, agora e o geocodigo
+      naps <- 0:9
+      res <- lapply(naps, calc.alertaintra) %>% setNames(APS) # antes o nome era character, agora e o geocodigo
       #       nick <- gsub(" ", "", nome, fixed = TRUE)
       #       #names(alerta) <- nick
       
       
       #if (writedb == TRUE) write_alerta(alerta, write = "db")  
-      class(res) <- "alertario"
+      class(res) <- "alerta_intra"
       res
 }
 
@@ -917,6 +916,80 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
  d1
 }
 
+
+#tabela_historico_intra --------------------------------------------------------------------
+#'@title Convert the alert object into a data.frame and calculate indicators for cities with subdivisions
+#'@description Function to organize the alert results for easy reading and inserting 
+#'in the database. Specific for municipalities with subdivisions. 
+#'@export
+#'@param obj object created by the pipeline.
+#'@param ini_se first week of the table. Default is the first date in obj.
+#'@param last_se last week of the table. Default is the last date in obj. To do.
+#'@param versao Default is current's date
+#'@return data.frame with the data to be written. 
+#'@examples
+#'NOT RUN without connection
+#'# Rio de Janeiro
+#'alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
+#' cid10 = "A90", dataini = "sinpri")
+#'restab <- tabela_historico_intra(alerio, iniSE = 201801) 
+#'tail(restab)
+
+tabela_historico_intra <- function(obj, iniSE, lastSE, versao = Sys.Date()){
+  
+  assert_that(class(obj) == "alerta_intra", msg = "tabela_historico_mun: obj must be of class alerta_intra.")
+  
+  # --------- create single data.frame ------------------#
+  data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
+  indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices
+    
+  d <- cbind(data, indices)
+  
+  # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
+  gera_id <- function(x) paste(data$cidade[x], data$Localidade_id[x], data$SE[x], 
+                               as.character(julian(versao)), sep="")
+  d$id <- sapply(1:nrow(data), gera_id) 
+  
+  # ---------- filtering dates -------------------------#
+  if(missing(iniSE)) iniSE <- 0
+  if(missing(lastSE)) lastSE <- 300000
+  
+  d <- d %>%
+    filter(SE >= iniSE & SE <= lastSE) %>% 
+    rename(municipio_geocodigo = cidade,
+           municipio_nome = nome,
+           casos_est = tcasesmed,
+           casos_est_min = tcasesICmin,
+           casos_est_max = tcasesICmax,
+           nivel = level) %>%
+    mutate(p_rt1 = ifelse(is.na(p1),0,p1),
+           p_inc100k =casos_est/populacao*1e5,
+           Localidade_id  = ifelse(is.na(localidade),0,localidade),
+           data_iniSE = SE2date(SE)$ini,
+           versao_modelo = as.character(versao))
+  d$Rt[is.na(d$Rt)] <- 0
+  
+  pars <- read.parameters(d$municipio_geocodigo, cid10 = d$CID10[1])
+  
+  d <- d %>%   # new stuff
+    rename(
+      receptivo = cytrue,  # weeks with receptive conditions
+      transmissao = cotrue)   # weeks with sustained transm
+  
+  d1 <- d %>%
+    left_join(pars[2:5]) %>%
+    mutate(  # compating estimated incidence with thresholds
+      nivel_inc = case_when(
+        p_inc100k < limiar_preseason ~ 0,
+        p_inc100k >= limiar_preseason & p_inc100k < limiar_epidemico ~ 1,
+        p_inc100k > limiar_epidemico ~ 2
+      )
+    )
+  
+  d1
+}
+
+
 #write_alerta --------------------------------------------------------------------
 #'@title Write historico_alerta into the database.
 #'@description Function to write the pipeline results into the database. 
@@ -1020,73 +1093,58 @@ write_alerta<-function(d, datasource = con){
 #'@title Write the Rio de janeiro alert into the database.
 #'@description Function to write the alert results into the database. 
 #'@export
-#'@param obj object created by the alertRio function and contains alerts for each APS.
-#'@param write use "db" if data.frame should be inserted into the project database,
-#' or "no" (default) if nothing is saved. 
+#'@param obj object created by the tabela_historico_intra function and contains alerts for each locality.
 #'@param version default is the current date
 #'@return data.frame with the data to be written. 
 #'@examples
-#'params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
-#'criter <- setCriteria(rule="Af", values = params)
-#'alerio2 <- alertaRio(naps = c(1,2), crit = criter, datasource=con, se = 201201)
+
 #'res <- write_alertaRio(alerio2, write="no")
 #'tail(res)  
 
 write_alertaRio<-function(obj, write = "no", datasource = con, version = Sys.Date()){
       
-      # check input
-      assert_that(class(obj) == "alertario", msg = "write_alertaRio: obj is an alertaRio object" )
+  # check input
+  assert_that(class(obj) == "data.frame", msg = "write_alertaRio: obj should
+                  be an output from tabela_historico_intra.")
+  
+
+  listaAPS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
+              , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")
+  APSlabel <- c("1.0", "2.1", "2.2", "3.1", "3.2", "3.3","4.0","5.1","5.2","5.3")
+  cid10 <- obj$CID10[1]
       
-      
-      listaAPS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
-                    , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")
-      APSlabel <- c("1.0", "2.1", "2.2", "3.1", "3.2", "3.3","4.0","5.1","5.2","5.3")
-      cid10 <- obj[[1]]$data$CID10[1]
-      
-      dados <- data.frame()
-      n <- length(obj)
-      for (i in 1:n){
-            data <- obj[[i]]$data
-            indices <- obj[[i]]$indices   
-            
-            # creating the data.frame with the required columns
-            d <- data %>%
-                  rename(se = SE,
-                         casos_est = tcasesmed,
-                         casos_estmin = tcasesICmin,
-                         casos_estmax = tcasesICmax,
-                         tmin = temp_min,
-                         tweets = tweet,
-                         rt = Rt,
-                         prt1 = p1) %>%
-                  mutate(data = SE2date(se)$ini,
-                         aps = APSlabel[(localidadeid[1]+1)],
-                         nivel = indices$level,
-                         prt1 = replace_na(prt1, 0)) %>%
-                  arrange(se) %>% 
-                  select(-pdig)
-            dados <- rbind(dados,d)
-      }
+          # creating the data.frame with the required columns
+  d <- obj %>%
+    rename(se = SE,
+           casos_estmin = casos_est_min,
+           casos_estmax = casos_est_max,
+           tmin = temp_min,
+           tweets = tweet,
+           rt = Rt,
+           prt1 = p_rt1) %>%
+    mutate(data = SE2date(se)$ini,
+           aps = APSlabel[(localidadeid[1]+1)],
+           prt1 = replace_na(prt1, 0)) %>%
+    arrange(se) 
            
-      if(write == "db"){
+  # escrevendo        
+  # nome da tabela no banco de dados e do respectivo constraint 
+  if (cid10 == "A90") {tabela <- "alerta_mrj"; sqlconstr = "unique_aps_se"}
+  if (cid10 == "A92.0") {tabela <- "alerta_mrj_chik"; sqlconstr = "unique_chik_aps_se"}
             
-            # nome da tabela no banco de dados e do respectivo constraint 
-            if (cid10 == "A90") {tabela <- "alerta_mrj"; sqlconstr = "unique_aps_se"}
-            if (cid10 == "A92.0") {tabela <- "alerta_mrj_chik"; sqlconstr = "unique_chik_aps_se"}
-            
-            # se tiver ja algum registro com mesmo aps e SE, esse sera substituido pelo atualizado.
-            # ------ vars to write            
-            varnames <- "(se,aps,data,tweets,casos,casos_est,casos_estmin,casos_estmax,tmin,rt,prt1,
+  # se tiver ja algum registro com mesmo aps e SE, esse sera substituido pelo atualizado.
+  # ------ vars to write            
+  varnames <- "(se,aps,data,tweets,casos,casos_est,casos_estmin,casos_estmax,tmin,rt,prt1,
                         inc,nivel)"
-            sepvarnames <- c("se","aps","data","tweets","casos","casos_est","casos_estmin","casos_estmax",
+  sepvarnames <- c("se","aps","data","tweets","casos","casos_est","casos_estmin","casos_estmax",
                                    "tmin","rt","prt1","inc","nivel")
             
-            # ------ sql command
-            varnames.sql <- str_c(sepvarnames, collapse = ",")
-            updates = str_c(paste(sepvarnames,"=excluded.",sepvarnames,sep=""),collapse=",") # excluidos, se duplicado
+   # ------ sql command
+   varnames.sql <- str_c(sepvarnames, collapse = ",")
+   updates = str_c(paste(sepvarnames,"=excluded.",sepvarnames,sep=""),collapse=",") # excluidos, se duplicado
             
-            escreve_linha <- function(li){
-                  vetor <- dados[li,sepvarnames]
+   escreve_linha <- function(li){
+                  vetor <- d[li,sepvarnames]
                   linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"','", 
                                 as.character(vetor[1,3]),"',", 
                                 str_c(vetor[1,4:13], collapse=","), sep="")
@@ -1097,14 +1155,21 @@ write_alertaRio<-function(obj, write = "no", datasource = con, version = Sys.Dat
                                UPDATE SET ",updates, sep="")
                   try(dbGetQuery(datasource, insert_sql2))    
                   
-            }
-            # escrevendo
-            1:nrow(dados) %>% map(escreve_linha)
-            refresh_sql = "REFRESH MATERIALIZED VIEW uf_total_view;"
-            try(dbGetQuery(datasource, refresh_sql))
-            message(paste("dados escritos na tabela", tabela))
+   }
+  # escrevendo
+   
+   try(dbGetQuery(datasource, "BEGIN TRANSACTION;"))  ##  start a transaction 
+    
+   1:nrow(d) %>% map(escreve_linha)
+   
+   try(dbGetQuery(datasource, "COMMIT TRANSACTION;")) 
+   
+   refresh_sql = "REFRESH MATERIALIZED VIEW uf_total_view;"
+   try(dbGetQuery(datasource, refresh_sql))
+   
+   message(paste("dados escritos na tabela", tabela))
             
-      }
+      
       dados
 }
       

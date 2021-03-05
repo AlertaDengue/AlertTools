@@ -361,11 +361,10 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
 #'@examples
 #'dC = getCasesinRio(APSid = 0:9, datasource = con) # Rio de Janeiro
 #'# Chikungunya:
-#'dC1 = getCasesinRio(APSid = 0, cid10 = "A90", datasource = con) # Rio de Janeiro
 #'dC1s = getCasesinRio(APSid = 0, cid10 = "A920", dataini = "sinpri", datasource = con) # Rio de Janeiro
 #'tail(dC1)
 
-getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="notific",
+getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="sinpri",
                           datasource = con) {
       
       #dealing with synonimous cid
@@ -398,13 +397,14 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="n
       # query pop from table Municipio.localidade (only has data for Rio)
       sql2 <- paste("SELECT nome,id,populacao from \"Municipio\".\"Localidade\" WHERE id IN(", sqlaps, ")") 
       pop <- dbGetQuery(datasource,sql2)
-      if(dataini=="sinpri") for(i in 1:nsem) st$casos[i] <- sum(d$SEM_INI == st$SE[i])
-      print(paste("calculating incidence using", dataini))
+      
+      #if(dataini=="sinpri") for(i in 1:nsem) st$casos[i] <- sum(d$SEM_INI == st$SE[i])
+      #print(paste("calculating incidence using", dataini))
       
       # agregando casos por semana por cidade 
       if(dataini == "notific"){
             message("case aggregated by notification date")
-            casos = d %>% 
+            casos <- d %>% 
                   mutate(SE = ano_notif*100+se_notif) %>%
                   group_by(id,SE) %>%
                   summarise(casos = n(),
@@ -413,22 +413,24 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="n
       
       if(dataini == "sinpri"){
             message("case aggregated by symptoms date")
-            casos = d %>% 
+            casos <- d %>% 
                   mutate(ano_sinpri = lubridate::year(dt_sin_pri),
                          SE = ano_sinpri*100+se_sin_pri) %>%
+              group_by(id,SE) %>%
                   summarise(casos = n(),
                             localidade = unique(nome))
       }
       
       
       # criando serie temporal
+      lastSE <- data2SE(lastday, format = "%Y-%m-%d")  
       sem <-  expand.grid(id = unique(casos$id), SE = seqSE(from = 201001, 
-                        to = max(casos$SE, na.rm=TRUE))$SE)
+                        to = lastSE[1])$SE)
       st <- left_join(sem,casos,by = c("id", "SE")) %>% 
             arrange(id,SE) %>%
             left_join(.,pop[,c("id","populacao")],"id") %>%
             rename(localidadeid = id) %>%
-            mutate(cidade = 3304557,
+            mutate(cidade = city,
                    nome = "Rio de Janeiro",
                    casos = replace_na(casos, 0),
                    CID10 = cid10) %>% 

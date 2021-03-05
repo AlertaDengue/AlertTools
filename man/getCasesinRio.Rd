@@ -8,7 +8,7 @@ getCasesinRio(
   APSid,
   lastday = Sys.Date(),
   cid10 = "A90",
-  dataini = "notific",
+  dataini = "sinpri",
   datasource = con
 )
 }
@@ -33,7 +33,6 @@ Get time series of cases per APS in Rio de Janeiro (special case)
 \examples{
 dC = getCasesinRio(APSid = 0:9, datasource = con) # Rio de Janeiro
 # Chikungunya:
-dC1 = getCasesinRio(APSid = 0, cid10 = "A90", datasource = con) # Rio de Janeiro
 dC1s = getCasesinRio(APSid = 0, cid10 = "A920", dataini = "sinpri", datasource = con) # Rio de Janeiro
 tail(dC1)
 }

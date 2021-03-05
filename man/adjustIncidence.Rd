@@ -11,7 +11,7 @@ adjustIncidence(
   Dmax = 10,
   nyears = 2,
   datasource = con,
-  lastSE = NA,
+  nowSE = NA,
   safelimit = 5
 )
 }
@@ -23,21 +23,24 @@ per bairro)}
 \item{method}{"fixedprob" for fixed delay prob per week; "bayesian" for the 
 dynamic model . If "none" just repeats case values}
 
-\item{pdig}{for the "fixedprob" method. It is a vector of probability of been typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
-The length of the vector corresponds to the maximum delay. After day, it is assumed that p = 1. The default
-was obtained from Rio de Janeiro.}
+\item{pdig}{for the "fixedprob" method. It is a vector of probability of been 
+typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
+The length of the vector corresponds to the maximum delay. After day, it is 
+assumed that p = 1. The default was obtained from Rio de Janeiro.}
 
 \item{Dmax}{for the "bayesian" method. Maximum number of weeks that is modeled}
 
 \item{nyears}{for the "bayesian" method. Number of years of data used for fitting the model}
 
-\item{lastSE}{for the "bayesian" method. Last epidemiological week to be considered. If NA, will use last digitalization date.}
+\item{nowSE}{for the "bayesian" method. Epidemiological week to be considered 
+for the nowcast. If NA, the maximum SE in obj is used.}
 
-\item{safelimit}{if median estimate is safelimit times sum(tail(cases, n=5)), nowcasting fails.}
+\item{safelimit}{if median estimate is larger than 'safelimit' times 
+'sum(tail(cases, n=5))', nowcasting fails.}
 }
 \value{
-data.frame with pdig (proportion reported), median and 95percent confidence interval for the 
-predicted cases-to-be-notified)
+data.frame with pdig (proportion reported), median and 95percent 
+confidence interval for the predicted cases-to-be-notified)
 }
 \description{
 This function estimate the time series of reported cases by adding the cases that will be reported in the future.
@@ -47,11 +50,11 @@ is dynamic.
 }
 \examples{
 # fixedprob
-d <- getCases(cities = 4126306, dataini = "sinpri", completetail = 0) 
+d <- getCases(cities = 4124053, dataini = "sinpri", completetail = 0) 
 tail(d)
 resfit<-adjustIncidence(obj = d)
 tail(resfit)
 # bayesian
 resfit2<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
-tail(resfit)
+tail(resfit2)
 }

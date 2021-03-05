@@ -84,13 +84,13 @@ as incidence. The alert model uses incidence.
 \examples{
 Generate thresholds for municipalities using the whole history. 
 Return object instead of writing to data base:
-mun_list <- c(4212650, 4200101,4216503,4214607,4212502,4218905,4212601,4214805,
+mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 4212650,4217006,4212700,4214706,4213104,4200804)
 mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
-thres <- infodengue_apply_mem(mun_list[1], database=con)
+thres <- infodengue_apply_mem(mun_list[1:2], database=con)
 
 A nice way to visualize the calculated thresholds
-plot(thresMG) 
+plot(thres) 
 
 Write to database instead of returning object requires password:
 thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10])

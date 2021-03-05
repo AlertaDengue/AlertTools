@@ -7,10 +7,7 @@
 write_alertaRio(obj, write = "no", datasource = con, version = Sys.Date())
 }
 \arguments{
-\item{obj}{object created by the alertRio function and contains alerts for each APS.}
-
-\item{write}{use "db" if data.frame should be inserted into the project database,
-or "no" (default) if nothing is saved.}
+\item{obj}{object created by the tabela_historico_intra function and contains alerts for each locality.}
 
 \item{version}{default is the current date}
 }
@@ -21,9 +18,6 @@ data.frame with the data to be written.
 Function to write the alert results into the database.
 }
 \examples{
-params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
-criter <- setCriteria(rule="Af", values = params)
-alerio2 <- alertaRio(naps = c(1,2), crit = criter, datasource=con, se = 201201)
 res <- write_alertaRio(alerio2, write="no")
 tail(res)  
 }
