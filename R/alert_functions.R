@@ -39,32 +39,32 @@ setCriteria <- function(rule=NULL, values=NULL,
       if(is.null(rule)) {
             assert_that(!is.null(values), msg = "setcriteria: if rule is null, values must be provided.")
             assert_that(any(names(values) %in% c("varcli", "clicrit", "limiar_preseason",
-                                            "limiar_epidemico")), msg = "setcriteria: elements missing from arg values")
-            }
+                                                 "limiar_epidemico")), msg = "setcriteria: elements missing from arg values")
+      }
       
       
       # pre-defined rules
       if(!is.null(rule)){
-      
+            
             if(rule[1] == "Af"){
                   criteria <- list(
-                  crity = c("temp_min > temp_crit & inc > 0", 3, 0), #3,2
-                  crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
-                  critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
-            )} 
+                        crity = c("temp_min > temp_crit & inc > 0", 3, 0), #3,2
+                        crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
+                        critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
+                  )} 
             if (rule[1] == "Aw"){
-                   criteria = list(
-                         crity = c("umid_max > umid_crit & inc > 0", 3, 0), #3,2
-                   crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
-                   critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
-                   )}
+                  criteria = list(
+                        crity = c("umid_max > umid_crit & inc > 0", 3, 0), #3,2
+                        crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
+                        critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
+                  )}
             if(rule[1] == "AsAw"){
                   criteria = list(
                         crity = c("temp_min > temp_crit & umid_max > umid_crit & inc > 0", 3, 0), #3,2
                         crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 0), #3,2
                         critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
                   )}
-       # user defined rules      
+            # user defined rules      
       } else {  
             criteria<-lapply(1:3, function(x) c(rule[[x]], delays[[x]]))
             names(criteria) <- c("crity","crito","critr")
@@ -76,24 +76,24 @@ setCriteria <- function(rule=NULL, values=NULL,
             
             if (rule[1] %in% c("Af", "AsAw")){
                   assert_that(values[["varcli"]] == "temp_min" | values[["varcli2"]] == "temp_min",
-            msg = "setcriteria: Af and AsAw require temp_min")
+                              msg = "setcriteria: Af and AsAw require temp_min")
                   tm <- names(values)[which(values == "temp_min")]
                   if(tm == "varcli")  values <- c(values, "temp_crit" = values[["clicrit"]])
                   if(tm == "varcli2") values[["temp_crit"]] <- c(values, "temp_crit" = values[["clicrit2"]])
-      }
-      
-      if (rule[1] %in% c("Aw", "AsAw")){
-            assert_that(values[["varcli"]] == "umid_max" | values[["varcli2"]] == "umid_max",
-                        msg = "setcriteria: Aw and AsAw require umid_max")
-            um <- names(values)[which(values == "umid_max")]
-            if(um == "varcli")   values <- c(values, "umid_crit" = values[["clicrit"]])
-            if(um == "varcli2")  values <- c(values, "umid_crit" = values[["clicrit2"]])
-      
-            if(class(values) == "data.frame") 
-                  { # handling values from read.parameters
-            values <- unlist(sapply(names(values),function(x) values[[x]])) 
             }
-      }
+            
+            if (rule[1] %in% c("Aw", "AsAw")){
+                  assert_that(values[["varcli"]] == "umid_max" | values[["varcli2"]] == "umid_max",
+                              msg = "setcriteria: Aw and AsAw require umid_max")
+                  um <- names(values)[which(values == "umid_max")]
+                  if(um == "varcli")   values <- c(values, "umid_crit" = values[["clicrit"]])
+                  if(um == "varcli2")  values <- c(values, "umid_crit" = values[["clicrit2"]])
+                  
+                  if(class(values) == "data.frame") 
+                  { # handling values from read.parameters
+                        values <- unlist(sapply(names(values),function(x) values[[x]])) 
+                  }
+            }
             
             criteria <- lapply(criteria, function(x) c(str_replace_all(x[1], values), x[c(2,3)]))
       }
@@ -152,8 +152,8 @@ fouralert <- function(obj, crit, miss="last",dy=4){
       # checking delays 
       #assert_that(all(sapply(c(delay_turnon, delay_turnoff), is.count)),
       #            msg = "fouralert: delays are mispecified")
-
-     # fun to accumulate conditions 
+      
+      # fun to accumulate conditions 
       accumcond <- function(vec,lag){
             if (lag ==1 )return(vec)
             zoo::rollapply(vec, lag, sum, align = "right", fill = NA)
@@ -185,7 +185,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
       indices$level[indices$notrue == delay_turnon[2]] <-3
       indices$level[indices$nrtrue == delay_turnon[3]] <-4
       
-    
+      
       
       # delayed turnoff
       delayturnoff <- function(level){
@@ -193,15 +193,15 @@ fouralert <- function(obj, crit, miss="last",dy=4){
             
             ifelse (delay_level == 0, return(indices),
                     {pos <- which(indices$level==level) %>% # weeks with alert at level delay_level
-                    lapply(.,function(x)x+seq(0,delay_level)) %>% # current and subsequent weeks 
+                          lapply(.,function(x)x+seq(0,delay_level)) %>% # current and subsequent weeks 
                           unlist() %>% 
                           unique()
                     pos <- pos[pos<=le] # remove inexisting rows
                     indices$level[pos] <- level #unlist(lapply(indices$level[pos], function(x) max(x,2)))
                     return(indices)
-            })
+                    })
       }
-            
+      
       indices <- delayturnoff(level=4)
       indices <- delayturnoff(level=3)
       indices <- delayturnoff(level=2)
@@ -209,14 +209,14 @@ fouralert <- function(obj, crit, miss="last",dy=4){
       # from orange-red to yellow:
       # if rt was orange or red at least once in the past dy weeks -> level yellow
       contains_34 <- which(zoo::rollapply(indices$level,list(c(-dy:0)),
-                                    function(x) any(x>=3), fill=NA))
+                                          function(x) any(x>=3), fill=NA))
       
       # to visualize how it works, descomment the following lines
       #indices$dy <- NA
       #indices$dy[contains_34]<-pmax(indices$level[contains_34], rep(2, length(contains_34)))
       
       indices$level[contains_34]<-pmax(indices$level[contains_34], 
-                                        rep(2, length(contains_34)))
+                                       rep(2, length(contains_34)))
       
       ale <- list(data=obj, indices=indices, crit = crit, n=4)
       class(ale)<-"alerta" 
@@ -258,7 +258,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
                             narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, completetail = NA, dataini = "notif"){
       
-     
+      
       
       if(missing(datarelatorio)) {
             datarelatorio <- data2SE(finalday, format = "%Y-%m-%d") 
@@ -294,12 +294,12 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
                      "limiar_posseason","limiar_epidemico",
                      "varcli","clicrit","varcli2","clicrit2","cid10","codmodelo") %in% names(cities))) {
                   message("using user's provided parameters")
-            
+                  
                   pars_table <- cities
             }
             else({message("don't know how to run the pipeline for these inputs")
-                 return(NULL)}
-                 )
+                  return(NULL)}
+            )
       }
       
       # number of cities 
@@ -346,7 +346,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             # params
             parcli.x <- city_table[city_table$municipio_geocodigo == x, c("codigo_estacao_wu", "estacao_wu_sec")]      
             varcli.x <- na.omit(c(pars_table$varcli[city_table$municipio_geocodigo == x],
-                                pars_table$varcli2[city_table$municipio_geocodigo == x]))
+                                  pars_table$varcli2[city_table$municipio_geocodigo == x]))
             
             # escolhe a melhor serie meteorologica para a cidade, usando apenas a primeira var 
             cli.x <- bestWU(series = list(cliwu[cliwu$estacao == parcli.x[[1]],],
@@ -398,7 +398,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             # Apply alert rules
             y <- fouralert(ale, crit = criteriaU)  # apply alert 
             y     
-            }      
+      }      
       
       res <- lapply(cidades, calc.alerta) %>% setNames(cidades) # antes o nome era character, agora e o geocodigo
       #       nick <- gsub(" ", "", nome, fixed = TRUE)
@@ -420,7 +420,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
 #'@export
 #'@param city geocode (one city at a time). Currently only works for Rio.
 #'@param locs subset of localities. Currently not used.  
-#'@param se last epidemiological week (format = 201401) 
+#'@param datarelatorio last epidemiological week (format = 201401) 
 #'@param iniSE first epidemiological week
 #'@param cid10 default is A90 (dengue). Chik = A920.
 #'@param narule how to fill climate missing data (arima is the only option)
@@ -431,21 +431,28 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
 #'@examples
 #'alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
 #' cid10 = "A90", dataini = "sinpri")
+#' ale.chik <- pipe_infodengue_intra(city = 3304557, se = 202108, iniSE = 201001, 
+#'cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
 
-pipe_infodengue_intra <- function(city, locs, se, cid10 = "A90", iniSE = 201001,
-                      delaymethod = "none", narule="arima", 
-                      dataini = "sinpri", datasource=con){
+pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90", iniSE = 201001,
+                                  delaymethod = "none", narule="arima", finalday = Sys.Date(),
+                                  dataini = "sinpri", datasource=con){
       
       assert_that(narule == "arima", msg = "alerta_intra: arima is the only na fill method available")
       assert_that(cid10 %in% c("A90","A920","A92.8"), msg = "alerta_intra: check cid10" )
       assert_that(length(city) == 1, msg = "alerta_intra: works for one city at a time.")
       
-      if(missing(se)) se = data2SE(days = Sys.Date(), format = "%Y-%m-%d")
+      if(missing(datarelatorio)) {
+            datarelatorio <- data2SE(finalday, format = "%Y-%m-%d") 
+      } else { # if datarelatorio & finalday are given, priority is datarelatorio
+            finalday <- SE2date(datarelatorio)$ini+6
+      }
       
       # getting parameters and criteria
       crit.x <- read.parameters(city, cid10 = cid10)
       crit.x.vector <- structure(as.character(crit.x), names = as.character(names(crit.x))) # dataframe -> vector
       crit <- setCriteria(rule = "Af", values = crit.x.vector)
+      
       
       # reading data
       message("lendo dados ...")
@@ -454,14 +461,14 @@ pipe_infodengue_intra <- function(city, locs, se, cid10 = "A90", iniSE = 201001,
       #print(paste("Ultimos registros de tweets:",
       #                  lastDBdate("tweet", cid10 = cid10, cities=3304557)$se))
       
-
-      cas = getCasesinRio(APSid = 0:9, cid10 = cid10,dataini = dataini)  ## need to change to include other cities
-      cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min") # too
+      
+      cas = getCasesinRio(APSid = 0:9, cid10 = cid10,dataini = dataini,lastday = finalday)  ## need to change to include other cities
+      cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min",finalday = finalday) # too
       if(cid10 == "A90") {
-            tw <- getTweet(cities = city, cid10="A90")[,c("SE","tweet")]
+            tw <- getTweet(cities = city, cid10="A90",lastday = finalday)[,c("SE","tweet")]
       }else {
             tw <- data.frame(SE = seqSE(from = min(cas$SE), to = max(cas$SE))$SE,
-                                   tweet = NA)
+                             tweet = NA)
       }
       
       # nowcasting and Rt parameters 
@@ -479,11 +486,11 @@ pipe_infodengue_intra <- function(city, locs, se, cid10 = "A90", iniSE = 201001,
             
             cli.aps <- cli %>%
                   filter(estacao == 
-                        case_when(
-                              aps %in% 0:2 ~ "SBRJ",
-                              aps %in% 3:5 ~ "SBGL",
-                              TRUE ~  "SBJR"
-                        )
+                               case_when(
+                                     aps %in% 0:2 ~ "SBRJ",
+                                     aps %in% 3:5 ~ "SBGL",
+                                     TRUE ~  "SBJR"
+                               )
                   )
             
             d.aps <- cas %>%
@@ -543,7 +550,7 @@ plot_alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
       # type of object to plot
       if(class(obj) == "alerta") obj <- tabela_historico(obj)
       if(class(obj[[1]]) == "alerta") obj <- tabela_historico(obj)
-
+      
       assert_that(var %in% names(obj), msg = paste("plot_alerta: I don't find the 
                                                    variable", var, "to plot"))
       
@@ -626,8 +633,8 @@ plot_alerta<-function(obj, geocodigo, var = "casos", cores = c("#0D6B0D","#C8D20
 #'plot_alertaRio(alerio2, var = "inc")
 
 plot_alertaRio<-function(ale, aps, var = "casos", cores = c("#0D6B0D","#C8D20F","orange","red"), 
-                      ini=201001, fim=202001, ylab=var, yrange, salvar = FALSE, 
-                      nome.fig = "grafico", datasource=con){
+                         ini=201001, fim=202001, ylab=var, yrange, salvar = FALSE, 
+                         nome.fig = "grafico", datasource=con){
       
       # type of object to plot
       assert_that(class(ale) == "alertario", msg = "plot_alertaRio can only be used with object created by alertaRio()") 
@@ -718,7 +725,7 @@ map_Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
       } else {
             ultima_se <- data
             stopifnot (which(d2$SE==ultima_se)>0)
-            }
+      }
       
       nomesAPS = names(obj)
       lastab <- data.frame(APS = nomesAPS, cor = "grey")
@@ -745,12 +752,12 @@ map_Rio<-function(obj, cores = c("green","yellow","orange","red"), data, datasou
       #text(coords,label=mapa@data$COD_AP_SMS,cex=0.6)
       legend("bottom",fill=cores,c("atividade baixa","condicoes favoraveis transmissao",
                                    "transmissao sustentada","atividade alta"),bty="n",cex=0.6)
-                                   
+      
       par(cex.main=0.7)
       title(paste0( "Mapa MRJ por APs \n"," Semana ",substr(ultima_se,5,6)," de ",
                     substr(ultima_se,1,4)),line=-1)
       
-    
+      
       if(!missing(filename)) {dev.off()} #salvar
       
       
@@ -790,8 +797,8 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
       
       assert_that(class(alerta[[1]]) == "alerta", msg = "geraMapa: alerta argument must have class alerta. 
                   Try using fouralert or infodengue_pipeline.")
-     
-       N = length(alerta) # numero de cidades presentes no objeto alerta.
+      
+      N = length(alerta) # numero de cidades presentes no objeto alerta.
       
       # subset de cidades para o mapa
       if (!missing(subset)){
@@ -826,7 +833,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
       coords <- coordinates(meumapa)
       if (caption == TRUE) text(coords,label=meumapa@data$short,cex=0.6)
       legend(legpos,fill=cores,c("Atividade baixa","Alerta de transmissão","Transmissão sustentada",
-                                        "Atividade alta"),bty="n",cex=0.8)
+                                 "Atividade alta"),bty="n",cex=0.8)
       par(cex.main=0.7)
       title(paste0(titulo, "Semana ",substr(se,5,6)," de ",substr(se,1,4)),line=-1)
       
@@ -864,7 +871,7 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
       if(class(obj)=="list" & class(obj[[1]])=="alerta"){
             data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
             indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices
-
+            
       } else if (class(obj)=="alerta"){ #if object created directly by fouralert()
             data <- obj$data
             indices <- obj$indices
@@ -899,8 +906,8 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
       
       d <- d %>%   # new stuff
             rename(
-            receptivo = cytrue,  # weeks with receptive conditions
-            transmissao = cotrue)   # weeks with sustained transm
+                  receptivo = cytrue,  # weeks with receptive conditions
+                  transmissao = cotrue)   # weeks with sustained transm
       
       d1 <- d %>%
             left_join(pars[2:5]) %>%
@@ -912,8 +919,8 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                   )
             )
       
-
- d1
+      
+      d1
 }
 
 
@@ -936,57 +943,57 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
 #'tail(restab)
 
 tabela_historico_intra <- function(obj, iniSE, lastSE, versao = Sys.Date()){
-  
-  assert_that(class(obj) == "alerta_intra", msg = "tabela_historico_mun: obj must be of class alerta_intra.")
-  
-  # --------- create single data.frame ------------------#
-  data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
-  indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices
-    
-  d <- cbind(data, indices)
-  
-  # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
-  gera_id <- function(x) paste(data$cidade[x], data$Localidade_id[x], data$SE[x], 
-                               as.character(julian(versao)), sep="")
-  d$id <- sapply(1:nrow(data), gera_id) 
-  
-  # ---------- filtering dates -------------------------#
-  if(missing(iniSE)) iniSE <- 0
-  if(missing(lastSE)) lastSE <- 300000
-  
-  d <- d %>%
-    filter(SE >= iniSE & SE <= lastSE) %>% 
-    rename(municipio_geocodigo = cidade,
-           municipio_nome = nome,
-           casos_est = tcasesmed,
-           casos_est_min = tcasesICmin,
-           casos_est_max = tcasesICmax,
-           nivel = level) %>%
-    mutate(p_rt1 = ifelse(is.na(p1),0,p1),
-           p_inc100k =casos_est/populacao*1e5,
-           Localidade_id  = ifelse(is.na(localidade),0,localidade),
-           data_iniSE = SE2date(SE)$ini,
-           versao_modelo = as.character(versao))
-  d$Rt[is.na(d$Rt)] <- 0
-  
-  pars <- read.parameters(d$municipio_geocodigo, cid10 = d$CID10[1])
-  
-  d <- d %>%   # new stuff
-    rename(
-      receptivo = cytrue,  # weeks with receptive conditions
-      transmissao = cotrue)   # weeks with sustained transm
-  
-  d1 <- d %>%
-    left_join(pars[2:5]) %>%
-    mutate(  # compating estimated incidence with thresholds
-      nivel_inc = case_when(
-        p_inc100k < limiar_preseason ~ 0,
-        p_inc100k >= limiar_preseason & p_inc100k < limiar_epidemico ~ 1,
-        p_inc100k > limiar_epidemico ~ 2
-      )
-    )
-  
-  d1
+      
+      assert_that(class(obj) == "alerta_intra", msg = "tabela_historico_mun: obj must be of class alerta_intra.")
+      
+      # --------- create single data.frame ------------------#
+      data <- transpose(obj)[[1]] %>% bind_rows()   # unlist data
+      indices <- transpose(obj)[[2]] %>% bind_rows()  #unlist indices
+      
+      d <- cbind(data, indices)
+      
+      # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
+      gera_id <- function(x) paste(data$cidade[x], data$Localidade_id[x], data$SE[x], 
+                                   as.character(julian(versao)), sep="")
+      d$id <- sapply(1:nrow(data), gera_id) 
+      
+      # ---------- filtering dates -------------------------#
+      if(missing(iniSE)) iniSE <- 0
+      if(missing(lastSE)) lastSE <- 300000
+      
+      d <- d %>%
+            filter(SE >= iniSE & SE <= lastSE) %>% 
+            rename(municipio_geocodigo = cidade,
+                   municipio_nome = nome,
+                   casos_est = tcasesmed,
+                   casos_est_min = tcasesICmin,
+                   casos_est_max = tcasesICmax,
+                   nivel = level) %>%
+            mutate(p_rt1 = ifelse(is.na(p1),0,p1),
+                   p_inc100k =casos_est/populacao*1e5,
+                   Localidade_id  = ifelse(is.na(localidade),0,localidade),
+                   data_iniSE = SE2date(SE)$ini,
+                   versao_modelo = as.character(versao))
+      d$Rt[is.na(d$Rt)] <- 0
+      
+      pars <- read.parameters(d$municipio_geocodigo, cid10 = d$CID10[1])
+      
+      d <- d %>%   # new stuff
+            rename(
+                  receptivo = cytrue,  # weeks with receptive conditions
+                  transmissao = cotrue)   # weeks with sustained transm
+      
+      d1 <- d %>%
+            left_join(pars[2:5]) %>%
+            mutate(  # compating estimated incidence with thresholds
+                  nivel_inc = case_when(
+                        p_inc100k < limiar_preseason ~ 0,
+                        p_inc100k >= limiar_preseason & p_inc100k < limiar_epidemico ~ 1,
+                        p_inc100k > limiar_epidemico ~ 2
+                  )
+            )
+      
+      d1
 }
 
 
@@ -1025,7 +1032,7 @@ write_alerta<-function(d, datasource = con){
       
       if(!("temp_min" %in% names(d))) d$temp_min <- NA
       if(!("umid_max" %in% names(d))) d$umid_max <- NA
-
+      
       assert_that(all(dcolumns %in% names(d)), msg = "write_alerta: check if d contains required
                                                            columns")
       
@@ -1042,12 +1049,12 @@ write_alerta<-function(d, datasource = con){
       dados <- d %>%
             select(all_of(dcolumns))
       
-       
+      
       # ------ sql command
       varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
                           "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
                           "nivel","id","versao_modelo","municipio_nome", "tweet", "\"Rt\"", "pop",
-                           "tempmin", "umidmax" ,"receptivo", "transmissao","nivel_inc")
+                          "tempmin", "umidmax" ,"receptivo", "transmissao","nivel_inc")
       
       varnames.sql <- str_c(varnamesforsql, collapse = ",")
       updates = str_c(paste(varnamesforsql,"=excluded.",varnamesforsql,sep=""),collapse=",") # excluidos, se duplicado
@@ -1058,12 +1065,12 @@ write_alerta<-function(d, datasource = con){
             linha = paste0(vetor$SE,",'",
                            as.character(vetor$data_iniSE), "',", 
                            str_c(vetor[1,c("casos_est","casos_est_min","casos_est_max",
-                  "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","),",'",
-                  as.character(vetor$versao_modelo),"','",
-                  as.character(vetor$municipio_nome),"',",
-                  str_c(vetor[1,c("tweet","Rt","pop","temp_min","umid_max")], collapse = ","), ",",
-                  str_c(vetor[1,c("receptivo","transmissao","nivel_inc")], collapse = ",")
-                  )
+                                           "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","),",'",
+                           as.character(vetor$versao_modelo),"','",
+                           as.character(vetor$municipio_nome),"',",
+                           str_c(vetor[1,c("tweet","Rt","pop","temp_min","umid_max")], collapse = ","), ",",
+                           str_c(vetor[1,c("receptivo","transmissao","nivel_inc")], collapse = ",")
+            )
             
             #if("temp_min" %in% names(vetor)) linha = paste0(linha,",", vetor$temp_min, ",","NA")
             #if("umid_max" %in% names(vetor)) linha = paste0(linha,",", "NA", ",", vetor$umid_max)
@@ -1093,86 +1100,84 @@ write_alerta<-function(d, datasource = con){
 #'@title Write the Rio de janeiro alert into the database.
 #'@description Function to write the alert results into the database. 
 #'@export
-#'@param obj object created by the tabela_historico_intra function and contains alerts for each locality.
-#'@param version default is the current date
+#'@param obj object created by the tabela_historico_intra function and contains 
+#' alerts for each locality.
+#'@param datasource connection to infodengue database
 #'@return data.frame with the data to be written. 
 #'@examples
+#'alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
+#' cid10 = "A90", dataini = "sinpri")
+#'restab <- tabela_historico_intra(alerio, iniSE = 201801) 
+#'write_alertaRio(restab)
 
-#'res <- write_alertaRio(alerio2, write="no")
-#'tail(res)  
-
-write_alertaRio<-function(obj, write = "no", datasource = con, version = Sys.Date()){
+write_alertaRio<-function(obj, datasource = con){
       
-  # check input
-  assert_that(class(obj) == "data.frame", msg = "write_alertaRio: obj should
+      # -------  check input
+      assert_that(class(obj) == "data.frame", msg = "write_alertaRio: obj should
                   be an output from tabela_historico_intra.")
-  
-
-  listaAPS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
-              , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")
-  APSlabel <- c("1.0", "2.1", "2.2", "3.1", "3.2", "3.3","4.0","5.1","5.2","5.3")
-  cid10 <- obj$CID10[1]
       
-          # creating the data.frame with the required columns
-  d <- obj %>%
-    rename(se = SE,
-           casos_estmin = casos_est_min,
-           casos_estmax = casos_est_max,
-           tmin = temp_min,
-           tweets = tweet,
-           rt = Rt,
-           prt1 = p_rt1) %>%
-    mutate(data = SE2date(se)$ini,
-           aps = APSlabel[(localidadeid[1]+1)],
-           prt1 = replace_na(prt1, 0)) %>%
-    arrange(se) 
-           
-  # escrevendo        
-  # nome da tabela no banco de dados e do respectivo constraint 
-  if (cid10 == "A90") {tabela <- "alerta_mrj"; sqlconstr = "unique_aps_se"}
-  if (cid10 == "A92.0") {tabela <- "alerta_mrj_chik"; sqlconstr = "unique_chik_aps_se"}
-            
-  # se tiver ja algum registro com mesmo aps e SE, esse sera substituido pelo atualizado.
-  # ------ vars to write            
-  varnames <- "(se,aps,data,tweets,casos,casos_est,casos_estmin,casos_estmax,tmin,rt,prt1,
+      
+      listaAPS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
+                    , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")
+      APSlabel <- c("1.0", "2.1", "2.2", "3.1", "3.2", "3.3","4.0","5.1","5.2","5.3")
+      cid10 <- obj$CID10[1]
+      
+      # ------- columns to write 
+      dcolumns <- c("se","aps","data","tweets","casos","casos_est","casos_estmin","casos_estmax",
+                    "tmin","rt","prt1","inc","nivel")
+      
+      # ------- preparing data.frame
+      d <- obj %>%
+            rename(se = SE,
+                   casos_estmin = casos_est_min,
+                   casos_estmax = casos_est_max,
+                   tmin = temp_min,
+                   tweets = tweet,
+                   rt = Rt,
+                   prt1 = p_rt1) %>%
+            mutate(data = SE2date(se)$ini,
+                   aps = APSlabel[(localidadeid+1)],
+                   prt1 = replace_na(prt1, 0)) %>%
+            select(all_of(dcolumns)) %>%
+            arrange(se) 
+      
+      # ----- sql command        
+      # setting table and constraint  
+      if (cid10 == "A90") {tabela <- "alerta_mrj"; sqlconstr = "unique_aps_se"}
+      if (cid10 == "A92.0") {tabela <- "alerta_mrj_chik"; sqlconstr = "unique_chik_aps_se"}
+      
+      varnames <- "(se,aps,data,tweets,casos,casos_est,casos_estmin,casos_estmax,tmin,rt,prt1,
                         inc,nivel)"
-  sepvarnames <- c("se","aps","data","tweets","casos","casos_est","casos_estmin","casos_estmax",
-                                   "tmin","rt","prt1","inc","nivel")
-            
-   # ------ sql command
-   varnames.sql <- str_c(sepvarnames, collapse = ",")
-   updates = str_c(paste(sepvarnames,"=excluded.",sepvarnames,sep=""),collapse=",") # excluidos, se duplicado
-            
-   escreve_linha <- function(li){
-                  vetor <- d[li,sepvarnames]
-                  linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"','", 
-                                as.character(vetor[1,3]),"',", 
-                                str_c(vetor[1,4:13], collapse=","), sep="")
-                  linha = gsub("NA","NULL",linha)
-                  linha = gsub("NaN","NULL",linha)
-                  insert_sql2 = paste("INSERT INTO \"Municipio\".", tabela, " ", varnames, 
-                                      " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT ", sqlconstr, " DO
-                               UPDATE SET ",updates, sep="")
-                  try(dbGetQuery(datasource, insert_sql2))    
-                  
-   }
-  # escrevendo
-   
-   try(dbGetQuery(datasource, "BEGIN TRANSACTION;"))  ##  start a transaction 
-    
-   1:nrow(d) %>% map(escreve_linha)
-   
-   try(dbGetQuery(datasource, "COMMIT TRANSACTION;")) 
-   
-   refresh_sql = "REFRESH MATERIALIZED VIEW uf_total_view;"
-   try(dbGetQuery(datasource, refresh_sql))
-   
-   message(paste("dados escritos na tabela", tabela))
-            
+      varnames.sql <- str_c(dcolumns, collapse = ",")
+      updates = str_c(paste(dcolumns,"=excluded.",dcolumns,sep=""),collapse=",") # excluidos, se duplicado
       
-      dados
+      escreve_linha <- function(li){
+            vetor <- d[li,]
+            linha = paste(vetor[1,1],",'",as.character(vetor[1,2]),"','", 
+                          as.character(vetor[1,3]),"',", 
+                          str_c(vetor[1,4:13], collapse=","), sep="")
+            linha = gsub("NA","NULL",linha)
+            linha = gsub("NaN","NULL",linha)
+            insert_sql2 = paste("INSERT INTO \"Municipio\".", tabela, " ", varnames, 
+                                " VALUES (", linha, ") ON CONFLICT ON CONSTRAINT ", sqlconstr, 
+                                " DO UPDATE SET ",updates, sep="")
+            try(dbGetQuery(datasource, insert_sql2))    
+            
+      }
+      # escrevendo
+      
+      try(dbGetQuery(datasource, "BEGIN TRANSACTION;"))  ##  start a transaction 
+      
+      1:nrow(d) %>% map(escreve_linha)
+      
+      try(dbGetQuery(datasource, "COMMIT TRANSACTION;")) 
+      
+      #refresh_sql = "REFRESH MATERIALIZED VIEW uf_total_view;"
+      #try(dbGetQuery(datasource, refresh_sql))
+      
+      message(paste("dados escritos na tabela", tabela))
 }
-      
+
 
 #update.alerta (deprecated) ----------------------------------------
 #'@title Define conditions to issue a 4 level alert Green-Yellow-Orange-Red for any city or region.

@@ -4,12 +4,13 @@
 \alias{write_alertaRio}
 \title{Write the Rio de janeiro alert into the database.}
 \usage{
-write_alertaRio(obj, write = "no", datasource = con, version = Sys.Date())
+write_alertaRio(obj, datasource = con)
 }
 \arguments{
-\item{obj}{object created by the tabela_historico_intra function and contains alerts for each locality.}
+\item{obj}{object created by the tabela_historico_intra function and contains 
+alerts for each locality.}
 
-\item{version}{default is the current date}
+\item{datasource}{connection to infodengue database}
 }
 \value{
 data.frame with the data to be written.
@@ -18,6 +19,8 @@ data.frame with the data to be written.
 Function to write the alert results into the database.
 }
 \examples{
-res <- write_alertaRio(alerio2, write="no")
-tail(res)  
+alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
+cid10 = "A90", dataini = "sinpri")
+restab <- tabela_historico_intra(alerio, iniSE = 201801) 
+write_alertaRio(restab)
 }
