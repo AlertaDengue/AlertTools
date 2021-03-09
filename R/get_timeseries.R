@@ -366,7 +366,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
 
 getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="sinpri",
                           datasource = con) {
-      
+      city <- 3304557
       #dealing with synonimous cid
       if (cid10 == "A90") cid <- c("A90") # dengue, dengue hemorragica
       if (cid10 %in% c("A92", "A920","A92.0")) {cid <-c("A92", "A920","A92.0"); cid10 <- "A92.0"}  # chik

@@ -459,13 +459,14 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90",
       
       cas = getCasesinRio(APSid = 0:9, cid10 = cid10,dataini = dataini,lastday = finalday)  ## need to change to include other cities
       cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min",finalday = finalday) # too
+      message("cli")
       if(cid10 == "A90") {
             tw <- getTweet(cities = city, cid10="A90",lastday = finalday)[,c("SE","tweet")]
       }else {
             tw <- data.frame(SE = seqSE(from = min(cas$SE), to = max(cas$SE))$SE,
                              tweet = NA)
       }
-      
+      message("tw")
       # nowcasting and Rt parameters 
       if(cid10=="A90") meangt = 3 # 3 weeks
       if(cid10=="A920") meangt = 2 # 2 weeks
