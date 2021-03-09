@@ -46,8 +46,8 @@ indicates evidence of sustained transmission, red indicates evidence of
 an epidemic scenario.
 }
 \examples{
-alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
-cid10 = "A90", dataini = "sinpri")
-ale.chik <- pipe_infodengue_intra(city = 3304557, se = 202108, iniSE = 201001, 
-cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
+alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202105, 
+delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
+ale.chik <- pipe_infodengue_intra(city = 3304557, datarelatorio = 202108, 
+iniSE = 201001, cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
 }

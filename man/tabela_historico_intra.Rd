@@ -25,8 +25,8 @@ in the database. Specific for municipalities with subdivisions.
 \examples{
 NOT RUN without connection
 # Rio de Janeiro
-alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
-cid10 = "A90", dataini = "sinpri")
+alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202105, 
+delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
 restab <- tabela_historico_intra(alerio, iniSE = 201801) 
 tail(restab)
 }

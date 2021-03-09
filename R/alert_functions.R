@@ -429,13 +429,14 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
 #'@param datasource name of the sql connection.
 #'@return list with an alert object for each APS.
 #'@examples
-#'alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
-#' cid10 = "A90", dataini = "sinpri")
-#' ale.chik <- pipe_infodengue_intra(city = 3304557, se = 202108, iniSE = 201001, 
-#'cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
+#'alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202105, 
+#'delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
+#' ale.chik <- pipe_infodengue_intra(city = 3304557, datarelatorio = 202108, 
+#' iniSE = 201001, cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
 
-pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90", iniSE = 201001,
-                                  delaymethod = "none", narule="arima", finalday = Sys.Date(),
+pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90", 
+                                  iniSE = 201001, delaymethod = "none", 
+                                  narule="arima", finalday = Sys.Date(),
                                   dataini = "sinpri", datasource=con){
       
       assert_that(narule == "arima", msg = "alerta_intra: arima is the only na fill method available")
@@ -452,7 +453,6 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90", iniS
       crit.x <- read.parameters(city, cid10 = cid10)
       crit.x.vector <- structure(as.character(crit.x), names = as.character(names(crit.x))) # dataframe -> vector
       crit <- setCriteria(rule = "Af", values = crit.x.vector)
-      
       
       # reading data
       message("lendo dados ...")
@@ -482,6 +482,7 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90", iniS
       names(res) <- APS
       
       # Function to calculate alert per aps
+      message("calculando...")
       calc.alertaintra <- function(aps){
             
             cli.aps <- cli %>%
@@ -503,7 +504,7 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90", iniS
                   full_join(cli.aps, by = "SE") %>% 
                   full_join(tw, by = "SE")
             
-            y <- fouralert(obj = d.aps[d.aps$SE <= se,],crit = crit)
+            y <- fouralert(obj = d.aps[d.aps$SE <= datarelatorio,],crit = crit)
             print(paste("nivel do alerta de ",d.aps$localidade[1],":", 
                         tail(y$indices$level,1)))
             y
@@ -937,8 +938,8 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
 #'@examples
 #'NOT RUN without connection
 #'# Rio de Janeiro
-#'alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
-#' cid10 = "A90", dataini = "sinpri")
+#'alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202105, 
+#'delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
 #'restab <- tabela_historico_intra(alerio, iniSE = 201801) 
 #'tail(restab)
 
@@ -1105,8 +1106,8 @@ write_alerta<-function(d, datasource = con){
 #'@param datasource connection to infodengue database
 #'@return data.frame with the data to be written. 
 #'@examples
-#'alerio <- pipe_infodengue_intra(city = 3304557, se=202105, delaymethod="bayesian",
-#' cid10 = "A90", dataini = "sinpri")
+#'alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202105, 
+#'delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
 #'restab <- tabela_historico_intra(alerio, iniSE = 201801) 
 #'write_alertaRio(restab)
 
