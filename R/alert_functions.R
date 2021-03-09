@@ -456,11 +456,6 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90",
       
       # reading data
       message("lendo dados ...")
-      #print(paste("Ultimos registros de",cid10,":",
-      #                  lastDBdate("sinan", cities=3304557,cid10 = cid10)[["se"]]))
-      #print(paste("Ultimos registros de tweets:",
-      #                  lastDBdate("tweet", cid10 = cid10, cities=3304557)$se))
-      
       
       cas = getCasesinRio(APSid = 0:9, cid10 = cid10,dataini = dataini,lastday = finalday)  ## need to change to include other cities
       cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min",finalday = finalday) # too
@@ -484,7 +479,7 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90",
       # Function to calculate alert per aps
       message("calculando...")
       calc.alertaintra <- function(aps){
-            
+            print(aps)
             cli.aps <- cli %>%
                   filter(estacao == 
                                case_when(
