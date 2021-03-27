@@ -4,7 +4,7 @@
 \alias{write_parameters}
 \title{City's parameterization.}
 \usage{
-write_parameters(city, cid10, params, overwrite = FALSE, senha)
+write_parameters(city, cid10, params, overwrite = FALSE, datasource = con)
 }
 \arguments{
 \item{params}{vector of the names of the params to be inserted in the table. Limiar is given as incidence. 

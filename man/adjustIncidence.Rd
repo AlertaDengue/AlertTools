@@ -11,7 +11,7 @@ adjustIncidence(
   Dmax = 10,
   nyears = 2,
   datasource = con,
-  nowSE = NA,
+  nowSE,
   safelimit = 5
 )
 }
@@ -50,11 +50,11 @@ is dynamic.
 }
 \examples{
 # fixedprob
-d <- getCases(cities = 4124053, dataini = "sinpri", completetail = 0) 
+d <- getCases(cities = 3167202, dataini = "sinpri",  completetail = 0) 
 tail(d)
 resfit<-adjustIncidence(obj = d)
 tail(resfit)
 # bayesian
-resfit2<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
+resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202111, datasource = con)
 tail(resfit2)
 }

@@ -4,7 +4,7 @@
 \alias{setWUstation}
 \title{set meteorological stations}
 \usage{
-setWUstation(st, UF, senha)
+setWUstation(st, UF, datasource = con)
 }
 \arguments{
 \item{st}{data.frame containing municipio_geocodigo, primary_station, 

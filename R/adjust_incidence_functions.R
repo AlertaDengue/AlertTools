@@ -30,16 +30,16 @@
 #'confidence interval for the predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'d <- getCases(cities = 4124053, dataini = "sinpri", completetail = 0) 
+#'d <- getCases(cities = 3167202, dataini = "sinpri",  completetail = 0) 
 #'tail(d)
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
 #' # bayesian
-#'resfit2<-adjustIncidence(obj=d, method = "bayesian", datasource = con)
+#'resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202111, datasource = con)
 #'tail(resfit2)
 
 adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
-                          Dmax=10, nyears = 2, datasource = con, nowSE=NA, safelimit = 5){
+                          Dmax=10, nyears = 2, datasource = con, nowSE, safelimit = 5){
   
   city <- unique(obj$cidade)  
   cid <- obj$CID10[1]
@@ -49,8 +49,9 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   le = nrow(obj) 
   
   # checking date
-  if(is.na(nowSE)) {
-    nowSE <- obj$SE[le]}   # last date in the input object
+  if(missing(nowSE)) {
+    nowSE <- obj$SE[le]
+    }   # last date in the input object
   else{
     assert_that(nowSE <= max(obj$SE), msg = "adjustIncidence: lastSE larger than max(obj$SE). Check input.")
     obj <- subset(obj, SE <= nowSE)  # assigned input
@@ -88,7 +89,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, lastday = nowday, datasource = datasource)
        message("bayesnowcasting...")
        
-       resfit<-bayesnowcasting(dados, Dmax,Fim = nowday)
+       resfit<-bayesnowcasting(dados, Dmax = Dmax, Fim = nowday)
        
        if(!is.null(resfit)){
          if(tail(resfit$Median, n = 1) > 
@@ -129,15 +130,16 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'@param obj data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita 
 #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
 #'@param Fim date for the nowcasting (date). Default is today.
+#'@param interacao TRUE (default) se o modelo tiver o termo de interacao efeito-atraso
 #'@return data.frame with median and 95percent confidence interval for the 
 #'predicted cases-to-be-notified)
 #'@examples
 #' # bayesian
-#'dd <- getdelaydata(cities=4126306, nyears=2, cid10="A90", datasource=con)
+#'dd <- getdelaydata(cities=3167202, nyears=1, cid10="A90", datasource=con)
 #'resfit<-bayesnowcasting(dd)
 #'resfit
 
-bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date()){
+bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date(), interacao = TRUE){
   
   # check input 
   if(is.null(names(d))) {
@@ -149,40 +151,50 @@ bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date()){
     return(NULL)}    
   
   
-   #d contains columns
+  #d contains columns
   assert_that(all(c("municipio_geocodigo", "dt_notific", "dt_sin_pri", "dt_digita")
-              %in% names(d)), msg = "bayesnowcasting requires data with columns
+                  %in% names(d)), msg = "bayesnowcasting requires data with columns
               municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita")
   
+  # remove cases with wrong dt_sin_pri (when is more than 4 weeks before notific 
+  # any tine after)
+  
+  d$ininotif <- d$dt_notific - d$dt_sin_pri
+  wrongdates <- which(d$ininotif > 30 | d$ininotif < 0 | is.na(d$dt_sin_pri))  
+  if(length(wrongdates) > 0) message(paste(length(wrongdates), 
+                                                  " registros com datas de inicio de sintomas invalidas"))
+  
+  d <- d[-wrongdates,]
+  
   d <- d %>% mutate(
-    dt_notific_epiweek = epiweek(dt_notific), 
-    dt_notific_aux =  as.numeric(format(as.Date(dt_notific), "%w")),
-    dt_notific_week = dt_notific + 6 - dt_notific_aux,
-    dt_notific_epiyear = epiyear(dt_notific), 
+    dt_sinpri_epiweek = epiweek(dt_sin_pri), 
+    dt_sinpri_aux =  as.numeric(format(as.Date(dt_sin_pri), "%w")),
+    dt_sinpri_week = dt_sin_pri + 6 - dt_sinpri_aux,
+    dt_sinpri_epiyear = epiyear(dt_sin_pri), 
     dt_digita_epiweek = epiweek(dt_digita),
     dt_digita_epiyear = epiyear(dt_digita),
-    delay_epiweek = ifelse( dt_digita_epiyear == dt_notific_epiyear,
-                            as.numeric(dt_digita_epiweek - dt_notific_epiweek),
-                            as.numeric(dt_digita_epiweek - dt_notific_epiweek) + 52
+    delay_epiweek = ifelse( dt_digita_epiyear == dt_sinpri_epiyear,
+                            as.numeric(dt_digita_epiweek - dt_sinpri_epiweek),
+                            as.numeric(dt_digita_epiweek - dt_sinpri_epiweek) + 52
     )
   ) 
   
   # casos observados por semama
   obs <- d %>%
-    group_by(dt_notific_week) %>%
+    group_by(dt_sinpri_week) %>%
     summarize(casos = n())
   
-  Inicio <- min(d$dt_notific_week)
+  Inicio <- min(d$dt_sinpri_week)
   # Ultimo dia com notificacao ou digitacao
   #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
   #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
   #Fim <- Fim + 6 - as.numeric(format(as.Date(Fim), "%w")) # why?
-
-    # contruindo a matriz de atraso - running triang
+  
+  # contruindo a matriz de atraso - running triang
   tibble(Date = c(Inicio,Fim) ) %>% 
     mutate(Weekday = weekdays(Date) )
-
-  tbl.dates <- tibble(dt_notific_week = seq(Inicio, Fim, by = 7)) %>% 
+  
+  tbl.dates <- tibble(dt_sinpri_week = seq(Inicio, Fim, by = 7)) %>% 
     rowid_to_column(var = "Time")
   Today = max(tbl.dates$Time)
   
@@ -192,7 +204,7 @@ bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date()){
       delay_epiweek = ifelse(delay_epiweek > Dmax, NA, delay_epiweek)
     ) %>% 
     drop_na(delay_epiweek) %>% 
-    group_by(dt_notific_week, delay_epiweek) %>% 
+    group_by(dt_sinpri_week, delay_epiweek) %>% 
     dplyr::summarise(
       Casos = n()
     ) %>% # View()
@@ -201,9 +213,9 @@ bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date()){
     # Adicianoando todas as data, algumas semanas nao houveram casos
     full_join( 
       y = tbl.dates, 
-      by = "dt_notific_week" ) %>% # View() 
+      by = "dt_sinpri_week" ) %>% # View() 
     # Voltando para o formato longo
-    gather(key = "Delay", value = Casos, -dt_notific_week, -Time) %>% # View()
+    gather(key = "Delay", value = Casos, -dt_sinpri_week, -Time) %>% # View()
     mutate(
       Delay = as.numeric(Delay),
       # Preparing the run-off triangle
@@ -212,66 +224,231 @@ bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date()){
         yes = replace_na(Casos, 0), 
         no = NA)
     ) %>% #View()
-    dplyr::rename( Date = dt_notific_week) %>%  #ungroup() %>% 
+    dplyr::rename( Date = dt_sinpri_week) %>%  #ungroup() %>% 
     # Sorting by date
     dplyr::arrange(Date) 
   
   
   dados.ag.full <- d %>% 
-    group_by(dt_notific_week) %>% 
+    group_by(dt_sinpri_week) %>% 
     dplyr::summarise(
       Total = n()
     ) %>% # View()
     # Adicianoando todas as data, algumas semanas nao houveram casos
     right_join( 
       y = tbl.dates, 
-      by = "dt_notific_week" ) %>% # View() 
+      by = "dt_sinpri_week" ) %>% # View() 
     mutate(
       Total = replace_na(Total, 0)
     ) %>% # View()
-    dplyr::rename( Date = dt_notific_week) %>%  #ungroup() %>% 
+    dplyr::rename( Date = dt_sinpri_week) %>%  #ungroup() %>% 
     # Sorting by date
     dplyr::arrange(Date) 
   
-# Model equation
-model.dengue <- Casos ~ 1 + 
-  f(Time, model = "rw2", constr = T
-    #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-    #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-  ) +
-  f(Delay, model = "rw1", constr = T
-    # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-    #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-  )  + 
-  # Efeito tempo-atraso
-  f(TimeDelay, model = "iid", constr = T
-    #   hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+  # Model equation
+  if(interacao) {
+    model.dengue <- Casos ~ 1 + 
+      f(Time, model = "rw2", constr = T
+        #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+      ) +
+      f(Delay, model = "rw1", constr = T
+        # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+      )  + 
+      # Efeito tempo-atraso
+      f(TimeDelay, model = "iid", constr = T
+        #   hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+      )
+  } else {
+    model.dengue <- Casos ~ 1 + 
+      f(Time, model = "rw2", constr = T
+        #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+      ) +
+      f(Delay, model = "rw1", constr = T
+        # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+      )
+    # message("modelo de nowcasting sem interacao")
+  }
+  
+  
+  output.dengue <- nowcast.INLA(
+    model.day = model.dengue,
+    dados.ag = dados.ag %>%
+      mutate(TimeDelay = paste(Time, Delay))
   )
-
-
-output.dengue <- nowcast.INLA(
-  model.day = model.dengue,
-  dados.ag = dados.ag %>%
-    mutate(TimeDelay = paste(Time, Delay))
-)
-
-pred.dengue <- nowcasting(output.dengue, dados.ag, 
-                          Dm = Dmax, Fim = max(dados.ag$Date))
-
-
-pred.dengue.summy <- pred.dengue %>% group_by(Date) %>% 
-  dplyr::summarise( Mean = mean(Casos, na.rm = TRUE),
-                    Median = median(Casos, na.rm = TRUE), 
-                    LI = quantile(Casos, probs = 0.025, na.rm = TRUE),
-                    LS = quantile(Casos, probs = 0.975, na.rm = TRUE)
-  ) %>%
-  left_join(obs, by = c("Date" = "dt_notific_week")) 
-
-pred.dengue.summy$SE <- daySEday(pred.dengue.summy$Date)$SE
-
-pred.dengue.summy
+  
+  pred.dengue <- nowcasting(output.dengue, dados.ag, 
+                            Dm = Dmax, Fim = max(dados.ag$Date))
+  
+  
+  pred.dengue.summy <- pred.dengue %>% group_by(Date) %>% 
+    dplyr::summarise( Mean = mean(Casos, na.rm = TRUE),
+                      Median = median(Casos, na.rm = TRUE), 
+                      LI = quantile(Casos, probs = 0.025, na.rm = TRUE),
+                      LS = quantile(Casos, probs = 0.975, na.rm = TRUE)
+    ) %>%
+    left_join(obs, by = c("Date" = "dt_sinpri_week")) 
+  
+  pred.dengue.summy$SE <- daySEday(pred.dengue.summy$Date)$SE
+  
+  pred.dengue.summy
 }
 
+
+
+#' # bayesnowcasting ---------------------------------------------------------------------
+#' #'@description This function estimate the Bayesian nowcast (new version)
+#' #'@title Correct incidence data with notification delay (nowcasting).
+#' #'@export
+#' #'@param obj data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita 
+#' #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
+#' #'@param Fim date for the nowcasting (date). Default is today.
+#' #'@return data.frame with median and 95percent confidence interval for the 
+#' #'predicted cases-to-be-notified)
+#' #'@examples
+#' #' # bayesian
+#' #'dd <- getdelaydata(cities=3167202, nyears=1, cid10="A90", datasource=con)
+#' #'resfit<-bayesnowcasting(dd)
+#' #'resfit
+#' 
+#' bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date()){
+#'   
+#'   # check input 
+#'   if(is.null(names(d))) {
+#'     message("bayesnowcasting: no data, returning NULL")
+#'     return(NULL)}    
+#'   
+#'   if(nrow(d) < 50) {
+#'     message("bayesnowcasting: few data, returning NULL")
+#'     return(NULL)}    
+#'   
+#'   
+#'    #d contains columns
+#'   assert_that(all(c("municipio_geocodigo", "dt_notific", "dt_sin_pri", "dt_digita")
+#'               %in% names(d)), msg = "bayesnowcasting requires data with columns
+#'               municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita")
+#'   
+#'   d <- d %>% mutate(
+#'     dt_notific_epiweek = epiweek(dt_notific), 
+#'     dt_notific_aux =  as.numeric(format(as.Date(dt_notific), "%w")),
+#'     dt_notific_week = dt_notific + 6 - dt_notific_aux,
+#'     dt_notific_epiyear = epiyear(dt_notific), 
+#'     dt_digita_epiweek = epiweek(dt_digita),
+#'     dt_digita_epiyear = epiyear(dt_digita),
+#'     delay_epiweek = ifelse( dt_digita_epiyear == dt_notific_epiyear,
+#'                             as.numeric(dt_digita_epiweek - dt_notific_epiweek),
+#'                             as.numeric(dt_digita_epiweek - dt_notific_epiweek) + 52
+#'     )
+#'   ) 
+#'   
+#'   # casos observados por semama
+#'   obs <- d %>%
+#'     group_by(dt_notific_week) %>%
+#'     summarize(casos = n())
+#'   
+#'   Inicio <- min(d$dt_notific_week)
+#'   # Ultimo dia com notificacao ou digitacao
+#'   #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
+#'   #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
+#'   #Fim <- Fim + 6 - as.numeric(format(as.Date(Fim), "%w")) # why?
+#' 
+#'     # contruindo a matriz de atraso - running triang
+#'   tibble(Date = c(Inicio,Fim) ) %>% 
+#'     mutate(Weekday = weekdays(Date) )
+#' 
+#'   tbl.dates <- tibble(dt_notific_week = seq(Inicio, Fim, by = 7)) %>% 
+#'     rowid_to_column(var = "Time")
+#'   Today = max(tbl.dates$Time)
+#'   
+#'   dados.ag <- d %>% 
+#'     filter( dt_digita <= Fim) %>% 
+#'     mutate(
+#'       delay_epiweek = ifelse(delay_epiweek > Dmax, NA, delay_epiweek)
+#'     ) %>% 
+#'     drop_na(delay_epiweek) %>% 
+#'     group_by(dt_notific_week, delay_epiweek) %>% 
+#'     dplyr::summarise(
+#'       Casos = n()
+#'     ) %>% # View()
+#'     # Passando para o formato wide
+#'     spread(key = delay_epiweek, value = Casos) %>%  # View()
+#'     # Adicianoando todas as data, algumas semanas nao houveram casos
+#'     full_join( 
+#'       y = tbl.dates, 
+#'       by = "dt_notific_week" ) %>% # View() 
+#'     # Voltando para o formato longo
+#'     gather(key = "Delay", value = Casos, -dt_notific_week, -Time) %>% # View()
+#'     mutate(
+#'       Delay = as.numeric(Delay),
+#'       # Preparing the run-off triangle
+#'       Casos = ifelse( 
+#'         test = (Time + Delay) <= Today, 
+#'         yes = replace_na(Casos, 0), 
+#'         no = NA)
+#'     ) %>% #View()
+#'     dplyr::rename( Date = dt_notific_week) %>%  #ungroup() %>% 
+#'     # Sorting by date
+#'     dplyr::arrange(Date) 
+#'   
+#'   
+#'   dados.ag.full <- d %>% 
+#'     group_by(dt_notific_week) %>% 
+#'     dplyr::summarise(
+#'       Total = n()
+#'     ) %>% # View()
+#'     # Adicianoando todas as data, algumas semanas nao houveram casos
+#'     right_join( 
+#'       y = tbl.dates, 
+#'       by = "dt_notific_week" ) %>% # View() 
+#'     mutate(
+#'       Total = replace_na(Total, 0)
+#'     ) %>% # View()
+#'     dplyr::rename( Date = dt_notific_week) %>%  #ungroup() %>% 
+#'     # Sorting by date
+#'     dplyr::arrange(Date) 
+#'   
+#' # Model equation
+#' model.dengue <- Casos ~ 1 + 
+#'   f(Time, model = "rw2", constr = T
+#'     #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+#'     #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+#'   ) +
+#'   f(Delay, model = "rw1", constr = T
+#'     # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+#'     #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+#'   )  + 
+#'   # Efeito tempo-atraso
+#'   f(TimeDelay, model = "iid", constr = T
+#'     #   hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+#'   )
+#' 
+#' 
+#' output.dengue <- nowcast.INLA(
+#'   model.day = model.dengue,
+#'   dados.ag = dados.ag %>%
+#'     mutate(TimeDelay = paste(Time, Delay))
+#' )
+#' 
+#' pred.dengue <- nowcasting(output.dengue, dados.ag, 
+#'                           Dm = Dmax, Fim = max(dados.ag$Date))
+#' 
+#' 
+#' pred.dengue.summy <- pred.dengue %>% group_by(Date) %>% 
+#'   dplyr::summarise( Mean = mean(Casos, na.rm = TRUE),
+#'                     Median = median(Casos, na.rm = TRUE), 
+#'                     LI = quantile(Casos, probs = 0.025, na.rm = TRUE),
+#'                     LS = quantile(Casos, probs = 0.975, na.rm = TRUE)
+#'   ) %>%
+#'   left_join(obs, by = c("Date" = "dt_notific_week")) 
+#' 
+#' pred.dengue.summy$SE <- daySEday(pred.dengue.summy$Date)$SE
+#' 
+#' pred.dengue.summy
+#' }
+#' 
 
 # getdelaydata ------------------------------------------------------------------
 #'@description Gets delay data for one or more cities. Internal function used in the delay fitting using inla. 

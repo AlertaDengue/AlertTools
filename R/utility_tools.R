@@ -585,7 +585,7 @@ getCidades <- function(regional, uf, datasource=con){
 #'limiar_epidemico = 67.72364, varcli = "temp_min", clicrit = 22, cid10 = "A90", codmodelo = "Af") 
 #'res = write_parameters(newpars)
 
-write_parameters<-function(city, cid10, params, overwrite = FALSE, senha){
+write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = con){
       
       # checking inputs
       assert_that(class(params) == "data.frame", 
@@ -601,11 +601,10 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, senha){
                   msg = paste("write.parameters: params must contain municipio_geocodigo, cid10"))
       
       # check if city is already in the system (Regional table)
-      conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin", password=senha, dbname="dengue")
       
       sql1 = paste("SELECT * from \"Dengue_global\".regional_saude SET  
                                WHERE municipio_geocodigo = ",city, sep="")      
-      cityregtable = try(dbGetQuery(conn, sql1))
+      cityregtable = try(dbGetQuery(datasource, sql1))
       
       assert_that(nrow(cityregtable)>0, 
                   msg = paste("geocode", city, "not implemented in Infodengue. Use insertCityinAlerta()") )
@@ -615,7 +614,7 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, senha){
                                WHERE municipio_geocodigo = ",city," AND cid10 = $$",
                                 cid10,"$$", sep="")      
       
-      parline = try(dbGetQuery(conn, sql2))
+      parline = try(dbGetQuery(datasource, sql2))
       
       assert_that(nrow(parline) < 2, 
                   msg = paste("parameter table has something wrong. more than one line for", 
@@ -633,7 +632,7 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, senha){
        message(paste("no previous param found. Inserting new param line for city", params$municipio_geocodigo))
        linha = paste(as.character(params$municipio_geocodigo), ",\'",params$cid10, "\'",sep="")
        sql = paste("insert into \"Dengue_global\".parameters (municipio_geocodigo, cid10) values(", linha ,")")
-       dbGetQuery(conn, sql)    
+       dbGetQuery(datasource, sql)    
        
        # check if was correctly created
        parline_now = try(dbGetQuery(conn, sql2))
@@ -653,10 +652,9 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, senha){
             update_sql = paste("UPDATE \"Dengue_global\".parameters SET ", linha , 
                                " WHERE municipio_geocodigo = ", params$municipio_geocodigo,
                                " AND cid10 = \'", cid10, "\'", sep="")      
-            try(dbGetQuery(con, update_sql))
+            try(dbGetQuery(datasource, update_sql))
       }
              
-      dbDisconnect(conn)
       
 }
 
@@ -733,9 +731,7 @@ getWUstation <- function(cities, datasource = con){
 #'setWUstation(wudata, UF = "Minas Gerais")
 #'getWUstation(cities =wudata$municipio_geocodigo)
 
-setWUstation <- function(st, UF, senha){
-      
-      conn <- dbConnect(dbDriver("PostgreSQL"), user="dengueadmin", password=senha, dbname="dengue")
+setWUstation <- function(st, UF, datasource = con){
       
       ncities <- nrow(st)
       
@@ -749,7 +745,7 @@ setWUstation <- function(st, UF, senha){
                         primary_station, secondary_station")
       
       # check if city is already in the system (Regional table)
-      cities_table <- getCidades(uf = UF, datasource = conn)
+      cities_table <- getCidades(uf = UF, datasource = datasource)
       cities_in <- st$municipio_geocodigo %in% cities_table$municipio_geocodigo
        
       assert_that(sum(cities_in)==ncities, 
@@ -764,10 +760,8 @@ setWUstation <- function(st, UF, senha){
             linha = paste("codigo_estacao_wu = ", el1, ",", "estacao_wu_sec = ", el2, sep = "")
             update_sql = paste("UPDATE \"Dengue_global\".regional_saude SET ", linha , " WHERE 
                                municipio_geocodigo = ", st$municipio_geocodigo[i], sep="")  
-            cityline = try(dbGetQuery(conn, update_sql))
+            cityline = try(dbGetQuery(datasource, update_sql))
       }
-      
-      dbDisconnect(conn)
       
       return()
 }
