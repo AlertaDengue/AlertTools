@@ -245,7 +245,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(uf = "Ceará",datasource = con)
-#'res <- pipe_infodengue(cities = 3167202, cid10 = "A90",
+#'res <- pipe_infodengue(cities = 2304400, cid10 = "A90",
 #'nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202111)
 #'tail(tabela_historico(res))
 #'# User's parameters
@@ -370,7 +370,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             
             cas.x <- casos %>% 
                   filter(cidade == x) %>%
-                  adjustIncidence(method = nowcasting,  nyears = 2) %>%
+                  adjustIncidence(method = nowcasting,  nowSE = datarelatorio, nyears = 1) %>%
                   Rt(count = "tcasesmed",gtdist="normal", meangt=3, sdgt = 1) %>%
                   mutate(inc = tcasesmed/pop*100000)  %>%
                   arrange(SE)

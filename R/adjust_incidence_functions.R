@@ -30,7 +30,7 @@
 #'confidence interval for the predicted cases-to-be-notified)
 #'@examples
 #'# fixedprob
-#'d <- getCases(cities = 3167202, dataini = "sinpri",  completetail = 0) 
+#'d <- getCases(cities = 2304400, dataini = "sinpri",  completetail = 0) 
 #'tail(d)
 #'resfit<-adjustIncidence(obj = d)
 #'tail(resfit)
@@ -50,7 +50,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   
   # checking date
   if(missing(nowSE)) {
-    nowSE <- obj$SE[le]
+    stop("adjustIncidence: nowSE must be provided")
     }   # last date in the input object
   else{
     assert_that(nowSE <= max(obj$SE), msg = "adjustIncidence: lastSE larger than max(obj$SE). Check input.")
@@ -62,7 +62,7 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   obj$tcasesICmax <- obj$casos
   
   if(sum(tail(obj$casos, n = 52), na.rm = TRUE) <= 50 | 
-         sum(tail(obj$casos, n = 4), na.rm = TRUE) <= 5){
+         sum(tail(obj$casos, n = 5), na.rm = TRUE) <= 5){
     message("less than 50 cases in the last 12 months or less than 5 cases in the last month. Nowcasting not done")
     return(obj)
   } 
@@ -87,9 +87,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
        message(paste("computing nowcasting for city ",city," date ",nowSE, "..."))
        nowday <- SE2date(nowSE)$ini + 6
        dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, lastday = nowday, datasource = datasource)
-       message("bayesnowcasting...")
-       
-       resfit<-bayesnowcasting(dados, Dmax = Dmax, Fim = nowday)
+        
+       resfit<-bayesnowcasting(dados, Dmax = Dmax, nowSE = nowSE)
        
        if(!is.null(resfit)){
          if(tail(resfit$Median, n = 1) > 
@@ -129,17 +128,17 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'@export
 #'@param obj data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita 
 #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
-#'@param Fim date for the nowcasting (date). Default is today.
+#'@param nowSE week of the nowcasting (ex. 202110). 
 #'@param interacao TRUE (default) se o modelo tiver o termo de interacao efeito-atraso
 #'@return data.frame with median and 95percent confidence interval for the 
 #'predicted cases-to-be-notified)
 #'@examples
 #' # bayesian
-#'dd <- getdelaydata(cities=3167202, nyears=1, cid10="A90", datasource=con)
-#'resfit<-bayesnowcasting(dd)
+#'dd <- getdelaydata(cities=2304400, nyears=1, cid10="A90", datasource=con)
+#'resfit<-bayesnowcasting(dd, nowSE = 202111)
 #'resfit
 
-bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date(), interacao = TRUE){
+bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE){
   
   # check input 
   if(is.null(names(d))) {
@@ -150,22 +149,35 @@ bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date(), interacao = TRUE){
     message("bayesnowcasting: few data, returning NULL")
     return(NULL)}    
   
+  if(missing(nowSE)) stop("bayesnowcasting requires definition of nowcast week ")
   
   #d contains columns
   assert_that(all(c("municipio_geocodigo", "dt_notific", "dt_sin_pri", "dt_digita")
                   %in% names(d)), msg = "bayesnowcasting requires data with columns
               municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita")
-  
+
   # remove cases with wrong dt_sin_pri (when is more than 4 weeks before notific 
   # any tine after)
   
   d$ininotif <- d$dt_notific - d$dt_sin_pri
   wrongdates <- which(d$ininotif > 30 | d$ininotif < 0 | is.na(d$dt_sin_pri))  
-  if(length(wrongdates) > 0) message(paste(length(wrongdates), 
-                                                  " registros com datas de inicio de sintomas invalidas"))
+  if(length(wrongdates) > 0) {
+    message(paste(length(wrongdates), "registros com datas de inicio de sintomas invalidas"))
+    d <- d[-wrongdates,]
+  }
   
-  d <- d[-wrongdates,]
+  # checking again
+  if(is.null(names(d))) {
+    message("bayesnowcasting: no valid data, returning NULL")
+    return(NULL)}    
   
+  if(nrow(d) < 50) {
+    message("bayesnowcasting: few valid data, returning NULL")
+    return(NULL)}    
+  
+  message(paste("nowcast will be calibrated with ", nrow(d), "cases"))
+  
+  # nowcasting
   d <- d %>% mutate(
     dt_sinpri_epiweek = epiweek(dt_sin_pri), 
     dt_sinpri_aux =  as.numeric(format(as.Date(dt_sin_pri), "%w")),
@@ -186,6 +198,7 @@ bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date(), interacao = TRUE){
   
   Inicio <- min(d$dt_sinpri_week)
   # Ultimo dia com notificacao ou digitacao
+  Fim <- SE2date(nowSE)$ini + 6 
   #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
   #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
   #Fim <- Fim + 6 - as.numeric(format(as.Date(Fim), "%w")) # why?
@@ -196,7 +209,7 @@ bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date(), interacao = TRUE){
   
   tbl.dates <- tibble(dt_sinpri_week = seq(Inicio, Fim, by = 7)) %>% 
     rowid_to_column(var = "Time")
-  Today = max(tbl.dates$Time)
+  Today <- max(tbl.dates$Time)
   
   dados.ag <- d %>% 
     filter( dt_digita <= Fim) %>% 
@@ -281,7 +294,7 @@ bayesnowcasting <- function(d, Dmax = 10, Fim = Sys.Date(), interacao = TRUE){
   )
   
   pred.dengue <- nowcasting(output.dengue, dados.ag, 
-                            Dm = Dmax, Fim = max(dados.ag$Date))
+                            Dm = Dmax, Fim = Fim) # max(dados.ag$Date))
   
   
   pred.dengue.summy <- pred.dengue %>% group_by(Date) %>% 
