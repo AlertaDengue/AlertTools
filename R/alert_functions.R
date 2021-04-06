@@ -429,7 +429,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
 #'@param datasource name of the sql connection.
 #'@return list with an alert object for each APS.
 #'@examples
-#'alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202105, 
+#'alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202113, 
 #'delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
 #' ale.chik <- pipe_infodengue_intra(city = 3304557, datarelatorio = 202108, 
 #' iniSE = 201001, cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
@@ -494,7 +494,7 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90",
                   filter(localidadeid == aps) %>%
                   filter(SE >= iniSE) %>%
                   arrange(SE) %>%
-                  adjustIncidence(method = delaymethod, pdig = p) %>%
+                  adjustIncidence(method = delaymethod, nowSE = datarelatorio, nyears = 1, pdig = p) %>%
                   Rt(count = "tcasesmed",gtdist="normal", meangt= meangt, sdgt = 1) %>%
                   mutate(inc = tcasesmed/populacao*100000) %>%
                   full_join(cli.aps, by = "SE") %>% 
