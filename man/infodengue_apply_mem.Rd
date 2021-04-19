@@ -2,12 +2,9 @@
 % Please edit documentation in R/infodengue_apply_mem.R
 \name{infodengue_apply_mem}
 \alias{infodengue_apply_mem}
-\title{Function \code{infodengue_apply_mem} uses MEM package to generate activity thresholds.
-Apply MEM algorithm discarding seasons below local pre-epidemic threshold.
-For each municipality, pre-epidemic (limiar_preseason) threshold has a minimum set at 5 cases.
-If calculated value falls below that, it is set to 5, with high activity (limiar_epidemico) set 
-to either the 90% quantile or 10, whichever is the greatest. The thresholds are given both in number of cases or
-as incidence. The alert model uses incidence.}
+\title{infodengue_apply_mem -------------------
+Function to apply MEM algorithm to generate pre-epidemic, post-epidemic, and high activity thresholds
+to municipalities covered by InfoDengue project}
 \usage{
 infodengue_apply_mem(
   mun_list,

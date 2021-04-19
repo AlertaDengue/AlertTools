@@ -1,5 +1,6 @@
-# Function to apply MEM algorithm to generate pre-epidemic, post-epidemic, and high activity thresholds
-# to municipalities covered by InfoDengue project
+#' infodengue_apply_mem -------------------
+#' Function to apply MEM algorithm to generate pre-epidemic, post-epidemic, and high activity thresholds
+#' to municipalities covered by InfoDengue project
 #' 
 #' Function \code{infodengue_apply_mem} uses MEM package to generate activity thresholds.
 #' Apply MEM algorithm discarding seasons below local pre-epidemic threshold.
@@ -173,7 +174,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
 }
 
 
-
+# infodengue_apply_mem_agreg -----------------------------------
 # Function to apply MEM algorithm to generate pre-epidemic, post-epidemic, and high activity thresholds
 # to municipalities covered by InfoDengue project
 #' 
