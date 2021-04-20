@@ -235,9 +235,6 @@ infodengue_apply_mem_agreg <- function(mun_list,
   #require(plyr, quietly=TRUE, warn.conflicts=FALSE)
   require(data.table, quietly=TRUE, warn.conflicts=FALSE)
   
- assert_that(class(mun_list[1]) == "numeric", 
-             msg = "infodengue_apply_mem_agreg: check input, must be numeric ")
- 
   # Read population table
   sqlcity = paste("'", str_c(mun_list, collapse = "','"),"'", sep="")
   
