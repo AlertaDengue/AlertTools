@@ -5,12 +5,12 @@
 \title{get list of regionais.}
 \usage{
 getRegionais(
-  cities = NULL,
+  cities,
   uf,
   sortedby = "a",
   macroreg = FALSE,
   datasource = con,
-  complete = FALSE
+  output = "names"
 )
 }
 \arguments{
@@ -23,7 +23,10 @@ if available}
 
 \item{macroreg}{TRUE if getRegionais should return macroreg instead of reg. Default: False}
 
-\item{database}{name of the database}
+\item{datasource}{name of the database}
+
+\item{output}{if "names" returns only a vector with names of regionais or macros. 
+If "complete" , returns municipalities and their regs}
 }
 \value{
 vector with names of the regionais.
@@ -33,8 +36,8 @@ consult database to get list of regionais
 }
 \examples{
 getRegionais(uf="Rio de Janeiro")
-getRegionais(uf="Minas Gerais")
-getRegionais(uf="Minas Gerais", macroreg = TRUE)
+head(getRegionais(uf="Rio de Janeiro",output="complete",macroreg = TRUE))
+head(getRegionais(uf="Rio de Janeiro",output="complete"))
 getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro")
 getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro", macroreg = TRUE)
 getRegionais(uf="Rio de Janeiro", sortedby = 'id')

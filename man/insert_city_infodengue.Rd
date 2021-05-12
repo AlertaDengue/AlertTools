@@ -22,11 +22,11 @@ insert_city_infodengue(
 \item{city}{geocode of the city. Mandatory}
 }
 \value{
-to be defined
+
 }
 \description{
 Initial setup of a new city in the alerta system.  Can be integrated later with 
-the delay model and write.parameters
+the delay model and write.parameters. DEPRECATED
 }
 \examples{
 insert_city_infodengue(geocodigo = 1111111, id_regional=1, regional = "teste", macroreg = "teste")

@@ -557,7 +557,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
   
   if(!missing(macroregional)){
       
-    sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, mr.uf   
+    sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
                   ON m.id_regional = r.id 
@@ -571,7 +571,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
   }
   
   # retorna para todo o estado
-  sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo   
+  sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
                   ON m.id_regional = r.id 

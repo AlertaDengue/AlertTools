@@ -47,7 +47,7 @@ Function to plot the output of tabela_historico.
 }
 \examples{
 # Parameters for the model
-cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro", datasource = con)
+cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
 restab <- tabela_historico(res)

@@ -4,10 +4,12 @@
 \alias{getCidades}
 \title{get list of cities.}
 \usage{
-getCidades(regional, uf, datasource = con)
+getCidades(regional, macroregional, uf, datasource = con)
 }
 \arguments{
 \item{regional}{full name of the regional.}
+
+\item{macroregional}{full name of the macroregional.}
 
 \item{uf}{full name of the state.}
 
@@ -17,9 +19,10 @@ getCidades(regional, uf, datasource = con)
 vector with names of the cities.
 }
 \description{
-consult database to get list of cities
+consult database to get list of cities for regional, macroregional or uf.
 }
 \examples{
-getCidades(regional = "Metropolitana I", uf="Rio de Janeiro",datasource=con)
-getCidades(uf="Minas Gerais",datasource=con)
+getCidades(regional = "Metropolitana I", uf="Rio de Janeiro")
+getCidades(uf="Maranhão")
+getCidades(uf="Maranhão", macroregional = "Norte")
 }

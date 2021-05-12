@@ -20,7 +20,7 @@ Function \code{read.cases} extract notification data from database
 and aggregate by epiweek. Used by mem.
 }
 \examples{
-dd <- read.cases(2010, 2020, mun_list = 4212650)
+dd <- read.cases(2019, 2020, mun_list = 4108304)
 }
 \author{
 Marcelo F C Gomes
