@@ -617,14 +617,14 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
       assert_that(all(c("municipio_geocodigo","cid10") %in% names(params)), 
                   msg = paste("write.parameters: params must contain municipio_geocodigo, cid10"))
       
-      # check if city is already in the system (Regional table)
+      # check if city is already in the system (Regional table) - they all are
       
-      sql1 = paste("SELECT * from \"Dengue_global\".regional_saude SET  
-                               WHERE municipio_geocodigo = ",city, sep="")      
-      cityregtable = try(dbGetQuery(datasource, sql1))
+      #sql1 = paste("SELECT * from \"Dengue_global\".regional_saude SET  
+      #                         WHERE municipio_geocodigo = ",city, sep="")      
+      #cityregtable = try(dbGetQuery(datasource, sql1))
       
-      assert_that(nrow(cityregtable)>0, 
-                  msg = paste("geocode", city, "not implemented in Infodengue. Use insertCityinAlerta()") )
+      #assert_that(nrow(cityregtable)>0, 
+      #            msg = paste("geocode", city, "not implemented in Infodengue. Use insertCityinAlerta()") )
       
       # Next step, check if there are any parameters for this cid10?      
       sql2 = paste("SELECT * from \"Dengue_global\".parameters SET  
@@ -786,20 +786,21 @@ setWUstation <- function(st, UF, datasource = con){
 
 # insert_city_infodengue ------------------------------------
 #'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 
-#'the delay model and write.parameters
+#'the delay model and write.parameters. DEPRECATED
 #'@title Initial setup of a new city in the alerta system. Insert into tables Regionais. 
 #'@export
 #'@param city geocode of the city. Mandatory 
 #'@param id_regional numerical id of the 'Regional da saude'.Mandatory
 #'@param regional name of the 'Regional da saude'.Mandatory
 #'@param macroreg name of the 'MacroRegional da saude'.Mandatory
-#'@return to be defined
+#'@return 
 #'@examples
 #'insert_city_infodengue(geocodigo = 1111111, id_regional=1, regional = "teste", macroreg = "teste")
 
 insert_city_infodengue<-function(geocodigo ,id_regional, regional, macroreg, datasource=con){
       
-      
+      message("this function is deprecated as all cities are in Infodengue")
+      return()
       # check if city is really new
       if(nchar(geocodigo) == 6) geocodigo <- sevendigitgeocode(geocodigo)   
       consult_sql = paste("SELECT * from \"Dengue_global\".regional_saude SET  

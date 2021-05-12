@@ -272,13 +272,12 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
 #' @param mun_list vector with the municipalities' 7 digit geocodes 
 #' @author Marcelo F C Gomes
 #' @examples
-#' dd <- read.cases(2010, 2020, mun_list = 4212650)
+#' dd <- read.cases(2019, 2020, mun_list = 4108304)
 
 read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
-      sqlquery = paste0("SELECT dt_notific, se_notif, ano_notif, c.municipio_geocodigo
-                        FROM  \"Municipio\".\"Notificacao\" as c
-                        INNER JOIN \"Dengue_global\".regional_saude as f
-                        ON c.municipio_geocodigo = f.municipio_geocodigo\n")
+  
+      sqlquery = paste0("SELECT dt_notific, se_notif, ano_notif, municipio_geocodigo
+                        FROM  \"Municipio\".\"Notificacao\" ")
       if (is.null(mun_list)){
             sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
                                " AND ano_notif <= ", end_year, ")")    
@@ -286,7 +285,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
             mun_list_txt <- paste0(mun_list, collapse=',')
             sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
                                " AND ano_notif <= ", end_year,
-                               " AND c.municipio_geocodigo IN (", mun_list_txt,"));" )
+                               " AND municipio_geocodigo IN (", mun_list_txt,"));" )
       }
       
       # In the database we have each single notification. So we'll have to aggregate 
@@ -341,7 +340,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
       
       df.cases.weekly <- merge(df.epiweeks, df.cases.weekly, by=c('municipio_geocodigo', 'SE'), all.x=T)
       df.cases.weekly[is.na(df.cases.weekly)] <- 0
-      df.cases.weekly$municipio_geocodigo <- as.integer((levels(df.cases.weekly$municipio_geocodigo))[df.cases.weekly$municipio_geocodigo])
+      df.cases.weekly$municipio_geocodigo <- as.integer(df.cases.weekly$municipio_geocodigo)
       
       return(df.cases.weekly)
 }
