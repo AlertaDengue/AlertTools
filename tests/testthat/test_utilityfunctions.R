@@ -26,3 +26,11 @@ test_that("episem output gave the wrong result''", {
 })
 
 rm(out1, out2, out3, out4)
+
+####==================================
+# getCidades ----
+####==================================
+
+cc <- getCidades(regional = "Metropolitana I", uf="Rio de Janeiro",datasource=con)
+test_that("getCidades: produce required output",{
+      expect_named(cc, c("municipio_geocodigo","nome","nome_regional","nome_macroreg","uf"),ignore.order = TRUE)})

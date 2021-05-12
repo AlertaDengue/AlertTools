@@ -245,7 +245,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(uf = "Ceará",datasource = con)
-#'res <- pipe_infodengue(cities = 2304400, cid10 = "A90",
+#'res <- pipe_infodengue(cities = cidades$geocodigo[1:4], cid10 = "A90",
 #'nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202111)
 #'tail(tabela_historico(res))
 #'# User's parameters
@@ -534,7 +534,7 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90",
 #'@return a plot for each city
 #'@examples
 #' # Parameters for the model
-#'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro", datasource = con)
+#'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'restab <- tabela_historico(res)

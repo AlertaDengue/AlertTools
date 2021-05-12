@@ -478,95 +478,112 @@ temp.predict <- function(v, plotar = FALSE){
 #'@param sortedby the options are: 'a' alphabetically, 'id' regional id number (only valid for regional), 
 #'if available
 #'@param macroreg TRUE if getRegionais should return macroreg instead of reg. Default: False  
-#'@param database name of the database
+#'@param output if "names" returns only a vector with names of regionais or macros. 
+#'If "complete" , returns municipalities and their regs
+#'@param datasource name of the database
 #'@return vector with names of the regionais.
 #'@examples
 #'getRegionais(uf="Rio de Janeiro")
-#'getRegionais(uf="Minas Gerais")
-#'getRegionais(uf="Minas Gerais", macroreg = TRUE)
+#'head(getRegionais(uf="Rio de Janeiro",output="complete",macroreg = TRUE))
+#'head(getRegionais(uf="Rio de Janeiro",output="complete"))
 #'getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro")
 #'getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro", macroreg = TRUE)
 #'getRegionais(uf="Rio de Janeiro", sortedby = 'id')
 
-getRegionais <- function(cities = NULL, uf, sortedby = "a", macroreg = FALSE, datasource=con, complete = FALSE){
+getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE, datasource=con, output = "names"){
       
       assert_that(!missing(uf), msg = "getRegionais: please specify uf. Ex. uf = \"Ceará\" ")
       
-      sqlquery = paste("SELECT municipio_geocodigo, nome_regional, id_regional, nome_macroreg, uf 
-                  FROM \"Dengue_global\".\"Municipio\" 
-                  INNER JOIN \"Dengue_global\".regional_saude
-                  ON municipio_geocodigo = geocodigo
-                  where uf = '", uf, "'", sep="")
-      
+     sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo   
+                  FROM \"Dengue_global\".\"Municipio\" m  
+                  INNER JOIN \"Dengue_global\".regional r 
+                  ON m.id_regional = r.id 
+                  INNER JOIN \"Dengue_global\".macroregional mr
+                  ON r.id_macroregional = mr.id 
+                  where m.uf = '", uf, "'", sep="")
+            
       d = dbGetQuery(datasource, sqlquery)    
       assert_that(nrow(d) > 0, msg = (paste("getRegionais: Database does not have the health areas for ", uf)))
       
-      if(!is.null(cities)) {
+      names(d) <- c("municipio_geocodigo","cidade","regional","codigo_regional","macroregional","codigo_macroregional")
+      if(!missing(cities)) {
             d <- d %>% filter(municipio_geocodigo %in% cities)
             assert_that(nrow(d) == length(cities), msg = (paste("getRegionais: Database does not have 
                                                                 the health districts for all listed cities in", uf)))
-            if(macroreg){
-                  return(d$nome_macroreg)
-            } else {
-                  return(d$nome_regional)
-            }
-            
-      } else{
-            if(macroreg){
-                  out <- sort(unique(d$nome_macroreg))
-                  if(sortedby == 'id') msg("macroreg does not have id. Returning in alphabetic order")
-                  
-            } else{
-                  if(sortedby == 'a') out <- sort(unique(d$nome_regional))
-                  if(sortedby == 'id') {
-                        out <- unique(d[order(d$id_regional),"nome_regional"])
-                        if (any(is.na(d$id_regional))) {
-                              warning("getRegionais: codigo das regionais nao encontrado, trocando argummento para sortedby = 'a'")
-                              out <- sort(unique(d$nome_regional))
-                        }
-                        
-                  }
-            }
-            
-            return(out)
       }
-      
+
+      if(output == "names" & macroreg == TRUE) return(unique(d$macroregional))
+      if(output == "names" & macroreg == FALSE) return(unique(d$regional))
+        
+      return(d)
 }
 
 
 # getCidades ------------------------------------
-#'@description  consult database to get list of cities 
+#'@description  consult database to get list of cities for regional, macroregional or uf.
 #'@title get list of cities. 
 #'@export
 #'@param uf full name of the state.
 #'@param regional full name of the regional.
+#'@param macroregional full name of the macroregional.
 #'@param datasource name of the database
 #'@return vector with names of the cities.
 #'@examples
-#'getCidades(regional = "Metropolitana I", uf="Rio de Janeiro",datasource=con)
-#'getCidades(uf="Minas Gerais",datasource=con)
+#'getCidades(regional = "Metropolitana I", uf="Rio de Janeiro")
+#'getCidades(uf="Maranhão")
+#'getCidades(uf="Maranhão", macroregional = "Norte")
 
-getCidades <- function(regional, uf, datasource=con){
+getCidades <- function(regional, macroregional, uf, datasource=con){
       
       if(missing(uf)) stop("getCidades requer nome da uf por extenso")
       if(!missing(regional)){
-            sqlquery = paste("SELECT municipio_geocodigo, nome, nome_regional, nome_macroreg, uf 
-                  FROM \"Dengue_global\".\"Municipio\" 
-                  INNER JOIN \"Dengue_global\".regional_saude
-                  ON municipio_geocodigo = geocodigo
-                  where uf = '", uf, "' AND nome_regional = '",regional ,"'", sep="")      
+            #sqlquery = paste("SELECT municipio_geocodigo, nome, nome_regional, nome_macroreg, uf 
+            #      FROM \"Dengue_global\".\"Municipio\" 
+            #      INNER JOIN \"Dengue_global\".regional_saude
+            #      ON municipio_geocodigo = geocodigo
+            #      where uf = '", uf, "' AND nome_regional = '",regional ,"'", sep="")     
+        sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
+                  FROM \"Dengue_global\".\"Municipio\" m  
+                  INNER JOIN \"Dengue_global\".regional r 
+                  ON m.id_regional = r.id 
+                  INNER JOIN \"Dengue_global\".macroregional mr
+                  ON r.id_macroregional = mr.id 
+                  WHERE m.uf = '", uf, "' AND r.nome = '", regional ,"'", sep="")
+        d <- dbGetQuery(datasource, sqlquery) 
+        assert_that(nrow(d)>0, msg = "getCidades: found no city")
+        names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id", "macroregional","macroregional_id","uf")
+        return(d)    
       }
+  
+  if(!missing(macroregional)){
       
-      if(missing(regional)){
-            sqlquery = paste("SELECT municipio_geocodigo, nome, nome_regional, nome_macroreg, uf 
-                  FROM \"Dengue_global\".\"Municipio\" 
-                  INNER JOIN \"Dengue_global\".regional_saude
-                  ON municipio_geocodigo = geocodigo
-                  where uf = '", uf, "'", sep="")      
-      }
+    sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, mr.uf   
+                  FROM \"Dengue_global\".\"Municipio\" m  
+                  INNER JOIN \"Dengue_global\".regional r 
+                  ON m.id_regional = r.id 
+                  INNER JOIN \"Dengue_global\".macroregional mr
+                  ON r.id_macroregional = mr.id 
+                  WHERE m.uf = '", uf, "' AND mr.nome = '", macroregional ,"'", sep="")
+    d <- dbGetQuery(datasource, sqlquery) 
+    assert_that(nrow(d)>0, msg = "getCidades: found no city")
+    names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id", "macroregional","macroregional_id","uf")
+    return(d)     
+  }
+  
+  # retorna para todo o estado
+  sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo   
+                  FROM \"Dengue_global\".\"Municipio\" m  
+                  INNER JOIN \"Dengue_global\".regional r 
+                  ON m.id_regional = r.id 
+                  INNER JOIN \"Dengue_global\".macroregional mr
+                  ON r.id_macroregional = mr.id 
+                  WHERE m.uf = '", uf, "'", sep="")
+  
+  d <- dbGetQuery(datasource, sqlquery) 
+  assert_that(nrow(d)>0, msg = "getCidades: found no city")
+  names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id", "macroregional","macroregional_id","uf")
+  return(d)       
       
-      d = dbGetQuery(datasource, sqlquery)    
-      d 
 }
 
 
