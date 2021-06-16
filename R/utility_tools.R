@@ -723,12 +723,12 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
 #'getWUstation(cities = cidades$municipio_geocodigo)
 
 getWUstation <- function(cities, datasource = con){
-      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
-      comando <- paste("SELECT id, nome_regional, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
-                       \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
-                       ")" , sep="")
-      city_table <- dbGetQuery(datasource,comando)
-      return(city_table)
+  sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+  comando <- paste("SELECT municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+                       \"Dengue_global\".parameters WHERE municipio_geocodigo IN (", sqlcity, 
+                   ")" , sep="")
+  city_table <- dbGetQuery(datasource,comando)
+  return(city_table)
 }
 
 # setWUstation ------------------------------------------
@@ -767,7 +767,7 @@ setWUstation <- function(st, UF, datasource = con){
        
       assert_that(sum(cities_in)==ncities, 
                   msg = paste("geocodes", st$municipio_geocodigo[cities_in == FALSE] , 
-                              "not implemented in Infodengue. Use insertCityinAlerta()") )
+                              "not implemented in Infodengue.") )
       
       ## writing 
     
@@ -775,7 +775,7 @@ setWUstation <- function(st, UF, datasource = con){
             el1 = paste("'", as.character(st$primary_station[i]),"'",sep="")
             el2 = paste("'", as.character(st$secondary_station[i]),"'",sep="")
             linha = paste("codigo_estacao_wu = ", el1, ",", "estacao_wu_sec = ", el2, sep = "")
-            update_sql = paste("UPDATE \"Dengue_global\".regional_saude SET ", linha , " WHERE 
+            update_sql = paste("UPDATE \"Dengue_global\".parameters SET ", linha , " WHERE 
                                municipio_geocodigo = ", st$municipio_geocodigo[i], sep="")  
             cityline = try(dbGetQuery(datasource, update_sql))
       }

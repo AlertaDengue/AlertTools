@@ -15,14 +15,13 @@ criteria = setCriteria(rule="Af",values=val)
 test_that("setcriteria: produces required input error messages", {
       expect_error(setCriteria(rule="XX"),"setcriteria: rule unknown.")
       expect_error(setCriteria(), "if rule is null, values must be provided")
-      expect_error(setCriteria(rule = "Aw", values = val), "setcriteria: Af requires temp_min and Aw requires umid_max")
 })
 
 test_that("setcriteria: produce required output",{
       expect_named(criteria, c("crity", "crito", "critr"))
       classes <- sapply(criteria,class)
-      expect_equal(sapply(criteria,class), c("character", "character","character"))
-      expect_equal(sapply(criteria,length), c(3,3,3))
+      expect_equal(classes, c(crity = "character", crito = "character", critr = "character"))
+      expect_equal(sapply(criteria,length), c(crity =3, crito =3, critr =3))
 })
 
 
@@ -39,10 +38,10 @@ cli = getWU(stations = 'SBGL', vars=c("temp_min"), datasource=con) %>%
 ale <- plyr::join_all(list(cas,cli),by="SE") 
 resf <- fouralert(ale, crit = criteria)
 
-test_that("fouralert: produces required input error messages", {
+#test_that("fouralert: produces required input error messages", {
       #expect_error(fouralert(cities = "Rio"),"cities should be a vector of numeric geocodes")
       #expect_error(getCases(cities=222222), "one or more cities not found")
-})
+#})
 
 test_that("fouralert: produces the required output", {
       expect_named(resf, c("data", "indices", "crit", "n"))
@@ -58,23 +57,23 @@ test_that("fouralert: produces the required output", {
 #      expect_true(all(c("data", "indices", "rules","n") %in% names(alerta)))
 #})
 
-# Testing alerio2 ----------------------
+# Testing pipe_infodengue_intra REFAZER ----------------------
 
 # common use
-params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
-criter <- setCriteria(rule="Af", values = params)
-alerio <- alertaRio(naps = 0:2, crit = criter, se=201304, delaymethod="fixedprob")
-
-test_that("alertrio: produces the required output", {
-      expect_named(alerio, c("APS 1", "APS 2.1", "APS 2.2"))
-      expect_named(alerio[[1]], c("data", "indices", "crit", "n"))
-      expect_named(alerio[[1]]$data, c("localidadeid","SE","casos","localidade","populacao",
-                                       "cidade","nome","CID10","tcasesICmin","tcasesmed",
-                                       "tcasesICmax","pdig","Rt","lwr","upr","p1","inc",
-                                       "estacao","temp_min","tweet"))
-      expect_named(alerio[[1]]$indices, c("cytrue","nytrue","cotrue","notrue","crtrue",
-                                          "nrtrue","level"))
-      expect_equal(class(alerio[[1]]), "alerta")
-})
+# params <- c(varcli ="temp_min", clicrit=22, limiar_epidemico=100, limiar_preseason = 14.15)
+# criter <- setCriteria(rule="Af", values = params)
+# alerio <- pipe_infodengue_intra(crit = criter, se=201304, delaymethod="fixedprob")
+# 
+# test_that("alertrio: produces the required output", {
+#       expect_named(alerio, c("APS 1", "APS 2.1", "APS 2.2"))
+#       expect_named(alerio[[1]], c("data", "indices", "crit", "n"))
+#       expect_named(alerio[[1]]$data, c("localidadeid","SE","casos","localidade","populacao",
+#                                        "cidade","nome","CID10","tcasesICmin","tcasesmed",
+#                                        "tcasesICmax","pdig","Rt","lwr","upr","p1","inc",
+#                                        "estacao","temp_min","tweet"))
+#       expect_named(alerio[[1]]$indices, c("cytrue","nytrue","cotrue","notrue","crtrue",
+#                                           "nrtrue","level"))
+#       expect_equal(class(alerio[[1]]), "alerta")
+# })
 
 

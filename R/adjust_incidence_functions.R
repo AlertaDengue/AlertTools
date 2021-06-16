@@ -44,7 +44,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   city <- unique(obj$cidade)  
   cid <- obj$CID10[1]
   # checking if only one city in obj
-  assert_that(length(city) == 1, msg = "adjustIncidence only works for one city at a time.")
+  assert_that(length(city) == 1, 
+              msg = "adjustIncidence only works for one city at a time.")
 
   le = nrow(obj) 
   
@@ -53,7 +54,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
     stop("adjustIncidence: nowSE must be provided")
     }   # last date in the input object
   else{
-    assert_that(nowSE <= max(obj$SE), msg = "adjustIncidence: lastSE larger than max(obj$SE). Check input.")
+    assert_that(nowSE <= max(obj$SE), 
+                msg = "adjustIncidence: lastSE larger than max(obj$SE). Check input.")
     obj <- subset(obj, SE <= nowSE)  # assigned input
   }
   
@@ -63,7 +65,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
   
   if(sum(tail(obj$casos, n = 52), na.rm = TRUE) <= 50 | 
          sum(tail(obj$casos, n = 5), na.rm = TRUE) <= 5){
-    message("less than 50 cases in the last 12 months or less than 5 cases in the last month. Nowcasting not done")
+    message("less than 50 cases in the last 12 months or less than 5 cases 
+            in the last month. Nowcasting not done")
     return(obj)
   } 
   
@@ -86,7 +89,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
  if (method == "bayesian"){
        message(paste("computing nowcasting for city ",city," date ",nowSE, "..."))
        nowday <- SE2date(nowSE)$ini + 6
-       dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, lastday = nowday, datasource = datasource)
+       dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, 
+                             lastday = nowday, datasource = datasource)
         
        resfit<-bayesnowcasting(dados, Dmax = Dmax, nowSE = nowSE)
        
@@ -101,7 +105,8 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
              resfit$LS <- NA
            expl <- which(resfit$LS > 10000)  # check if any LS was too big
            resfit$LS[expl] <- NA
-           message("upper limit nowcarting too large in some dates, returning t_cases_max = NA")
+           message("upper limit nowcarting too large in some dates, 
+                   returning t_cases_max = NA")
            }
            message("bayesnowcasting done")
            # adding to the alert data obj
@@ -631,9 +636,11 @@ getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(),
 #'@description Apply the fitDelayModel to all or a subset of cities.
 #'@title Update notification delay model.
 #'@param cities geocode of one of more cities.
-#'@param ufs list of ufs (full name as in the database). Required even if only a subset of cities is the target  
+#'@param ufs list of ufs (full name as in the database). Required even if only a subset 
+#'of cities is the target  
 #'@param regional TRUE, if model should be fitted at the regional level too
-#'@param period range of dates for the analysis. Format: c("2010-01-01","2015-12-31"). 
+#'@param period range of dates for the analysis. 
+#'Format: c("2010-01-01","2015-12-31"). 
 #'Default is the whole period available. 
 #'@param datasource sql connection.
 #'@param plotar if TRUE, show plot of the fitted model.
@@ -642,8 +649,10 @@ getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(),
 #'@examples
 #'con <- DenguedbConnect()
 #'par(mfrow=c(2,1))
-#'res<-updateDelayModel(cities=c(330240, 330045), period=c("2013-01-01","2016-01-01"), plotar=TRUE, ufs = "Rio de Janeiro", datasource=con)
-#'res<-updateDelayModel(ufs="Rio de Janeiro", period=c("2013-01-01","2016-01-01"), datasource=con)
+#'res<-updateDelayModel(cities=c(330240, 330045), 
+#'period=c("2013-01-01","2016-01-01"), plotar=TRUE, ufs = "Rio de Janeiro")
+#'res<-updateDelayModel(ufs="Rio de Janeiro", 
+#'period=c("2013-01-01","2016-01-01"), datasource=con)
 #'res<-updateDelayModel(ufs="Rio de Janeiro", period=c("2013-01-01","2016-01-01"), regional=TRUE, datasource=con)
 
 # updateDelayModel <- function(cities, ufs, period, datasource, plotar=FALSE, write, verbose=FALSE, regional=FALSE){

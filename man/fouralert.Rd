@@ -41,6 +41,4 @@ tw = getTweet(cities = 3200300)
 # Calculate alert      
 ale <- plyr::join_all(list(cas,cli,tw), by="SE") 
 resf <- fouralert(ale, crit = criteria)
-# Better visualization
-tail(tabela_historico(resf),n=3)
 }

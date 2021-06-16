@@ -54,14 +54,12 @@ wrap of functions used by Infodengue.
 }
 \examples{
 cidades <- getCidades(uf = "Ceará",datasource = con)
-res <- pipe_infodengue(cities = cidades$geocodigo[1:4], cid10 = "A90",
-nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202111)
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90",
+nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202111)
 tail(tabela_historico(res))
-# User's parameters
+# User's parameters (not working)
 dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)
 res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 finalday= "2018-08-12",nowcasting="none")
 restab <- tabela_historico(res)
-res <- pipe_infodengue(cities = 3143302, cid10 = "A90",completetail = 0, nowcasting="none")
-tail(tabela_historico(res))
 }

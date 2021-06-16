@@ -7,9 +7,12 @@
 applymem(df.data, l.seasons, ...)
 }
 \arguments{
-\item{df.data}{data frame with municipio_geocodigo in a column named municipio_geocodigo, and incidence seasons in each column each row gives the incidence in each season, for each municipio_geocodigo, for each week.}
+\item{df.data}{data frame with municipio_geocodigo in a column named municipio_geocodigo,
+and incidence seasons in each column each row gives the incidence in each season,
+ for each municipio_geocodigo, for each week.}
 
-\item{l.seasons}{vector with incidence columns to be used. Additional arguments accepted by memmodel function}
+\item{l.seasons}{vector with incidence columns to be used. Additional arguments 
+accepted by memmodel function}
 
 \item{i.n.max}{Number of pre-epidemic values used to calculate the threshold.}
 
@@ -46,13 +49,16 @@ applymem(df.data, l.seasons, ...)
 \item{i.iter.boot}{Number of bootstrap iterations.}
 }
 \value{
-epithresholds: list with full epimem report for each municipio_geocodigo, keyed by AP's name. dfthresholds: data frame with thresholds for each AP.
+epithresholds: list with full epimem report for each municipio_geocodigo,
+keyed by AP's name. dfthresholds: data frame with thresholds for each AP.
 }
 \description{
-Function to apply epimem algorithm on df.data and generate full reports as well as a data frame with summary of relevant thresholds (pre, pos, mid, high, veryhigh)
+Function to apply epimem algorithm on df.data and generate full 
+reports as well as a data frame with summary of relevant thresholds (pre, pos, mid, high, veryhigh)
 }
 \details{
-internal function, used by info.dengue.apply.mem.   Defatul arguments passed to memmodel function:
+internal function, used by info.dengue.apply.mem.   Defatul arguments 
+passed to memmodel function:
 }
 \author{
 Marcelo F Gomes

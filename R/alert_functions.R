@@ -131,8 +131,6 @@ setCriteria <- function(rule=NULL, values=NULL,
 #'# Calculate alert      
 #'ale <- plyr::join_all(list(cas,cli,tw), by="SE") 
 #'resf <- fouralert(ale, crit = criteria)
-#'# Better visualization
-#'tail(tabela_historico(resf),n=3)
 
 
 fouralert <- function(obj, crit, miss="last",dy=4){
@@ -245,19 +243,19 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(uf = "Ceará",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$geocodigo[1:4], cid10 = "A90",
-#'nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202111)
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90",
+#'nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202111)
 #'tail(tabela_historico(res))
-#'# User's parameters
+#'# User's parameters (not working)
 #'dd <- read.parameters(cities = c(3200300)) %>% mutate(limiar_epidemico = 100)
 #'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
 #'finalday= "2018-08-12",nowcasting="none")
 #'restab <- tabela_historico(res)
-#'res <- pipe_infodengue(cities = 3143302, cid10 = "A90",completetail = 0, nowcasting="none")
-#'tail(tabela_historico(res))
-pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), iniSE = 201001, nowcasting="none", 
-                            narule=NULL, writedb = FALSE, datasource = con, userinput =FALSE, completetail = NA, dataini = "notif"){
-      
+
+pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), 
+                            iniSE = 201001, nowcasting="none", narule=NULL,
+                            writedb = FALSE, datasource = con, userinput =FALSE,
+                            completetail = NA, dataini = "notif"){
       
       
       if(missing(datarelatorio)) {
@@ -309,13 +307,14 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       print(cidades)      
       
       # Reading the names of the meterological stations for each city
-      sqlcity = paste("'", str_c(cidades, collapse = "','"),"'", sep="")
-      comando <- paste("SELECT id, nome_regional, nome_macroreg, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
-                       \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
-                       ")" , sep="")
-      city_table <- dbGetQuery(datasource,comando)
+      # sqlcity = paste("'", str_c(cidades, collapse = "','"),"'", sep="")
+      # comando <- paste("SELECT id, nome_regional, nome_macroreg, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+      #                  \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
+      #                  ")" , sep="")
+      # city_table <- dbGetQuery(datasource,comando)
       
-      estacoes <- na.omit(unique(c(city_table$estacao_wu_sec, city_table$codigo_estacao_wu)))
+      estacoes_cidades <- getWUstation(cidades)
+      estacoes <- na.omit(unique(c(estacoes_cidades$estacao_wu_sec, estacoes_cidades$codigo_estacao_wu)))
       print("usando dados de clima das estacoes:")
       print(estacoes)
       
@@ -332,6 +331,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
                         dataini = dataini, completetail = completetail) %>%
             mutate(inc = casos/pop*100000)
       
+            message("getCases done")
       # Reading tweets 
       if(cid10 == "A90"){
             print("Reading tweets...")
@@ -343,10 +343,11 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       
       ## FUN  calc.alerta (internal)
       calc.alerta <- function(x){  #x = cities[i]
+         message(x)
             # params
-            parcli.x <- city_table[city_table$municipio_geocodigo == x, c("codigo_estacao_wu", "estacao_wu_sec")]      
-            varcli.x <- na.omit(c(pars_table$varcli[city_table$municipio_geocodigo == x],
-                                  pars_table$varcli2[city_table$municipio_geocodigo == x]))
+            parcli.x <- estacoes_cidades[estacoes_cidades$municipio_geocodigo == x, c("codigo_estacao_wu", "estacao_wu_sec")]      
+            varcli.x <- na.omit(c(pars_table$varcli[pars_table$municipio_geocodigo == x],
+                                  pars_table$varcli2[pars_table$municipio_geocodigo == x]))
             
             # escolhe a melhor serie meteorologica para a cidade, usando apenas a primeira var 
             cli.x <- bestWU(series = list(cliwu[cliwu$estacao == parcli.x[[1]],],
