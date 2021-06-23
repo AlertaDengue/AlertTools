@@ -1,13 +1,13 @@
 #' infodengue_apply_mem -------------------
 #' Function to apply MEM algorithm to generate pre-epidemic, post-epidemic, and high activity thresholds
 #' to municipalities covered by InfoDengue project
-#' 
+#'
 #' Function \code{infodengue_apply_mem} uses MEM package to generate activity thresholds.
 #' Apply MEM algorithm discarding seasons below local pre-epidemic threshold.
 #' For each municipality, pre-epidemic (limiar_preseason) threshold has a minimum set at 5 cases.
-#' If calculated value falls below that, it is set to 5, with high activity (limiar_epidemico) set 
+#' If calculated value falls below that, it is set to 5, with high activity (limiar_epidemico) set
 #' to either the 90% quantile or 10, whichever is the greatest. The thresholds are given both in number of cases or
-#' as incidence. The alert model uses incidence. 
+#' as incidence. The alert model uses incidence.
 #' @name infodengue_apply_mem
 #' @export
 #' @param start_year Historical data starting year to consider. Default: 0 (i.e., as old as possible)
@@ -28,29 +28,29 @@
 #' @param mincases.pre minimum number of cases to launch a preseason alert. Default: 5
 #' @param mincases.epi minimum number of cases to launch an epidemic alert. Default: 10
 #' @param ... Optional arguments passed to \code{memmodel}, from MEM package.
-#' @return Function \code{info.dengue.apply.mem} will return a list with thresholds calculated by mem, 
-#' by simple percentile and the choice used in the infodengue model, by municipality: 
+#' @return Function \code{info.dengue.apply.mem} will return a list with thresholds calculated by mem,
+#' by simple percentile and the choice used in the infodengue model, by municipality:
 #'  \describe{
-#'  \item{mem: threshold values calculated by mem}{municipio_geocodigo = geocode, inc_preseason = preseason incidence threshold, inc_posseason = 
+#'  \item{mem: threshold values calculated by mem}{municipio_geocodigo = geocode, inc_preseason = preseason incidence threshold, inc_posseason =
 #'  pos-season incidence threshold, inc_epidemico = high incidence threshold, inicio and inicio.ic = estimated begining of the season
-#'  duracao, duracao.ic = season duration. ano_inicio and ano_fim used for calculation.} 
+#'  duracao, duracao.ic = season duration. ano_inicio and ano_fim used for calculation.}
 #'  \item{percentiles: threshold values calculated as percentiles (incidence)}{quant_pre = preseason incidence threshold,
-#'  quant_pos = posseason incidence threshold, quant_epidemico = epidemic incidence threshold.} 
-#'  \item{min_threshold_inc:}{pre-defined minimum threshold.} 
-#'  \item{threshold: values used by Infodengue}{MEM's values if cases > min.cases, percentiles otherwise: limiar_preseason, limiar_posseason, 
-#'  limiar_epidemico.}    
+#'  quant_pos = posseason incidence threshold, quant_epidemico = epidemic incidence threshold.}
+#'  \item{min_threshold_inc:}{pre-defined minimum threshold.}
+#'  \item{threshold: values used by Infodengue}{MEM's values if cases > min.cases, percentiles otherwise: limiar_preseason, limiar_posseason,
+#'  limiar_epidemico.}
 #'    }
 #' @examples
-#' Generate thresholds for municipalities using the whole history. 
+#' Generate thresholds for municipalities using the whole history.
 #' Return object instead of writing to data base:
 #' mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 #' 4212650,4217006,4212700,4214706,4213104,4200804)
 #' mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
 #' thres <- infodengue_apply_mem(mun_list[1:2], database=con)
-#' 
+#'
 #' A nice way to visualize the calculated thresholds
-#' plot(thres) 
-#' 
+#' plot(thres)
+#'
 #' Write to database instead of returning object requires password:
 #' thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10])
 
@@ -60,30 +60,30 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
                                   limiar.preseason=0.95, limiar.epidemico=0.95, i.type.curve=2,
                                   i.type.threshold=2, i.type.intensity=2, mincases.pre = 5, mincases.pos = 5,
                                   mincases.epi=10, ...){
-  
+
   require(mem, quietly=TRUE, warn.conflicts=FALSE)
   #require(plyr, quietly=TRUE, warn.conflicts=FALSE)
   require(data.table, quietly=TRUE, warn.conflicts=FALSE)
-  
-  #stopifnot(is.numeric(mun_list),"MEM: mun_list should be a numeric vector")       
+
+  #stopifnot(is.numeric(mun_list),"MEM: mun_list should be a numeric vector")
   # Read population table
   sqlcity = paste("'", str_c(mun_list, collapse = "','"),"'", sep="")
-  
-  comando <- paste0("SELECT geocodigo, populacao FROM 
+
+  comando <- paste0("SELECT geocodigo, populacao FROM
                    \"Dengue_global\".\"Municipio\" WHERE geocodigo
                    IN (", sqlcity, ")")
-  
+
   df.pop <- dbGetQuery(conn=con, comando)
   names(df.pop)[1] <- "municipio_geocodigo"
-  
+
   # Process data in chuncks for 300 municipalities at a time:
   mun_list <- split(mun_list, ceiling(seq_along(mun_list)/20))
-  
+
   # Prepare output data table
   #thresholds.table <-   data.table('municipio_geocodigo'=integer(), 'ano_inicio'=integer(), 'ano_fim'=integer(),
   #                                 'pre'=double(), 'pos'=double(), 'muitoalta'=double())
   thresholds.table <-   data.table(NULL)
- 
+
    # Run by chuncks:
   for (mun_chunck in mun_list){
         print(mun_chunck)
@@ -93,7 +93,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
     # Build incidence
     df.inc <- merge.data.frame(df.inc, df.pop, by='municipio_geocodigo')
     df.inc['inc'] <- df.inc$casos * 100000.0 / df.inc$populacao
-    
+
     # Store only necessary data, separating seasons by columns
     dfsimple <- df.inc[df.inc$SE > max(df.inc$SE[df.inc$SE<(effec_start_year+1)*100])-12 &
                          df.inc$SE < (effec_start_year+1)*100+41, c('municipio_geocodigo', 'SE', 'inc')]
@@ -106,20 +106,20 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
         seasons <- cbind(seasons, paste0(i,'-',i+1))
       }
     }
-    
+
     # Apply quantile method (new)
-    quantile.tab <- df.inc %>% 
+    quantile.tab <- df.inc %>%
           group_by(municipio_geocodigo) %>%
           summarise(quant_pre = max(mincases.pre, quantile(casos, probs = 0.10), na.rm = TRUE)/mean(populacao)*1e5,
                     quant_pos = max(mincases.pre,quantile(casos, probs = 0.10), na.rm = TRUE)/mean(populacao)*1e5,
                     quant_epidemico = max(mincases.epi,quantile(casos, probs = limiar.epidemico), na.rm = TRUE)/mean(populacao)*1e5)
-    
+
     # Apply mem method
     thresholds.tab <- data.table(municipio_geocodigo=mun_chunck)
     base.cols <- c('municipio_geocodigo', 'pre', 'pos', 'veryhigh')
     thresholds <- data.frame(municipio_geocodigo = mun_chunck,
                             pre = NA_real_, pos = NA_real_, veryhigh = NA_real_,
-                            inicio = NA_real_, inicio.ic = NA_real_, 
+                            inicio = NA_real_, inicio.ic = NA_real_,
                             duracao = NA_real_, duracao.ic = NA_real_)
     thresholdsMEM <- try(applymem(dfsimple, seasons, i.n.max=i.n.max, i.level.threshold=limiar.preseason,
                            i.level.intensity=limiar.epidemico,
@@ -127,7 +127,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
                            i.type.intensity=i.type.intensity)$dfthresholds)#[base.cols]
     if(ncol(thresholdsMEM) > 1) thresholds <- thresholdsMEM
     #if(class(thresholds == list())){
-      thresholds.tab <- merge(thresholds.tab, thresholds, by='municipio_geocodigo', all=TRUE) # mem calcula limiar em incidencia  
+      thresholds.tab <- merge(thresholds.tab, thresholds, by='municipio_geocodigo', all=TRUE) # mem calcula limiar em incidencia
     #}
       thresholds.tab <- merge(thresholds.tab, df.pop, by='municipio_geocodigo', all.x = TRUE) # agrega pop para calcular casos
     thresholds.tab <- merge(thresholds.tab, quantile.tab, by='municipio_geocodigo', all.x = TRUE) # agrega pop para calcular casos
@@ -135,7 +135,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
           mutate(mininc_pre = mincases.pre/populacao*1e5,
                  mininc_pos = mincases.pos/populacao*1e5,
                  mininc_epi = mincases.epi/populacao*1e5)
-    
+
     thresholds.tab <- thresholds.tab %>%
       mutate(limiar_preseason = case_when(
                   as.numeric(is.na(pre)) == 0 & pre > mininc_pre ~ pre, TRUE ~ quant_pre),
@@ -146,17 +146,17 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
           rename(inc_preseason = pre,
                  inc_posseason = pos,
                  inc_epidemico = veryhigh)
-    
-    
+
+
     thresholds.tab$ano_inicio <- start_year
     thresholds.tab$ano_fim <- end_year
     #thresholds.tab <- thresholds.tab[, c('municipio_geocodigo', 'ano_inicio', 'ano_fim','pre', 'pos', 'muitoalta')]
     thresholds.table <- rbindlist(list(thresholds.table, thresholds.tab))
-    
+
   }
 #thresholds.table <- plyr::rename(thresholds.table, replace=c('pre'='limiar_preseason', 'pos'='limiar_posseason',
 #                                                         'muitoalta'='limiar_epidemico'))
-        
+
   if (write=='db'){
     tgt.cols <- c('municipio_geocodigo', 'limiar_preseason', 'limiar_posseason', 'limiar_epidemico')
     write.parameters(params=tgt.cols, tab=thresholds.table[, tgt.cols], senha=passwd)
@@ -170,7 +170,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
         class(obj) <- "infomem"
         return(obj)
   }
-  
+
 }
 
 
@@ -319,6 +319,7 @@ infodengue_apply_mem_agreg <- function(mun_list,
     return(thresholds.tab)
   
 }
+
 
 
 ######################
