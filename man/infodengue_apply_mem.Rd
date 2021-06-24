@@ -57,29 +57,29 @@ This value is passed to i.level.intensity parameter in \code{memmodel}, from MEM
 \item{con}{Connection to PostGreSQL database, using \code{dbConnect} from RPostgreSQL package}
 }
 \value{
-Function \code{info.dengue.apply.mem} will return a list with thresholds calculated by mem, 
-by simple percentile and the choice used in the infodengue model, by municipality: 
+Function \code{info.dengue.apply.mem} will return a list with thresholds calculated by mem,
+by simple percentile and the choice used in the infodengue model, by municipality:
  \describe{
- \item{mem: threshold values calculated by mem}{municipio_geocodigo = geocode, inc_preseason = preseason incidence threshold, inc_posseason = 
+ \item{mem: threshold values calculated by mem}{municipio_geocodigo = geocode, inc_preseason = preseason incidence threshold, inc_posseason =
  pos-season incidence threshold, inc_epidemico = high incidence threshold, inicio and inicio.ic = estimated begining of the season
- duracao, duracao.ic = season duration. ano_inicio and ano_fim used for calculation.} 
+ duracao, duracao.ic = season duration. ano_inicio and ano_fim used for calculation.}
  \item{percentiles: threshold values calculated as percentiles (incidence)}{quant_pre = preseason incidence threshold,
- quant_pos = posseason incidence threshold, quant_epidemico = epidemic incidence threshold.} 
- \item{min_threshold_inc:}{pre-defined minimum threshold.} 
- \item{threshold: values used by Infodengue}{MEM's values if cases > min.cases, percentiles otherwise: limiar_preseason, limiar_posseason, 
- limiar_epidemico.}    
+ quant_pos = posseason incidence threshold, quant_epidemico = epidemic incidence threshold.}
+ \item{min_threshold_inc:}{pre-defined minimum threshold.}
+ \item{threshold: values used by Infodengue}{MEM's values if cases > min.cases, percentiles otherwise: limiar_preseason, limiar_posseason,
+ limiar_epidemico.}
    }
 }
 \description{
 Function \code{infodengue_apply_mem} uses MEM package to generate activity thresholds.
 Apply MEM algorithm discarding seasons below local pre-epidemic threshold.
 For each municipality, pre-epidemic (limiar_preseason) threshold has a minimum set at 5 cases.
-If calculated value falls below that, it is set to 5, with high activity (limiar_epidemico) set 
+If calculated value falls below that, it is set to 5, with high activity (limiar_epidemico) set
 to either the 90% quantile or 10, whichever is the greatest. The thresholds are given both in number of cases or
 as incidence. The alert model uses incidence.
 }
 \examples{
-Generate thresholds for municipalities using the whole history. 
+Generate thresholds for municipalities using the whole history.
 Return object instead of writing to data base:
 mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 4212650,4217006,4212700,4214706,4213104,4200804)
@@ -87,7 +87,7 @@ mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
 thres <- infodengue_apply_mem(mun_list[1:2], database=con)
 
 A nice way to visualize the calculated thresholds
-plot(thres) 
+plot(thres)
 
 Write to database instead of returning object requires password:
 thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10])

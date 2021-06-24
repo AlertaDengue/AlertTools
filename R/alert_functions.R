@@ -242,9 +242,9 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@return data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE.
 #'@examples
-#'cidades <- getCidades(uf = "Ceará",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90",
-#'nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202111)
+#'cidades <- getCidades(uf = "Paraná",datasource = con)
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[306], cid10 = "A90",
+#'nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 #'tail(tabela_historico(res))
 #'# User's parameters (not working)
 #'dd <- read.parameters(cities = c(3200300)) %>% mutate(limiar_epidemico = 100)
@@ -371,10 +371,22 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             
             cas.x <- casos %>% 
                   filter(cidade == x) %>%
-                  adjustIncidence(method = nowcasting,  nowSE = datarelatorio, nyears = 1) %>%
-                  Rt(count = "tcasesmed",gtdist="normal", meangt=3, sdgt = 1) %>%
-                  mutate(inc = tcasesmed/pop*100000)  %>%
-                  arrange(SE)
+                  adjustIncidence(method = "none",  
+                                  nowSE = datarelatorio, 
+                                  nyears = 1) 
+             
+            if(nowcasting != "none"){  # handling errors in bayesian nowcast
+               try(cas.x <- casos %>% 
+                      filter(cidade == x) %>%
+                      adjustIncidence(method = nowcasting,  
+                                      nowSE = datarelatorio, 
+                                      nyears = 1)) 
+            }
+                        
+            cas.x <- cas.x %>%
+               Rt(count = "tcasesmed",gtdist="normal", meangt=3, sdgt = 1) %>%
+               mutate(inc = tcasesmed/pop*100000)  %>%
+               arrange(SE)
             
             # Joining all data
             ale <- cas.x %>% 
