@@ -10,32 +10,27 @@
 #'chosen from existing rules or can be specified by the user. The built in rules are: 
 #'Af (minimum temperature defines yellow) and Aw (humidity does), AsAw (temp min and max humidity together).  
 #'@export 
-#'@param rule either a built-in rule ("Af", "Aw", "AsAw") or a list with three elements defining criteria for 
+#'@param rule either a built-in rule ("Af", "Aw", "AsAw","Awi","AsAwi") or a list with three elements defining criteria for 
 #'transition to yellow (level 2), orange (level 3) and red (level 4). See description.
 #'@param delays list with three elements, each one is a vector: c(delay to turn on, delay to turn off)
 #'@param values named vector of values for the critical parameters. Use character.   
 #'@return list with rules. To be useful, this list must contain variables that match those in the data.  
 #'@examples
-#'NOT USE: setCriteria(rule="Af")
-#'Defining a rule
-#'myrule = list(crity = "temp_min > 25 & casos > 0", crito = "p1 > 0.9 & inc > 1", 
-#'critr = "inc > 100 & casos > 10")
-#'mydelay = list(delayy = c(3,1), delayo = c(3,1), delayr = c(2,2))
-#'setCriteria(rule = myrule, delays = mydelay)
 #'Defining values manually
 #'val <- c("varcli" ="temp_min", "limiar_preseason"="10","limiar_epidemico"="100", "clicrit"="22"
 #', "clicrit2" = "80", varcli2 = "umid_max")
 #'setCriteria(rule="Af",values=val)
 #'setCriteria(rule="AsAw",values=val)
 #'Using infodengue parameters:
-#'val <- read.parameters(3304557)
-#'setCriteria(rule="Af", values=val)
+#'val <- read.parameters(1200401)
+#'setCriteria(rule=val$codmodelo, values=val)
 
 setCriteria <- function(rule=NULL, values=NULL, 
                         delays = list(delayy = c(0,0), delayo = c(0,0), delayr = c(0,0))){
       
       # checking input
-      if(!is.null(rule)) assert_that(rule %in% c("Af","Aw","AsAw"),msg = "setcriteria: rule unknown. Try Af, Aw or AsAw")
+      if(!is.null(rule)) assert_that(rule %in% c("Af","Aw","AsAw","Awi","AsAwi"),
+                                     msg = "setcriteria: rule unknown. Try Af, Aw, Awi, AsAw or AsAwi")
       if(is.null(rule)) {
             assert_that(!is.null(values), msg = "setcriteria: if rule is null, values must be provided.")
             assert_that(any(names(values) %in% c("varcli", "clicrit", "limiar_preseason",
@@ -49,51 +44,73 @@ setCriteria <- function(rule=NULL, values=NULL,
             if(rule[1] == "Af"){
                   criteria <- list(
                         crity = c("temp_min > temp_crit & inc > 0", 3, 0), #3,2
-                        crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
-                        critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
+                        crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 1), #3,2
+                        critr = c("inc > limiar_epidemico & casos > 30", 2, 1) #2,2
                   )} 
             if (rule[1] == "Aw"){
                   criteria = list(
                         crity = c("umid_max > umid_crit & inc > 0", 3, 0), #3,2
                         crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
-                        critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
+                        critr = c("inc > limiar_epidemico & casos > 30", 2, 0) #2,2
                   )}
-            if(rule[1] == "AsAw"){
+         if (rule[1] == "Awi"){
+            criteria = list(
+               crity = c("umid_min > umid_crit & inc > 0", 3, 0), #3,2
+               crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
+               critr = c("inc > limiar_epidemico & casos > 30", 2, 0) #2,2
+            )}
+         if(rule[1] == "AsAw"){
                   criteria = list(
                         crity = c("temp_min > temp_crit & umid_max > umid_crit & inc > 0", 3, 0), #3,2
                         crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 0), #3,2
-                        critr = c("inc > limiar_epidemico & casos > 5", 2, 0) #2,2
+                        critr = c("inc > limiar_epidemico & casos > 30", 2, 0) #2,2
                   )}
+         if(rule[1] == "AsAwi"){
+            criteria = list(
+               crity = c("temp_min > temp_crit & umid_min > umid_crit & inc > 0", 3, 0), #3,2
+               crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 0), #3,2
+               critr = c("inc > limiar_epidemico & casos > 30", 2, 0) #2,2
+            )}
             # user defined rules      
       } else {  
+         message("setcriteria function using user defined criteria")
             criteria<-lapply(1:3, function(x) c(rule[[x]], delays[[x]]))
             names(criteria) <- c("crity","crito","critr")
       }
       
       # substituting values (very bad coding, should be improved)
-      if(!is.null(values)) {
+      if(!is.null(values)) {  #used in the pipeline
             if (!("varcli2" %in% names(values))) values[["varcli2"]] <- "xx"
             
-            if (rule[1] %in% c("Af", "AsAw")){
+            if (rule[1] %in% c("Af", "AsAw","AsAwi")){ # reading temp
                   assert_that(values[["varcli"]] == "temp_min" | values[["varcli2"]] == "temp_min",
-                              msg = "setcriteria: Af and AsAw require temp_min")
+                              msg = "setcriteria: Af, AsAw and AsAwi require temp_min")
                   tm <- names(values)[which(values == "temp_min")]
                   if(tm == "varcli")  values <- c(values, "temp_crit" = values[["clicrit"]])
                   if(tm == "varcli2") values[["temp_crit"]] <- c(values, "temp_crit" = values[["clicrit2"]])
             }
             
-            if (rule[1] %in% c("Aw", "AsAw")){
+            if (rule[1] %in% c("Aw", "AsAw")){ # reading umidmax
                   assert_that(values[["varcli"]] == "umid_max" | values[["varcli2"]] == "umid_max",
                               msg = "setcriteria: Aw and AsAw require umid_max")
                   um <- names(values)[which(values == "umid_max")]
                   if(um == "varcli")   values <- c(values, "umid_crit" = values[["clicrit"]])
                   if(um == "varcli2")  values <- c(values, "umid_crit" = values[["clicrit2"]])
-                  
-                  if(class(values) == "data.frame") 
-                  { # handling values from read.parameters
-                        values <- unlist(sapply(names(values),function(x) values[[x]])) 
-                  }
             }
+            
+            if (rule[1] %in% c("Awi", "AsAwi")){ # reading umidmin
+               assert_that(values[["varcli"]] == "umid_min" | values[["varcli2"]] == "umid_min",
+                           msg = "setcriteria: Awi and AsAwi require umid_min")
+               um <- names(values)[which(values == "umid_min")]
+               if(um == "varcli")   values <- c(values, "umid_crit" = values[["clicrit"]])
+               if(um == "varcli2")  values <- c(values, "umid_crit" = values[["clicrit2"]])
+            }
+            
+            #if(class(values) == "data.frame") 
+            #      { # handling values from read.parameters
+            values <- unlist(sapply(names(values),function(x) values[[x]])) 
+            #      }
+            
             
             criteria <- lapply(criteria, function(x) c(str_replace_all(x[1], values), x[c(2,3)]))
       }
