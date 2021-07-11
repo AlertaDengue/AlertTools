@@ -652,14 +652,14 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
        dbGetQuery(datasource, sql)    
        
        # check if was correctly created
-       parline_now = try(dbGetQuery(conn, sql2))
+       parline_now = try(dbGetQuery(con, sql2))
        
        assert_that(nrow(parline_now) == 1, 
                    msg = paste("parameter table has something wrong. number of lines for ", 
                                params$cid10, "for city", city, "is:", nrow(parline_now) ))
       }
       
-      vars <- params %>% select(-c("municipio_geocodigo", "cid10"))
+      vars <- params %>% dplyr::select(-c("municipio_geocodigo", "cid10"))
       nvars <- length(vars)
       
       # updating parameter values
