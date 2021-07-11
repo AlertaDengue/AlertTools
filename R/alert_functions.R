@@ -45,31 +45,31 @@ setCriteria <- function(rule=NULL, values=NULL,
                   criteria <- list(
                         crity = c("temp_min > temp_crit & inc > 0", 3, 0), #3,2
                         crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 1), #3,2
-                        critr = c("inc > limiar_epidemico & casos > 30", 2, 1) #2,2
+                        critr = c("inc > limiar_epidemico & casos > 10", 2, 1) #2,2
                   )} 
             if (rule[1] == "Aw"){
                   criteria = list(
                         crity = c("umid_max > umid_crit & inc > 0", 3, 0), #3,2
                         crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
-                        critr = c("inc > limiar_epidemico & casos > 30", 2, 0) #2,2
+                        critr = c("inc > limiar_epidemico & casos > 10", 2, 0) #2,2
                   )}
          if (rule[1] == "Awi"){
             criteria = list(
                crity = c("umid_min > umid_crit & inc > 0", 3, 0), #3,2
                crito = c("p1 > 0.95 & inc > limiar_preseason", 2, 0), #3,2
-               critr = c("inc > limiar_epidemico & casos > 30", 2, 0) #2,2
+               critr = c("inc > limiar_epidemico & casos > 10", 2, 0) #2,2
             )}
          if(rule[1] == "AsAw"){
                   criteria = list(
                         crity = c("temp_min > temp_crit & umid_max > umid_crit & inc > 0", 3, 0), #3,2
                         crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 0), #3,2
-                        critr = c("inc > limiar_epidemico & casos > 30", 2, 0) #2,2
+                        critr = c("inc > limiar_epidemico & casos > 10", 2, 0) #2,2
                   )}
          if(rule[1] == "AsAwi"){
             criteria = list(
                crity = c("temp_min > temp_crit & umid_min > umid_crit & inc > 0", 3, 0), #3,2
                crito = c("p1 > 0.95 & inc > limiar_preseason", 3, 0), #3,2
-               critr = c("inc > limiar_epidemico & casos > 30", 2, 0) #2,2
+               critr = c("inc > limiar_epidemico & casos > 10", 2, 0) #2,2
             )}
             # user defined rules      
       } else {  
