@@ -23,8 +23,9 @@ Create weekly time series from tweeter data from server. The
 source of this data is the Observatorio da Dengue (UFMG).
 }
 \examples{
-tw <- getTweet(cities = 3302205, lastday = "2014-03-01")
-tw <- getTweet(cities = 3200300, lastday = "2016-03-01")
+NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
+tw <- getTweet(cities = c(3302205,3200300), lastday = "2014-03-01")
+tw <- getTweet(cities = 3304557, finalday = "2016-03-01")
 cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 tw <- getTweet(cities = cid$municipio_geocodigo) 
 tail(tw)

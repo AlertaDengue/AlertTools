@@ -20,7 +20,7 @@ Currently, the parameters are: "limiar_preseason", "limiar_posseason",
 City must be already in the regionais table.
 }
 \examples{
-params = data.frame(municipio_geocodigo = 3506003,limiar_preseason = 4.50243, limiar_posseason = 3.962566, 
+pars = data.frame(municipio_geocodigo = 3506003,limiar_preseason = 4.50243, limiar_posseason = 3.962566, 
 limiar_epidemico = 67.72364, varcli = "temp_min", clicrit = 22, cid10 = "A90", codmodelo = "Af") 
-res = write_parameters(newpars)
+res = write_parameters(params$municipio_geocodigo, params$cid10, params = pars)
 }

@@ -14,8 +14,9 @@
 #' to open the database connection. 
 #'@return data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
 #'@examples
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
 #'res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201201)
-#'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med")
+#'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"))
 #'tail(res)
 
 getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 201001,
@@ -28,22 +29,53 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 20
 
       # check if all stations exist
       sqlstations = paste("'", str_c(stations, collapse = "','"),"'", sep="")
-      checkStationComm <- paste("SELECT estacao_id, nome FROM \"Municipio\".\"Estacao_wu\" WHERE  estacao_id IN (", sqlstations, ")",sep="")
-      stanames <- dbGetQuery(datasource,checkStationComm)
       
-      if(nrow(stanames)==0) stop("'stations' unknown. Check their names.")
-      notfoundsta <- stations[!(stations %in% stanames$estacao_id)]
-      if(length(notfoundsta) > 0) warning(paste("station",notfoundsta, "does not exist in the database."))
       
-      # Geting the data from the available stations
-      message(paste("are the wu stations used", cat(stanames$nome)))
-      sqlstations = paste("'", str_c(stanames$estacao_id, collapse = "','"),"'", sep="")
-      
-      comando <- paste("SELECT * from \"Municipio\".\"Clima_wu\" WHERE 
+      if(class(con) == "SQLConnection"){
+        checkStationComm <- paste("SELECT estacao_id, nome FROM 
+                                \"Municipio\".\"Estacao_wu\" WHERE  estacao_id 
+                                IN (", sqlstations, ")",sep="")
+        stanames <- dbGetQuery(datasource,checkStationComm)  
+        if(nrow(stanames)==0) stop("'stations' unknown. Check their names.")
+        notfoundsta <- stations[!(stations %in% stanames$estacao_id)]
+        if(length(notfoundsta) > 0) warning(paste("station",notfoundsta, 
+                                                  "does not exist in the database."))
+        
+        # Geting the data from the available stations
+        message(paste("are the wu stations used", cat(stanames$nome)))
+        sqlstations = paste("'", str_c(stanames$estacao_id, collapse = "','"),"'", sep="")
+        
+        comando <- paste("SELECT * from \"Municipio\".\"Clima_wu\" WHERE 
                         \"Estacao_wu_estacao_id\" IN  (", sqlstations, ") AND 
                          data_dia <= '",finalday,"'",sep="")
+        
+        d <- dbGetQuery(datasource,comando) 
+      }
       
-      d <- dbGetQuery(datasource,comando) 
+      if(class(datasource) == "SQLiteConnection"){
+        allsta <- unique(dbGetQuery(datasource, 'SELECT Estacao_wu_estacao_id FROM wu')$Estacao_wu_estacao_id)
+        notfoundsta <- stations[!(stations %in% allsta)]
+        if(length(notfoundsta) > 0) warning(paste("station",notfoundsta, 
+                                                  "does not exist in the database."))
+        
+        # Geting the data from the available stations
+        foundsta <- stations[stations %in% allsta]
+        if(length(foundsta) > 0){ 
+          message(paste("these are the wu stations used", cat(foundsta)))
+          finaldaynum <- as.numeric(finalday) 
+          sqlstations = paste("'", str_c(foundsta, collapse = "','"),"'", sep="")
+          comando <- paste("SELECT * from wu WHERE 
+                        \"Estacao_wu_estacao_id\" IN  (", sqlstations, ")" ,sep="")
+          
+          d <- dbGetQuery(datasource, comando)
+          
+          # fixing dates
+          d$data_dia <- as.Date(d$data_dia, origin = "1970-01-01")
+          d <- d %>%
+            filter(d$data_dia <= finalday)
+          } 
+      }
+      
       
       # agregando vars climaticas por semana (ignora NAs)
       d1 = d %>% 
@@ -72,6 +104,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 20
 #'@param var name of the meteorological variable 
 #'@return data.frame with the best series 
 #'@examples
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
 #'series1 = getWU(stations = 'SBCP',vars="temp_min", datasource= con)
 #'series2 = getWU(stations = 'SBME',vars="temp_min", datasource= con)
 #'res = bestWU(list(series1, series2),var="temp_min")
@@ -115,8 +148,9 @@ bestWU <- function(series,var){
 #'@param datasource Use the connection to the Postgresql server for using project data.  
 #'@return data.frame with weekly counts of people tweeting on dengue.
 #'@examples
-#'tw <- getTweet(cities = 3302205, lastday = "2014-03-01")
-#'tw <- getTweet(cities = 3200300, lastday = "2016-03-01")
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
+#'tw <- getTweet(cities = c(3302205,3200300), lastday = "2014-03-01")
+#'tw <- getTweet(cities = 3304557, finalday = "2016-03-01")
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'tw <- getTweet(cities = cid$municipio_geocodigo) 
 #'tail(tw)
@@ -130,19 +164,37 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
             
             sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
 
-            comando <- paste("SELECT \"Municipio_geocodigo\", data_dia, numero FROM \"Municipio\".\"Tweet\" WHERE 
-                \"Municipio_geocodigo\" IN (", sqlcity,") AND data_dia <= '", lastday,"'",sep="")
+            if(class(con) == "SQLConnection"){
+              
+              comando <- paste("SELECT \"Municipio_geocodigo\", data_dia, numero
+              FROM \"Municipio\".\"Tweet\" WHERE \"Municipio_geocodigo\" IN (",
+                               sqlcity,") AND data_dia <= '", lastday,"'",sep="")
             
-            tw <- dbGetQuery(datasource,comando) 
+              tw <- dbGetQuery(datasource,comando) 
+            }
             
-      } else {stop(paste("there is no tweet for", cid10,"in the database"))}
+            if(class(datasource) == "SQLiteConnection"){
+              
+             comando <- paste("SELECT * from tweet WHERE  
+                        \"Municipio_geocodigo\" IN  (", sqlcity, ")" ,sep="")
+                
+             tw <- dbGetQuery(datasource, comando)
+                
+             # fixing dates and filtering
+             tw$data_dia <- as.Date(tw$data_dia, origin = "1970-01-01")
+             tw <- tw %>%
+                  filter(tw$data_dia <= as.Date(lastday))
+              } 
+              
+            } else {stop(paste("there is no tweet for", cid10,"in the database"))}
       
       # no tweets found for these cities 
       if(nrow(tw) == 0){
             message(paste("cidade(s)",cities,"nunca tweetou sobre dengue"))
             tw <- expand.grid(Municipio_geocodigo = cities,
-                             SE = seqSE(from = 201001, to = data2SE(lastday, 
-                                                                    format = "%Y-%m-%d"))$SE)
+                             SE = seqSE(from = 201001, 
+                                        to = data2SE(finalday, 
+                                        format = "%Y-%m-%d"))$SE)
             tw$tweet <- 0
             return(tw)
       }
@@ -181,17 +233,20 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'@param datasource PostgreSQLConnection to project database. 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'@examples
-#'d <- getCases(cities = 4314902) # dengue
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
+#'d <- getCases(cities = 4314902, dataini = "sinpri") # dengue
 #'d <- getCases(cities = 3300936, completetail = 0) # dengue
 #'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'d <- getCases(cities = cid$municipio_geocodigo, datasource = con, dataini = "sinpri") 
 #'tail(d)
 
-getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific", completetail = NA,
+getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific", 
+                     completetail = NA,
                      datasource=con) {
       
-      assert_that(class(cities) %in% c("integer","numeric"), msg = "cities should be a vector of numeric geocodes") 
+      assert_that(class(cities) %in% c("integer","numeric"), 
+                  msg = "cities should be a vector of numeric geocodes") 
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
       
       # dealing with synonimous cid 
@@ -211,17 +266,44 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
       sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
       sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
       
-      comando <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
+      
+      if(class(datasource) == "SQLConnection"){
+        comando <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
                          "' AND municipio_geocodigo IN (", sqlcity, 
                          ") AND cid10_codigo IN(", sqlcid,")", sep="")
             
-      dd <- dbGetQuery(datasource,comando)
+        dd <- dbGetQuery(datasource,comando)
       
-      if(nrow(dd)==0)stop("getCases found no data")
+        if(nrow(dd)==0)stop("getCases found no data")
             
-      # pegando nome da cidade e populacao 
-      sql2 <- paste("SELECT nome,populacao,geocodigo from \"Dengue_global\".\"Municipio\" WHERE geocodigo IN(", sqlcity,")") 
-      varglobais <- dbGetQuery(datasource,sql2)
+        # pegando nome da cidade e populacao 
+        sql2 <- paste("SELECT nome,populacao,geocodigo from \"Dengue_global\".\"Municipio\" WHERE geocodigo IN(", sqlcity,")") 
+        varglobais <- dbGetQuery(datasource,sql2)
+      
+      }
+      if(class(datasource) == "SQLiteConnection"){
+        
+        comando <- paste("SELECT * from \"Notificacao\" WHERE 
+                         municipio_geocodigo IN (", sqlcity, 
+                         ") AND cid10_codigo IN(", sqlcid,")", sep="")
+        
+        dd <- dbGetQuery(datasource,comando)
+        
+        if(nrow(dd)==0)stop("getCases found no data")
+        # fixing dates
+        dd$dt_notific <- as.Date(dd$dt_notific, origin = "1970-01-01")
+        dd$dt_sin_pri <- as.Date(dd$dt_sin_pri, origin = "1970-01-01")
+        dd$dt_digita <- as.Date(dd$dt_digita, origin = "1970-01-01")
+        
+        dd <- dd %>%
+          filter(dt_digita <= lastday)
+        
+        # pegando nome da cidade e populacao 
+        sql2 <- paste("SELECT nome,populacao,geocodigo from \"Municipio\" WHERE 
+                      geocodigo IN(", sqlcity,")") 
+        varglobais <- dbGetQuery(datasource,sql2)
+        
+      }
       
       # agregando casos por semana por cidade 
       if(dataini == "notific"){
@@ -272,27 +354,44 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
 #' @param mun_list vector with the municipalities' 7 digit geocodes 
 #' @author Marcelo F C Gomes
 #' @examples
-#' dd <- read.cases(2019, 2020, mun_list = 4108304)
+#' dd <- read.cases(2019, 2020, mun_list = c(4108304, 3300936))
 
-read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
+read.cases <- function(start_year, end_year, datasource=con, mun_list){
   
+  mun_list_txt <- paste0(mun_list, collapse=',')
+  
+  if(class(con) == "SQLConnection"){
       sqlquery = paste0("SELECT dt_notific, se_notif, ano_notif, municipio_geocodigo
                         FROM  \"Municipio\".\"Notificacao\" ")
-      if (is.null(mun_list)){
-            sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
-                               " AND ano_notif <= ", end_year, ")")    
-      } else {
-            mun_list_txt <- paste0(mun_list, collapse=',')
-            sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
+      
+      sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
                                " AND ano_notif <= ", end_year,
                                " AND municipio_geocodigo IN (", mun_list_txt,"));" )
-      }
       
+      df.cases.weekly <- dbGetQuery(conn = datasource, sqlquery, 
+                                    stringsAsFactors=FALSE)
+      
+      }
+  
+  
+  if(class(datasource) == "SQLiteConnection"){
+    sqlquery = paste0("SELECT dt_notific, se_notif, ano_notif, municipio_geocodigo
+                        FROM  \"Notificacao\" ")
+    
+    sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
+                       " AND ano_notif <= ", end_year,
+                       " AND municipio_geocodigo IN (", mun_list_txt,"));" )
+    
+    df.cases.weekly <- dbGetQuery(conn = datasource, sqlquery, 
+                                  stringsAsFactors=FALSE) 
+    df.cases.weekly$dt_notific <- as.Date(df.cases.weekly$dt_notific, origin = "1970-01-01")
+    
+  }
       # In the database we have each single notification. So we'll have to aggregate 
       #later on We'll use an object name "weekly" from the start since we'll overwrite
       #it with the aggregate later.
       
-      df.cases.weekly <- dbGetQuery(conn = datasource, sqlquery, stringsAsFactors=FALSE)
+  
       
       # Auxiliary function to correctly generate SE in the format YYYYWW from columns
       # notification week (WW) and current year. Since dates in the begining(end) of an year
@@ -358,6 +457,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list=NULL){
 #'@param datasource Posgresql connection to project's database
 #'@return data.frame with the data aggregated per health district and week
 #'@examples
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
 #'dC = getCasesinRio(APSid = 0:9, datasource = con) # Rio de Janeiro
 #'# Chikungunya:
 #'dC1s = getCasesinRio(APSid = 0, cid10 = "A920", dataini = "sinpri", datasource = con) # Rio de Janeiro
@@ -381,24 +481,52 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="s
       sqldate <- paste("'", lastday, "'", sep = "")
       sqlaps = paste("'", str_c(APSid, collapse = "','"),"'", sep="")
       
-      sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.se_sin_pri, n.dt_sin_pri, se_notif, l.id, l.nome
-      FROM  \"Municipio\".\"Notificacao\" AS n 
-      INNER JOIN \"Municipio\".\"Bairro\" AS b 
-      ON n.bairro_nome = b.nome 
-      INNER JOIN \"Municipio\".\"Localidade\" AS l 
-      ON b.\"Localidade_id\" = l.id 
-      WHERE n.municipio_geocodigo = 3304557 AND l.id IN(",sqlaps, ") AND dt_digita <= ",sqldate, 
-                       "AND n.cid10_codigo = ", sqlcid)
+      if(class(con) == "SQLConnection"){
+        sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.dt_digita,
+        n.dt_sin_pri, se_notif, l.id, l.nome
+        FROM  \"Municipio\".\"Notificacao\" AS n 
+        INNER JOIN \"Municipio\".\"Bairro\" AS b 
+        ON n.bairro_nome = b.nome 
+        INNER JOIN \"Municipio\".\"Localidade\" AS l 
+        ON b.\"Localidade_id\" = l.id 
+        WHERE n.municipio_geocodigo = 3304557 AND l.id IN(",sqlaps, ") AND dt_digita <= ",
+                         sqldate, "AND n.cid10_codigo = ", sqlcid)
       
-      d <- dbGetQuery(datasource,sqlquery)
-      d$SEM_INI <- year(d$dt_sin_pri)*100+d$se_sin_pri 
+        d <- dbGetQuery(datasource,sqlquery)
       
-      # query pop from table Municipio.localidade (only has data for Rio)
-      sql2 <- paste("SELECT nome,id,populacao from \"Municipio\".\"Localidade\" WHERE id IN(", sqlaps, ")") 
-      pop <- dbGetQuery(datasource,sql2)
+        #d$SEM_INI <- year(d$dt_sin_pri)*100+d$se_sin_pri 
       
-      #if(dataini=="sinpri") for(i in 1:nsem) st$casos[i] <- sum(d$SEM_INI == st$SE[i])
-      #print(paste("calculating incidence using", dataini))
+        # query pop from table Municipio.localidade (only has data for Rio)
+         sql2 <- paste("SELECT nome,id,populacao from \"Municipio\".\"Localidade\" 
+                     WHERE id IN(", sqlaps, ")") 
+         pop <- dbGetQuery(datasource,sql2)
+      
+      }
+      
+      if(class(con) == "SQLiteConnection"){
+        sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.dt_digita,
+        n.dt_sin_pri, se_notif, l.id, l.nome
+        FROM  \"Notificacao\" AS n 
+        INNER JOIN \"Bairro\" AS b 
+        ON n.bairro_nome = b.nome 
+        INNER JOIN \"Localidade\" AS l 
+        ON b.\"Localidade_id\" = l.id 
+        WHERE n.municipio_geocodigo = 3304557 AND l.id IN(",sqlaps, ") AND dt_digita <= ",
+                         sqldate, "AND n.cid10_codigo = ", sqlcid)
+        
+        d <- dbGetQuery(datasource,sqlquery)
+        # fixing dates
+        d$dt_sin_pri <- as.Date(d$dt_sin_pri, origin = "1970-01-01")
+        d$dt_notific <- as.Date(d$dt_notific, origin = "1970-01-01")
+        d$dt_digita <- as.Date(d$dt_digita, origin = "1970-01-01")
+        #d$SEM_INI <- year(d$dt_sin_pri)*100+d$se_sin_pri 
+        
+        # query pop from table Municipio.localidade (only has data for Rio)
+        sql2 <- paste("SELECT nome,id,populacao from \"Localidade\" 
+                    WHERE id IN(", sqlaps, ")") 
+        pop <- dbGetQuery(datasource,sql2)
+        
+      }
       
       # agregando casos por semana por cidade 
       if(dataini == "notific"){
@@ -450,49 +578,5 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="s
 }
 
 
-
-# mergedata (deprecated)  -------------------------------------------
-#'@description Merge cases, tweets and climate data for the alert  
-#'@title Merge cases, tweets and climate data.
-#'@param cases data.frame with aggregated cases by locality (or city)
-#' and epidemiological week.
-#'@param tweet data.frame with tweets aggregated per week
-#'@param climate data.frame with climate data aggregated per week for the
-#' station of interest.
-#'@return data.frame with all data available 
-#'@examples
-#'cas = getCases(city = 330240, datasource = con) 
-#'tw = getTweet(city = 330240, datasource = con)
-#'clima = getWU(stations = 'SBRJ', var=c("temp_min","umid_min"), datasource=con)
-#'head(mergedata(cases = cas, tweet = tw, climate = clima))
-#'head(mergedata(tweet = tw, climate = clima))
-#'head(mergedata(cases = cas, climate = clima))
-#'head(mergedata(tweet = tw, cases = cas))
-
-# mergedata <- function(cases = c(), tweet =c(), climate=c(), ini=200952){
-#       # checking the datasets
-#       if (!is.null(cases) & !all(table(cases$SE)==1)) 
-#             stop("merging require one line per SE in case dataset")
-#       if (!is.null(tweet) & !all(table(tweet$SE)==1)) 
-#             stop("merging require one line per SE in tweet dataset")
-#       if (!is.null(climate) & !all(table(climate$SE)==1))
-#             stop("merging require one line per SE in climate dataset. Mybe you have more than one station.")
-#       
-#       # merging
-#       if (is.null(cases)) {
-#             d <- merge(climate, tweet, by=c("SE"), all = TRUE)
-#       } else if (is.null(tweet)){
-#             d <- merge(cases, climate,  by=c("SE"), all = TRUE)     
-#       } else if (is.null(climate)) {
-#             d <- merge(cases, tweet[, c("SE","tweet")],  by=c("SE"), all = TRUE)
-#       }
-#       if (!(is.null(cases) | is.null(tweet) | is.null(climate))){
-#             d <- merge(cases, tweet[, c("SE","tweet")],  by=c("SE"), all = TRUE)
-#             d <- merge(d, climate,  by=c("SE"), all=TRUE)  
-#       }
-#       # removing beginning
-#       d <- subset(d, SE > ini)
-#       d
-# }
 
 

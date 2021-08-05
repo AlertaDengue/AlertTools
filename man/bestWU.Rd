@@ -20,6 +20,7 @@ Receives a set of meteorological data and return the most complete for
 a given city.If both are good, the first is returned.
 }
 \examples{
+NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
 series1 = getWU(stations = 'SBCP',vars="temp_min", datasource= con)
 series2 = getWU(stations = 'SBME',vars="temp_min", datasource= con)
 res = bestWU(list(series1, series2),var="temp_min")

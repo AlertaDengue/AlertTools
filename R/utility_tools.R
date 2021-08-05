@@ -274,16 +274,25 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
       
       if (tab %in% c("sinan","tweet","historico", "historico_mrj")){
       
-            assert_that(cid10 %in% c("A90", "A92.0", "A92.8"), msg = "lastDBdate asking for valid cid10")
+            assert_that(cid10 %in% c("A90", "A92.0", "A92.8"), 
+                        msg = "lastDBdate asking for valid cid10")
             
             sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
             sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
             
             
             if(tab == "sinan") {
-                  
-                  sqlcom <- paste("SELECT MAX(dt_digita) from \"Municipio\".\"Notificacao\" WHERE municipio_geocodigo IN (", sqlcity, 
+              if(class(datasource) == "SQLConnection"){
+                  sqlcom <- paste("SELECT MAX(dt_digita) from \"Municipio\".\"Notificacao\" 
+                                  WHERE municipio_geocodigo IN (", sqlcity, 
                                   ") AND cid10_codigo IN(", sqlcid,")", sep="")
+              }
+              if(class(datasource) == "SQLiteConnection"){
+                sqlcom <- paste("SELECT MAX(dt_digita) from \"Notificacao\" 
+                                  WHERE municipio_geocodigo IN (", sqlcity, 
+                                ") AND cid10_codigo IN(", sqlcid,")", sep="")
+              }
+              
             }
             
             if(tab == "tweet"){
@@ -292,24 +301,48 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
                         message("tweet table has no value for this cid10")
                         return(NULL)
                   } else {
+                    if(class(datasource) == "SQLConnection"){
                         sqlcom <- paste0("SELECT MAX(data_dia) from \"Municipio\".\"Tweet\" WHERE
                                          \"Municipio_geocodigo\" IN (", sqlcity,")")
-                        }
+                    }
+                    if(class(datasource) == "SQLiteConnection"){
+                      sqlcom <- paste0("SELECT MAX(data_dia) from \"Tweet\" WHERE
+                                         \"Municipio_geocodigo\" IN (", sqlcity,")")
+                    }
+                  }
             }
             
             if (tab == "historico"){
+              
+              if(class(datasource) == "SQLConnection"){
                       if(cid10 == "A90")    tabela <- "\"Municipio\".\"Historico_alerta\""
                       if(cid10 == "A92.0")  tabela <- "\"Municipio\".\"Historico_alerta_chik\""
                       if(cid10 == "A92.8")  tabela <- "\"Municipio\".\"Historico_alerta_zika\""
-
-                        sqlcom <- paste0("SELECT MAX(\"data_iniSE\") FROM ",tabela, 
+              }
+              
+              if(class(datasource) == "SQLiteConnection"){
+                if(cid10 == "A90")    tabela <- "\"Historico_alerta\""
+                if(cid10 == "A92.0")  tabela <- "\"Historico_alerta_chik\""
+                if(cid10 == "A92.8")  tabela <- "\"Historico_alerta_zika\""
+              }
+              
+              sqlcom <- paste0("SELECT MAX(\"data_iniSE\") FROM ",tabela, 
                                      " WHERE municipio_geocodigo IN (", sqlcity,")")
-            }
+              }
                       
             if (tab == "historico"){
+              
+              if(class(datasource) == "SQLConnection"){
                         if(cid10 == "A90")    tabela <- "\"Municipio\".alerta_mrj_dengue"
                         if(cid10 == "A92.0")  tabela <- "\"Municipio\".alerta_mrj_chik"
                         if(cid10 == "A92.8")  tabela <- "\"Municipio\".alerta_mrj_zika"
+              }
+              
+              if(class(datasource) == "SQLiteConnection"){
+                if(cid10 == "A90")    tabela <- "alerta_mrj_dengue"
+                if(cid10 == "A92.0")  tabela <- "alerta_mrj_chik"
+                if(cid10 == "A92.8")  tabela <- "alerta_mrj_zika"
+              }
                               
                               sqlcom <- paste0("SELECT MAX(data) FROM ",tabela, 
                                                " WHERE municipio_geocodigo IN (", sqlcity,")")         
@@ -324,13 +357,27 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
             }
             
             sqlstations = paste("'", str_c(stations, collapse = "','"),"'", sep="")
-            sqlcom <- paste("SELECT MAX(data_dia) from \"Municipio\".\"Clima_wu\" WHERE 
+            
+            if(class(datasource) == "SQLConnection"){
+              sqlcom <- paste("SELECT MAX(data_dia) from \"Municipio\".\"Clima_wu\" WHERE 
                                \"Estacao_wu_estacao_id\" IN ( ",sqlstations,")")
+            }
+            
+            if(class(datasource) == "SQLiteConnection"){
+              sqlcom <- paste("SELECT MAX(data_dia) from \"Clima_wu\" WHERE 
+                               \"Estacao_wu_estacao_id\" IN ( ",sqlstations,")")
+            }
                   
       }
       try(ult_day <- dbGetQuery(datasource,sqlcom))
       ult_se <- NA
-      if(!is.na(ult_day)) ult_se <- data2SE(ult_day$max, format = "%Y-%m-%d") # SE
+      if(!is.na(ult_day)){
+         if(is.date(ult_day)) {ult_se <- data2SE(ult_day$max, format = "%Y-%m-%d")} # SE
+         else{
+           ult_day <- as.Date(x = ult_day[[1]], origin = "1970-01-01")
+           #ult_se <- data2SE(ult_day, format = "%Y-%m-%d")
+         } 
+      }
       return(c(data = ult_day, se = ult_se))
 }
 
@@ -493,7 +540,8 @@ temp.predict <- function(v, plotar = FALSE){
 getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE, datasource=con, output = "names"){
       
       assert_that(!missing(uf), msg = "getRegionais: please specify uf. Ex. uf = \"Ceará\" ")
-      
+  
+  if(class(con) == "SQLConnection"){
      sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -503,7 +551,20 @@ getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE, datasourc
                   where m.uf = '", uf, "'", sep="")
             
       d = dbGetQuery(datasource, sqlquery)    
-      assert_that(nrow(d) > 0, msg = (paste("getRegionais: Database does not have the health areas for ", uf)))
+  }
+  
+  if(class(con) == "SQLiteConnection"){
+    sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo   
+                  FROM \"Municipio\" m  
+                  INNER JOIN regional r 
+                  ON m.id_regional = r.id 
+                  INNER JOIN macroregional mr
+                  ON r.id_macroregional = mr.id 
+                  where m.uf = '", uf, "'", sep="")
+    
+    d = dbGetQuery(datasource, sqlquery)    
+  }   
+        assert_that(nrow(d) > 0, msg = (paste("getRegionais: Database does not have the health areas for ", uf)))
       
       names(d) <- c("municipio_geocodigo","cidade","regional","codigo_regional","macroregional","codigo_macroregional")
       if(!missing(cities)) {
@@ -537,18 +598,28 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
       
       if(missing(uf)) stop("getCidades requer nome da uf por extenso")
       if(!missing(regional)){
-            #sqlquery = paste("SELECT municipio_geocodigo, nome, nome_regional, nome_macroreg, uf 
-            #      FROM \"Dengue_global\".\"Municipio\" 
-            #      INNER JOIN \"Dengue_global\".regional_saude
-            #      ON municipio_geocodigo = geocodigo
-            #      where uf = '", uf, "' AND nome_regional = '",regional ,"'", sep="")     
-        sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
+        
+        if(class(con) == "SQLConnection"){
+          sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
                   ON m.id_regional = r.id 
                   INNER JOIN \"Dengue_global\".macroregional mr
                   ON r.id_macroregional = mr.id 
                   WHERE m.uf = '", uf, "' AND r.nome = '", regional ,"'", sep="")
+        }
+        
+        if(class(con) == "SQLiteConnection"){
+          sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
+                  FROM \"Municipio\" m  
+                  INNER JOIN regional r 
+                  ON m.id_regional = r.id 
+                  INNER JOIN macroregional mr
+                  ON r.id_macroregional = mr.id 
+                  WHERE m.uf = '", uf, "' AND r.nome = '", regional ,"'", sep="")
+        }
+        
+        
         d <- dbGetQuery(datasource, sqlquery) 
         assert_that(nrow(d)>0, msg = "getCidades: found no city")
         names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id", "macroregional","macroregional_id","uf")
@@ -556,14 +627,28 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
       }
   
   if(!missing(macroregional)){
-      
-    sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
+    
+    if(class(con) == "SQLConnection"){
+      sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
                   ON m.id_regional = r.id 
                   INNER JOIN \"Dengue_global\".macroregional mr
                   ON r.id_macroregional = mr.id 
                   WHERE m.uf = '", uf, "' AND mr.nome = '", macroregional ,"'", sep="")
+    }
+    
+    if(class(con) == "SQLiteConnection"){
+      sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
+                  FROM \"Municipio\" m  
+                  INNER JOIN regional r 
+                  ON m.id_regional = r.id 
+                  INNER JOIN macroregional mr
+                  ON r.id_macroregional = mr.id 
+                  WHERE m.uf = '", uf, "' AND mr.nome = '", macroregional ,"'", sep="")
+    }
+      
+      
     d <- dbGetQuery(datasource, sqlquery) 
     assert_that(nrow(d)>0, msg = "getCidades: found no city")
     names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id", "macroregional","macroregional_id","uf")
@@ -571,6 +656,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
   }
   
   # retorna para todo o estado
+  if(class(con) == "SQLConnection"){
   sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -578,6 +664,17 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
                   INNER JOIN \"Dengue_global\".macroregional mr
                   ON r.id_macroregional = mr.id 
                   WHERE m.uf = '", uf, "'", sep="")
+  }
+  
+  if(class(con) == "SQLiteConnection"){
+    sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
+                  FROM \"Municipio\" m  
+                  INNER JOIN regional r 
+                  ON m.id_regional = r.id 
+                  INNER JOIN macroregional mr
+                  ON r.id_macroregional = mr.id 
+                  WHERE m.uf = '", uf, "'", sep="")
+  }
   
   d <- dbGetQuery(datasource, sqlquery) 
   assert_that(nrow(d)>0, msg = "getCidades: found no city")
@@ -598,9 +695,9 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
 #'It can be a subset of the default. 
 #'@return the new line in the parameters table 
 #'@examples
-#'params = data.frame(municipio_geocodigo = 3506003,limiar_preseason = 4.50243, limiar_posseason = 3.962566, 
+#'pars = data.frame(municipio_geocodigo = 3506003,limiar_preseason = 4.50243, limiar_posseason = 3.962566, 
 #'limiar_epidemico = 67.72364, varcli = "temp_min", clicrit = 22, cid10 = "A90", codmodelo = "Af") 
-#'res = write_parameters(newpars)
+#'res = write_parameters(params$municipio_geocodigo, params$cid10, params = pars)
 
 write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = con){
       
@@ -616,6 +713,9 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
       
       assert_that(all(c("municipio_geocodigo","cid10") %in% names(params)), 
                   msg = paste("write.parameters: params must contain municipio_geocodigo, cid10"))
+      
+      assert_that(class(datasource) == "SQLConnection", 
+                  msg = paste("write.parameters: datasource must be a connection to the Infodengue server"))
       
       # check if city is already in the system (Regional table) - they all are
       
@@ -699,11 +799,20 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
       if(cid10 != "A90")print("tab de parametros so tem dengue. Usando-os.")
       cid10 = "A90"
       # reading parameters from database
+      
       sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      
+      if(class(datasource) == "SQLConnection"){
       comando = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
                         "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
-            
-      dd <- dbGetQuery(datasource,comando)
+      }
+      
+      if(class(datasource) == "SQLiteConnection"){
+        comando = paste("SELECT * FROM parameters WHERE cid10 = '", cid10 , 
+                        "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
+      }
+      
+      try(dd <- dbGetQuery(datasource,comando))
             
       assert_that(all(cities %in% dd$municipio_geocodigo),msg = ("check if cities and cid10 are in the parameter table"))      
       
@@ -724,9 +833,18 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
 
 getWUstation <- function(cities, datasource = con){
   sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+  
+  if(class(datasource) == "SQLConnection"){
   comando <- paste("SELECT municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
                        \"Dengue_global\".parameters WHERE municipio_geocodigo IN (", sqlcity, 
                    ")" , sep="")
+  }
+  if(class(datasource) == "SQLiteConnection"){
+    comando <- paste("SELECT municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
+                       parameters WHERE municipio_geocodigo IN (", sqlcity, 
+                     ")" , sep="")
+  }
+  
   city_table <- dbGetQuery(datasource,comando)
   return(city_table)
 }
@@ -760,6 +878,9 @@ setWUstation <- function(st, UF, datasource = con){
                                  "secondary_station")), 
                   msg = "setWUstation: st should contain columns municipio_geocodigo, 
                         primary_station, secondary_station")
+      
+      assert_that(class(datasource) == "SQLConnection", 
+                  msg = paste("setWUstation: datasource must be a connection to the Infodengue server"))
       
       # check if city is already in the system (Regional table)
       cities_table <- getCidades(uf = UF, datasource = datasource)

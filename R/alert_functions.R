@@ -260,7 +260,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(uf = "Paraná",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[306], cid10 = "A90",
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90",
 #'nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 #'tail(tabela_historico(res))
 #'# User's parameters (not working)
@@ -323,12 +323,6 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       print(paste("sera'feita analise de",nlugares,"cidade(s):"))
       print(cidades)      
       
-      # Reading the names of the meterological stations for each city
-      # sqlcity = paste("'", str_c(cidades, collapse = "','"),"'", sep="")
-      # comando <- paste("SELECT id, nome_regional, nome_macroreg, municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
-      #                  \"Dengue_global\".regional_saude WHERE municipio_geocodigo IN (", sqlcity, 
-      #                  ")" , sep="")
-      # city_table <- dbGetQuery(datasource,comando)
       
       estacoes_cidades <- getWUstation(cidades)
       estacoes <- na.omit(unique(c(estacoes_cidades$estacao_wu_sec, estacoes_cidades$codigo_estacao_wu)))
@@ -1036,11 +1030,11 @@ tabela_historico_intra <- function(obj, iniSE, lastSE, versao = Sys.Date()){
 #'# Parameters for the model 
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
-#'finalday= "2016-08-12",nowcasting="none")
+#'finalday= "2021-07-12",nowcasting="none")
 #'restab <- tabela_historico(res)
 #'# NOT RUN 
 #'t1 <- Sys.time()
-#'write_alerta(restab)
+#'write_alerta(restab[1,])
 #'t2 <- Sys.time() - t1
 
 write_alerta<-function(d, datasource = con){
@@ -1048,6 +1042,9 @@ write_alerta<-function(d, datasource = con){
       # check input
       assert_that(class(d) == "data.frame", msg = "write_alerta: d is not a data.frame. d should
                   be an output from tabela_historico.")
+   
+      assert_that(class(datasource) == "SQLConnection", msg = "write_alerta: 
+                 works only for writing into Infodengue's server")
       
       cid10 = unique(d$CID10)
       assert_that(length(cid10) == 1, msg = "write_alerta: d must contain only one cid10")
@@ -1086,7 +1083,7 @@ write_alerta<-function(d, datasource = con){
       varnames.sql <- str_c(varnamesforsql, collapse = ",")
       updates = str_c(paste(varnamesforsql,"=excluded.",varnamesforsql,sep=""),collapse=",") # excluidos, se duplicado
       
-      escreve_linha <- function(li){
+      escreve_linha <- function(li){  # para escrever no sql
             vetor <- dados[li,]
             vetor$municipio_nome = gsub(vetor$municipio_nome, pattern = "'", replacement = "''")
             linha = paste0(vetor$SE,",'",
@@ -1104,23 +1101,132 @@ write_alerta<-function(d, datasource = con){
             linha = gsub("NA","NULL",linha)
             linha = gsub("NaN","NULL",linha)
             
+            
             insert_sql = paste("INSERT INTO \"Municipio\".\"",tabela,"\" (" ,varnames.sql,") VALUES (", linha, ") 
                                     ON CONFLICT ON CONSTRAINT ",constr.unico,"  
                                      DO UPDATE SET ",updates, sep="")
-            try(dbGetQuery(datasource, insert_sql))    
+            
+            
             insert_sql
       }
+         
+         # escrevendo no sql
+     
+         try(dbGetQuery(datasource, "BEGIN TRANSACTION;"))  ##  start a transaction 
+         
+         1:nrow(d) %>% map(escreve_linha)  ## the  sql inserts will only be processed after the end of the transaction 
+         
+         try(dbGetQuery(datasource, "COMMIT TRANSACTION;")) ## finish the transaction and insert the lines 
+         ## in case of failure is possible to roll back (undo) 
+         ## ROLLBACK TRANSACTION;
+         
       
-      # escrevendo
-      try(dbGetQuery(datasource, "BEGIN TRANSACTION;"))  ##  start a transaction 
-      
-      1:nrow(d) %>% map(escreve_linha)  ## the  sql inserts will only be processed after the end of the transaction 
-      
-      try(dbGetQuery(datasource, "COMMIT TRANSACTION;")) ## finish the transaction and insert the lines 
-      ## in case of failure is possible to roll back (undo) 
-      ## ROLLBACK TRANSACTION;
 }
 
+
+
+#write_alerta_local --------------------------------------------------------------------
+#'@title Write historico_alerta into the local SQLite database.
+#'@description Function to write the output of the pipeline into the local SQLite database. 
+#'The input must be the object created by the function historico.alerta.
+#'@export
+#'@param d object created by tabela_historico()
+#'@param datasource SQLite conn 
+#'@return the same data.frame from the input
+#'@examples
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
+#'# Parameters for the model 
+#'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
+#'finalday= "2021-07-12",nowcasting="none", dataini = "sinpri")
+#'restab <- tabela_historico(res)
+#'# NOT RUN 
+#'t1 <- Sys.time()
+#'write_alerta_local(restab)
+#'t2 <- Sys.time() - t1
+write_alerta_local <- function(d, datasource = con){
+   
+   assert_that(class(datasource) == "SQLiteConnection", msg = "write_alerta_local: 
+                 works only for writing into local SQLite server")
+   
+   # check input
+   assert_that(class(d) == "data.frame", msg = "write_alerta_local: d is not a data.frame. d should
+                  be an output from tabela_historico.")
+   
+   
+   dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
+                 "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
+                 "nivel","id","versao_modelo","municipio_nome","Rt", "pop", "tweet",
+                 "receptivo","transmissao","nivel_inc","temp_min","umid_max")
+   
+   if(!("temp_min" %in% names(d))) d$temp_min <- NA
+   if(!("umid_max" %in% names(d))) d$umid_max <- NA
+   
+   
+   assert_that(all(dcolumns %in% names(d)), msg = "write_alerta: check if d contains required
+                                                           columns")
+   
+   # ------ vars to write 
+   
+   dados <- d %>%
+      select(all_of(dcolumns)) %>%
+      rename(tempmin = temp_min,
+             umidmax = umid_max)
+   
+   # ---------- which table? 
+   cid10 <- d$CID10[1]
+   muns <- unique(dados$municipio_geocodigo)
+   
+   # deleting all recent records
+   minSE <- min(dados$SE)
+
+   if(cid10 == "A90") {
+      rs <- dbSendStatement(datasource, 
+                                            'DELETE FROM \"Historico_alerta\" 
+                                            WHERE SE >= :s AND
+                                            [municipio_geocodigo] == $m')
+   
+      dbBind(rs, params = list(s = rep(minSE, length(muns)), m = muns))
+      dbGetRowsAffected(rs)
+      dbClearResult(rs)
+   
+      # writing new data
+      dbWriteTable(datasource, name = "Historico_alerta", dados, append = TRUE)
+      message("tabela historico_alerta atualizada localmente para dengue")
+   }
+   
+   if(cid10 == "A92.0") {
+      rs <- dbSendStatement(datasource, 
+                            'DELETE FROM \"Historico_alerta_chik\" 
+                                            WHERE SE >= :s AND
+                                            [municipio_geocodigo] == $m')
+      
+      dbBind(rs, params = list(s = rep(minSE, length(muns)), m = muns))
+      dbGetRowsAffected(rs)
+      dbClearResult(rs)
+      
+      # writing new data
+      dbWriteTable(datasource, name = "Historico_alerta_chik", dados, append = TRUE)
+      message("tabela historico_alerta atualizada localmente para chik")
+   }
+   
+   if(cid10 == "A92.8") {
+      rs <- dbSendStatement(datasource, 
+                            'DELETE FROM \"Historico_alerta_zika\" 
+                                            WHERE SE >= :s AND
+                                            [municipio_geocodigo] == $m')
+      
+      dbBind(rs, params = list(s = rep(minSE, length(muns)), m = muns))
+      dbGetRowsAffected(rs)
+      dbClearResult(rs)
+      
+      # writing new data
+      dbWriteTable(datasource, name = "Historico_alerta_zika", dados, append = TRUE)
+      message("tabela historico_alerta atualizada localmente para zika")
+   }
+   
+  d
+}
 
 
 #write_alertaRio --------------------------------------------------------------------

@@ -4,7 +4,7 @@
 \alias{read.cases}
 \title{Function to extract case count for covered municipalities}
 \usage{
-read.cases(start_year, end_year, datasource = con, mun_list = NULL)
+read.cases(start_year, end_year, datasource = con, mun_list)
 }
 \arguments{
 \item{start_year}{first year of the time series}
@@ -20,7 +20,7 @@ Function \code{read.cases} extract notification data from database
 and aggregate by epiweek. Used by mem.
 }
 \examples{
-dd <- read.cases(2019, 2020, mun_list = 4108304)
+dd <- read.cases(2019, 2020, mun_list = c(4108304, 3300936))
 }
 \author{
 Marcelo F C Gomes
