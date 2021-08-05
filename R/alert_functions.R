@@ -1247,7 +1247,7 @@ write_alertaRio<-function(obj, datasource = con){
       
       # -------  check input
       assert_that(class(obj) == "data.frame", msg = "write_alertaRio: obj should
-                  be an output from tabela_historico_intra.")
+                  be an output from tabela_historico_intra. ")
       
       
       listaAPS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
