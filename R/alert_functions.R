@@ -1043,7 +1043,7 @@ write_alerta<-function(d, datasource = con){
       assert_that(class(d) == "data.frame", msg = "write_alerta: d is not a data.frame. d should
                   be an output from tabela_historico.")
    
-      assert_that(class(datasource) == "SQLConnection", msg = "write_alerta: 
+      assert_that(class(datasource) == "PostgreSQLConnection", msg = "write_alerta: 
                  works only for writing into Infodengue's server")
       
       cid10 = unique(d$CID10)

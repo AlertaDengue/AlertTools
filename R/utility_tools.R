@@ -282,7 +282,7 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
             
             
             if(tab == "sinan") {
-              if(class(datasource) == "SQLConnection"){
+              if(class(datasource) == "PostgreSQLConnection"){
                   sqlcom <- paste("SELECT MAX(dt_digita) from \"Municipio\".\"Notificacao\" 
                                   WHERE municipio_geocodigo IN (", sqlcity, 
                                   ") AND cid10_codigo IN(", sqlcid,")", sep="")
@@ -301,7 +301,7 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
                         message("tweet table has no value for this cid10")
                         return(NULL)
                   } else {
-                    if(class(datasource) == "SQLConnection"){
+                    if(class(datasource) == "PostgreSQLConnection"){
                         sqlcom <- paste0("SELECT MAX(data_dia) from \"Municipio\".\"Tweet\" WHERE
                                          \"Municipio_geocodigo\" IN (", sqlcity,")")
                     }
@@ -314,7 +314,7 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
             
             if (tab == "historico"){
               
-              if(class(datasource) == "SQLConnection"){
+              if(class(datasource) == "PostgreSQLConnection"){
                       if(cid10 == "A90")    tabela <- "\"Municipio\".\"Historico_alerta\""
                       if(cid10 == "A92.0")  tabela <- "\"Municipio\".\"Historico_alerta_chik\""
                       if(cid10 == "A92.8")  tabela <- "\"Municipio\".\"Historico_alerta_zika\""
@@ -332,7 +332,7 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
                       
             if (tab == "historico"){
               
-              if(class(datasource) == "SQLConnection"){
+              if(class(datasource) == "PostgreSQLConnection"){
                         if(cid10 == "A90")    tabela <- "\"Municipio\".alerta_mrj_dengue"
                         if(cid10 == "A92.0")  tabela <- "\"Municipio\".alerta_mrj_chik"
                         if(cid10 == "A92.8")  tabela <- "\"Municipio\".alerta_mrj_zika"
@@ -358,7 +358,7 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
             
             sqlstations = paste("'", str_c(stations, collapse = "','"),"'", sep="")
             
-            if(class(datasource) == "SQLConnection"){
+            if(class(datasource) == "PostgreSQLConnection"){
               sqlcom <- paste("SELECT MAX(data_dia) from \"Municipio\".\"Clima_wu\" WHERE 
                                \"Estacao_wu_estacao_id\" IN ( ",sqlstations,")")
             }
@@ -541,7 +541,7 @@ getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE, datasourc
       
       assert_that(!missing(uf), msg = "getRegionais: please specify uf. Ex. uf = \"Ceará\" ")
   
-  if(class(con) == "SQLConnection"){
+  if(class(con) == "PostgreSQLConnection"){
      sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -599,7 +599,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
       if(missing(uf)) stop("getCidades requer nome da uf por extenso")
       if(!missing(regional)){
         
-        if(class(con) == "SQLConnection"){
+        if(class(con) == "PostgreSQLConnection"){
           sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -628,7 +628,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
   
   if(!missing(macroregional)){
     
-    if(class(con) == "SQLConnection"){
+    if(class(con) == "PostgreSQLConnection"){
       sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -656,7 +656,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
   }
   
   # retorna para todo o estado
-  if(class(con) == "SQLConnection"){
+  if(class(con) == "PostgreSQLConnection"){
   sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -714,7 +714,7 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
       assert_that(all(c("municipio_geocodigo","cid10") %in% names(params)), 
                   msg = paste("write.parameters: params must contain municipio_geocodigo, cid10"))
       
-      assert_that(class(datasource) == "SQLConnection", 
+      assert_that(class(datasource) == "PostgreSQLConnection", 
                   msg = paste("write.parameters: datasource must be a connection to the Infodengue server"))
       
       # check if city is already in the system (Regional table) - they all are
@@ -802,7 +802,7 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
       
       sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
       
-      if(class(datasource) == "SQLConnection"){
+      if(class(datasource) == "PostgreSQLConnection"){
       comando = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
                         "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
       }
@@ -834,7 +834,7 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
 getWUstation <- function(cities, datasource = con){
   sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
   
-  if(class(datasource) == "SQLConnection"){
+  if(class(datasource) == "PostgreSQLConnection"){
   comando <- paste("SELECT municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
                        \"Dengue_global\".parameters WHERE municipio_geocodigo IN (", sqlcity, 
                    ")" , sep="")
@@ -879,7 +879,7 @@ setWUstation <- function(st, UF, datasource = con){
                   msg = "setWUstation: st should contain columns municipio_geocodigo, 
                         primary_station, secondary_station")
       
-      assert_that(class(datasource) == "SQLConnection", 
+      assert_that(class(datasource) == "PostgreSQLConnection", 
                   msg = paste("setWUstation: datasource must be a connection to the Infodengue server"))
       
       # check if city is already in the system (Regional table)
