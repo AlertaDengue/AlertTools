@@ -193,7 +193,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
             message(paste("cidade(s)",cities,"nunca tweetou sobre dengue"))
             tw <- expand.grid(Municipio_geocodigo = cities,
                              SE = seqSE(from = 201001, 
-                                        to = data2SE(finalday, 
+                                        to = data2SE(lastday, 
                                         format = "%Y-%m-%d"))$SE)
             tw$tweet <- 0
             return(tw)
@@ -208,11 +208,12 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
             mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) # creating column SE
             
       sem <-  expand.grid(Municipio_geocodigo = cities, 
-                          SE = seqSE(from = 201001, to = max(tw$SE))$SE)
+                          SE = seqSE(from = 201001, to = data2SE(lastday, 
+                                                                 format = "%Y-%m-%d"))$SE)
       st <- full_join(sem,tw,by = c("Municipio_geocodigo", "SE")) %>% 
                   arrange(Municipio_geocodigo,SE) %>%
                   group_by(Municipio_geocodigo,SE)  %>%
-                  summarize(tweet = sum(numero))  %>%
+                  summarize(tweet = sum(numero, na.rm = TRUE))  %>%
                   select(Municipio_geocodigo, SE, tweet)
             
       return(as.data.frame(st))      
