@@ -331,8 +331,8 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       
       # Reading the meteorological data
       #print('Obtendo os dados de clima...')
-      varscli <- na.omit(unique(c(pars_table$varcli, pars_table$varcli2)))
-      #varscli <- c("umid_max", "temp_min")
+      #varscli <- na.omit(unique(c(pars_table$varcli, pars_table$varcli2)))
+      varscli <- c("umid_max", "temp_min", "umid_min")
       cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday)
       
       # Reading Cases
@@ -359,7 +359,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             parcli.x <- estacoes_cidades[estacoes_cidades$municipio_geocodigo == x, c("codigo_estacao_wu", "estacao_wu_sec")]      
             varcli.x <- na.omit(c(pars_table$varcli[pars_table$municipio_geocodigo == x],
                                   pars_table$varcli2[pars_table$municipio_geocodigo == x]))
-            
+            if("NA" %in% varcli.x) varcli.x <- varcli.x[varcli.x!="NA"]
             # escolhe a melhor serie meteorologica para a cidade, usando apenas a primeira var 
             cli.x <- bestWU(series = list(cliwu[cliwu$estacao == parcli.x[[1]],],
                                           cliwu[cliwu$estacao == parcli.x[[2]],]), var = varcli.x[1])
