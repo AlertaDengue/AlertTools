@@ -4,19 +4,25 @@
 \alias{write_alerta}
 \title{Write historico_alerta into the database.}
 \usage{
-write_alerta(d, datasource = con)
+write_alerta(d, writetofile = FALSE, datasource = con, arq = "output.sql")
 }
 \arguments{
 \item{d}{object created by tabela_historico()}
 
+\item{writetofile}{TRUE if an sql object will be the output; FALSE if not.}
+
 \item{datasource}{posgreSQL conn to project's database}
+
+\item{arq}{file name to store sql object}
 }
 \value{
 the same data.frame from the input
 }
 \description{
 Function to write the pipeline results into the database. 
-Receives the object created by the function historico.alerta.
+Receives the object created by the function historico.alerta. If writetofile == TRUE,
+it saves the sql command in a text file. If FALSE, it will write directly in the database
+using the connection.
 }
 \examples{
 # Parameters for the model 
@@ -26,6 +32,6 @@ finalday= "2021-07-12",nowcasting="none")
 restab <- tabela_historico(res)
 # NOT RUN 
 t1 <- Sys.time()
-write_alerta(restab[1,])
+write_alerta(restab)
 t2 <- Sys.time() - t1
 }

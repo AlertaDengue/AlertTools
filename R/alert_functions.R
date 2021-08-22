@@ -260,7 +260,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(uf = "Paraná",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90",
+#'res <- pipe_infodengue(cities = cidades , cid10 = "A90",
 #'nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 #'tail(tabela_historico(res))
 #'# User's parameters (not working)
@@ -904,6 +904,10 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                                    as.character(julian(versao)), sep="")
       d$id <- sapply(1:nrow(data), gera_id) 
       
+      # ------------removing umid_min ----------------------#
+      # just because it is not implemented yet in the dataset
+      if("umid_min" %in% names(d)) d <- subset(d, select = -umid_min)
+      
       # ---------- filtering dates -------------------------#
       if(missing(iniSE)) iniSE <- 0
       if(missing(lastSE)) lastSE <- 300000
@@ -941,7 +945,7 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
             )
       
       
-      d1
+      d1 
 }
 
 
