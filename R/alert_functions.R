@@ -259,8 +259,8 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@return data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE.
 #'@examples
-#'cidades <- getCidades(uf = "Paraná",datasource = con)
-#'res <- pipe_infodengue(cities = cidades , cid10 = "A90",
+#'cidades <- getCidades(uf = "Amapá",datasource = con)
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[15] , cid10 = "A90",
 #'nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 #'tail(tabela_historico(res))
 #'# User's parameters (not working)
@@ -337,16 +337,17 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       
       # Reading Cases
       print("Obtendo dados de notificacao ...")
+      print(cities)
+      casos <- getCases(cities, lastday = finalday, cid10 = cid10, 
+                        dataini = dataini, completetail = completetail) 
+      message("getCases done")
+      casos$inc <- casos$casos/casos$pop*100000
       
-      casos <- getCases(cidades, lastday = finalday, cid10 = cid10, 
-                        dataini = dataini, completetail = completetail) %>%
-            mutate(inc = casos/pop*100000)
       
-            message("getCases done")
       # Reading tweets 
       if(cid10 == "A90"){
             print("Reading tweets...")
-            dT = getTweet(cidades, lastday = finalday, cid10 = "A90")
+            dT = getTweet(cities, lastday = finalday, cid10 = "A90")
       }
       
       
@@ -874,7 +875,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'@return data.frame with the data to be written. 
 #'@examples
 #'# Several cities at once:
-#'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro", datasource = con)
+#'cidades <- getCidades(uf = "Mato Grosso", datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1:3], cid10 = "A90", 
 #'finalday= "2018-01-10")
 #'restab <- tabela_historico(res, iniSE = 201701) 
@@ -904,6 +905,7 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                                    as.character(julian(versao)), sep="")
       d$id <- sapply(1:nrow(data), gera_id) 
       
+      
       # ------------removing umid_min ----------------------#
       # just because it is not implemented yet in the dataset
       if("umid_min" %in% names(d)) d <- subset(d, select = -umid_min)
@@ -919,7 +921,9 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                    casos_est = tcasesmed,
                    casos_est_min = tcasesICmin,
                    casos_est_max = tcasesICmax,
-                   nivel = level) %>%
+                   nivel = level,
+                   tempmin = temp_min,
+                   umidmax = umid_max) %>%
             mutate(p_rt1 = ifelse(is.na(p1),0,p1),
                    p_inc100k =casos_est/pop*1e5,
                    Localidade_id  = ifelse(is.na(localidade),0,localidade),
@@ -943,9 +947,20 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                         p_inc100k > limiar_epidemico ~ 2
                   )
             )
+      # --------- checking all required variables ------------#
+      varnames <-c("data_iniSE", "SE", "casos_est", "casos_est_min", "casos_est_max",
+                   "casos", "municipio_geocodigo", "p_rt1", "p_inc100k", "Localidade_id",
+                   "nivel", "id", "versao_modelo", "municipio_nome", "tweet", "Rt", 
+                   "pop", "tempmin", "umidmax", "receptivo", "transmissao", "nivel_inc") 
       
-      
-      d1 
+      if(all(varnames %in% names(d1))) {
+         dfinal <- d1[,varnames]
+         return(dfinal)
+         } else {
+         message(paste("historico_alerta is not returning the required variables", 
+                       varnames[!varnames %in% names(d1)]))
+            return(NULL)
+         }
 }
 
 

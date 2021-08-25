@@ -243,8 +243,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'tail(d)
 
 getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific", 
-                     completetail = NA,
-                     datasource=con) {
+                     completetail = NA, datasource=con) {
       
       assert_that(class(cities) %in% c("integer","numeric"), 
                   msg = "cities should be a vector of numeric geocodes") 
@@ -309,14 +308,14 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
       # agregando casos por semana por cidade 
       if(dataini == "notific"){
             message("case aggregated by notification date")
-            casos = dd %>% 
+            casos <- dd %>% 
                   mutate(SE = ano_notif*100+se_notif) %>%
                   group_by(municipio_geocodigo) %>%
                   count(SE)
       }
       if(dataini == "sinpri"){
             message("case aggregated by symptoms date")
-            casos = dd %>% 
+            casos <- dd %>% 
                   mutate(ano_sinpri = lubridate::year(dt_sin_pri),
                         SE = ano_sinpri*100+se_sin_pri) %>%
                   group_by(municipio_geocodigo) %>%
