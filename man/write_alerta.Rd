@@ -32,6 +32,6 @@ finalday= "2021-07-12",nowcasting="none")
 restab <- tabela_historico(res)
 # NOT RUN 
 t1 <- Sys.time()
-write_alerta(restab)
+write_alerta(restab[1:10,])
 t2 <- Sys.time() - t1
 }

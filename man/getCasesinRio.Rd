@@ -34,6 +34,5 @@ Get time series of cases per APS in Rio de Janeiro (special case)
 NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
 dC = getCasesinRio(APSid = 0:9, datasource = con) # Rio de Janeiro
 # Chikungunya:
-dC1s = getCasesinRio(APSid = 0, cid10 = "A920", dataini = "sinpri", datasource = con) # Rio de Janeiro
-tail(dC1)
+dC1s = getCasesinRio(APSid = 0, cid10 = "A920") # Rio de Janeiro
 }

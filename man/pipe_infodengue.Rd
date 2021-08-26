@@ -16,7 +16,7 @@ pipe_infodengue(
   datasource = con,
   userinput = FALSE,
   completetail = NA,
-  dataini = "notif"
+  dataini = "notific"
 )
 }
 \arguments{
@@ -53,8 +53,8 @@ last lag weeks with conditions = TRUE.
 wrap of functions used by Infodengue.
 }
 \examples{
-cidades <- getCidades(uf = "Paraná",datasource = con)
-res <- pipe_infodengue(cities = cidades , cid10 = "A90",
+cidades <- getCidades(uf = "Amapá",datasource = con)
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo[15] , cid10 = "A90",
 nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 tail(tabela_historico(res))
 # User's parameters (not working)

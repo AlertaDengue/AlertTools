@@ -463,7 +463,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list){
 #'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
 #'dC = getCasesinRio(APSid = 0:9, datasource = con) # Rio de Janeiro
 #'# Chikungunya:
-#'dC1s = getCasesinRio(APSid = 0, cid10 = "A920", dataini = "sinpri", datasource = con) # Rio de Janeiro
+#'dC1s = getCasesinRio(APSid = 0, cid10 = "A920") # Rio de Janeiro
 # tail(dC1)
 
 getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="sinpri",

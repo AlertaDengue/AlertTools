@@ -455,9 +455,9 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
 #'@return list with an alert object for each APS.
 #'@examples
 #'alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202113, 
-#'delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
-#' ale.chik <- pipe_infodengue_intra(city = 3304557, datarelatorio = 202108, 
-#' iniSE = 201001, cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
+#'delaymethod="none", cid10 = "A90", dataini = "sinpri")
+#'ale.chik <- pipe_infodengue_intra(city = 3304557, datarelatorio = 202108, 
+#'iniSE = 201001, cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
 
 pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90", 
                                   iniSE = 201001, delaymethod = "none", 
@@ -1272,7 +1272,7 @@ write_alerta_local <- function(d, datasource = con){
 #'alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202105, 
 #'delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
 #'restab <- tabela_historico_intra(alerio, iniSE = 201801) 
-#'write_alertaRio(restab)
+#'write_alertaRio(restab[1:10,])
 
 write_alertaRio<-function(obj, datasource = con){
       

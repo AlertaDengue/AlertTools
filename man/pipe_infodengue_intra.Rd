@@ -47,7 +47,7 @@ an epidemic scenario.
 }
 \examples{
 alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202113, 
-delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
+delaymethod="none", cid10 = "A90", dataini = "sinpri")
 ale.chik <- pipe_infodengue_intra(city = 3304557, datarelatorio = 202108, 
 iniSE = 201001, cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
 }
