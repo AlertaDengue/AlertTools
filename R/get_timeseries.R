@@ -247,6 +247,9 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
       
       assert_that(class(cities) %in% c("integer","numeric"), 
                   msg = "cities should be a vector of numeric geocodes") 
+  
+      assert_that(dataini %in% c("sinpri", "notific"), msg="getCases: dataini should 
+                                                           be sinpri or notific. Check it!")
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
       
       # dealing with synonimous cid 
@@ -461,7 +464,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list){
 #'dC = getCasesinRio(APSid = 0:9, datasource = con) # Rio de Janeiro
 #'# Chikungunya:
 #'dC1s = getCasesinRio(APSid = 0, cid10 = "A920", dataini = "sinpri", datasource = con) # Rio de Janeiro
-#'tail(dC1)
+# tail(dC1)
 
 getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="sinpri",
                           datasource = con) {
@@ -483,7 +486,7 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="s
       
       if(class(con) == "PostgreSQLConnection"){
         sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.dt_digita,
-        n.dt_sin_pri, se_notif, l.id, l.nome
+        n.dt_sin_pri, n.se_notif, n.se_sin_pri, l.id, l.nome
         FROM  \"Municipio\".\"Notificacao\" AS n 
         INNER JOIN \"Municipio\".\"Bairro\" AS b 
         ON n.bairro_nome = b.nome 
@@ -505,7 +508,7 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="s
       
       if(class(con) == "SQLiteConnection"){
         sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.dt_digita,
-        n.dt_sin_pri, se_notif, l.id, l.nome
+        n.dt_sin_pri, n.se_notif, n.se_sin_pri, l.id, l.nome
         FROM  \"Notificacao\" AS n 
         INNER JOIN \"Bairro\" AS b 
         ON n.bairro_nome = b.nome 

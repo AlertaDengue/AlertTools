@@ -272,7 +272,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), 
                             iniSE = 201001, nowcasting="none", narule=NULL,
                             writedb = FALSE, datasource = con, userinput =FALSE,
-                            completetail = NA, dataini = "notif"){
+                            completetail = NA, dataini = "notific"){
       
       
       if(missing(datarelatorio)) {
@@ -948,7 +948,7 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                   )
             )
       # --------- checking all required variables ------------#
-      varnames <-c("data_iniSE", "SE", "casos_est", "casos_est_min", "casos_est_max",
+      varnames <-c("data_iniSE", "SE", "CID10","casos_est", "casos_est_min", "casos_est_max",
                    "casos", "municipio_geocodigo", "p_rt1", "p_inc100k", "Localidade_id",
                    "nivel", "id", "versao_modelo", "municipio_nome", "tweet", "Rt", 
                    "pop", "tempmin", "umidmax", "receptivo", "transmissao", "nivel_inc") 
@@ -1057,7 +1057,7 @@ tabela_historico_intra <- function(obj, iniSE, lastSE, versao = Sys.Date()){
 #'restab <- tabela_historico(res)
 #'# NOT RUN 
 #'t1 <- Sys.time()
-#'write_alerta(restab)
+#'write_alerta(restab[1:10,])
 #'t2 <- Sys.time() - t1
 
 write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.sql"){
