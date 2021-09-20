@@ -68,14 +68,25 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
   #stopifnot(is.numeric(mun_list),"MEM: mun_list should be a numeric vector")
   # Read population table
   sqlcity = paste("'", str_c(mun_list, collapse = "','"),"'", sep="")
-
+  
+  if(class(con) == "PostgreSQLConnection"){
   comando <- paste0("SELECT geocodigo, populacao FROM
                    \"Dengue_global\".\"Municipio\" WHERE geocodigo
                    IN (", sqlcity, ")")
-
+  
   df.pop <- dbGetQuery(conn=con, comando)
   names(df.pop)[1] <- "municipio_geocodigo"
-
+  }
+  
+  if(class(con) == "SQLiteConnection"){
+    comando <- paste0("SELECT geocodigo, populacao FROM
+                   \"Municipio\" WHERE geocodigo
+                   IN (", sqlcity, ")")
+    
+    df.pop <- dbGetQuery(conn=con, comando)
+    names(df.pop)[1] <- "municipio_geocodigo"
+  }
+    
   # Process data in chuncks for 300 municipalities at a time:
   mun_list <- split(mun_list, ceiling(seq_along(mun_list)/20))
 
@@ -222,7 +233,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
 #' mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 #' 4212650,4217006,4212700,4214706,4213104,4200804)
 #' mun_list <- getCidades(uf = "Maranhão", regional = "Caxias", datasource=con)
-#' thres <- infodengue_apply_mem_agreg(mun_list$municipio_geocodigo, database=con, nome = "Caxias")
+#' thres <- infodengue_apply_mem_agreg(mun_list$municipio_geocodigo, nome = "Caxias")
 
 infodengue_apply_mem_agreg <- function(mun_list,  
                                  start_year=2010, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
@@ -237,13 +248,22 @@ infodengue_apply_mem_agreg <- function(mun_list,
   
   # Read population table
   sqlcity = paste("'", str_c(mun_list, collapse = "','"),"'", sep="")
-  
-  comando <- paste0("SELECT geocodigo, populacao FROM 
+  if(class(con) == "PostgreSQLConnection"){
+    comando <- paste0("SELECT geocodigo, populacao FROM 
                    \"Dengue_global\".\"Municipio\" WHERE geocodigo
                    IN (", sqlcity, ")")
   
-  df.pop <- dbGetQuery(conn=con, comando)
-  names(df.pop)[1] <- "municipio_geocodigo"
+    df.pop <- dbGetQuery(conn=con, comando)
+    names(df.pop)[1] <- "municipio_geocodigo"
+  }
+  if(class(con) == "SQLiteConnection"){
+    comando <- paste0("SELECT geocodigo, populacao FROM 
+                   \"Municipio\" WHERE geocodigo
+                   IN (", sqlcity, ")")
+    
+    df.pop <- dbGetQuery(conn=con, comando)
+    names(df.pop)[1] <- "municipio_geocodigo"
+  }
   
    pop = sum(df.pop$populacao) 
      # Read historical cases table
