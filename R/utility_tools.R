@@ -541,7 +541,7 @@ getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE, datasourc
       
       assert_that(!missing(uf), msg = "getRegionais: please specify uf. Ex. uf = \"Ceará\" ")
   
-  if(class(con) == "PostgreSQLConnection"){
+  if(class(datasource) == "PostgreSQLConnection"){
      sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -553,7 +553,7 @@ getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE, datasourc
       d = dbGetQuery(datasource, sqlquery)    
   }
   
-  if(class(con) == "SQLiteConnection"){
+  if(class(datasource) == "SQLiteConnection"){
     sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo   
                   FROM \"Municipio\" m  
                   INNER JOIN regional r 
@@ -599,7 +599,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
       if(missing(uf)) stop("getCidades requer nome da uf por extenso")
       if(!missing(regional)){
         
-        if(class(con) == "PostgreSQLConnection"){
+        if(class(datasource) == "PostgreSQLConnection"){
           sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -609,7 +609,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
                   WHERE m.uf = '", uf, "' AND r.nome = '", regional ,"'", sep="")
         }
         
-        if(class(con) == "SQLiteConnection"){
+        if(class(datasource) == "SQLiteConnection"){
           sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Municipio\" m  
                   INNER JOIN regional r 
@@ -628,7 +628,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
   
   if(!missing(macroregional)){
     
-    if(class(con) == "PostgreSQLConnection"){
+    if(class(datasource) == "PostgreSQLConnection"){
       sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -638,7 +638,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
                   WHERE m.uf = '", uf, "' AND mr.nome = '", macroregional ,"'", sep="")
     }
     
-    if(class(con) == "SQLiteConnection"){
+    if(class(datasource) == "SQLiteConnection"){
       sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Municipio\" m  
                   INNER JOIN regional r 
@@ -656,7 +656,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
   }
   
   # retorna para todo o estado
-  if(class(con) == "PostgreSQLConnection"){
+  if(class(datasource) == "PostgreSQLConnection"){
   sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Dengue_global\".\"Municipio\" m  
                   INNER JOIN \"Dengue_global\".regional r 
@@ -666,7 +666,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
                   WHERE m.uf = '", uf, "'", sep="")
   }
   
-  if(class(con) == "SQLiteConnection"){
+  if(class(datasource) == "SQLiteConnection"){
     sqlquery = paste("SELECT m.geocodigo, m.nome, r.nome, r.codigo, mr.nome, mr.codigo, m.uf   
                   FROM \"Municipio\" m  
                   INNER JOIN regional r 
@@ -752,7 +752,7 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
        dbGetQuery(datasource, sql)    
        
        # check if was correctly created
-       parline_now = try(dbGetQuery(con, sql2))
+       parline_now = try(dbGetQuery(datasource, sql2))
        
        assert_that(nrow(parline_now) == 1, 
                    msg = paste("parameter table has something wrong. number of lines for ", 

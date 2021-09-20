@@ -260,7 +260,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'cidades <- getCidades(uf = "Amapá",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[15] , cid10 = "A90",
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[13:15] , cid10 = "A90",
 #'nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 #'tail(tabela_historico(res))
 #'# User's parameters (not working)
@@ -875,7 +875,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'@return data.frame with the data to be written. 
 #'@examples
 #'# Several cities at once:
-#'cidades <- getCidades(uf = "Mato Grosso", datasource = con)
+#'cidades <- getCidades(uf = "Mato Grosso", datasource = mycon)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1:3], cid10 = "A90", 
 #'finalday= "2018-01-10")
 #'restab <- tabela_historico(res, iniSE = 201701) 
@@ -922,8 +922,8 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                    casos_est_min = tcasesICmin,
                    casos_est_max = tcasesICmax,
                    nivel = level,
-                   tempmin = temp_min,
-                   umidmax = umid_max) %>%
+                   temp_min = temp_min,
+                   umid_max = umid_max) %>%
             mutate(p_rt1 = ifelse(is.na(p1),0,p1),
                    p_inc100k =casos_est/pop*1e5,
                    Localidade_id  = ifelse(is.na(localidade),0,localidade),
@@ -944,14 +944,14 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                   nivel_inc = case_when(
                         p_inc100k < limiar_preseason ~ 0,
                         p_inc100k >= limiar_preseason & p_inc100k < limiar_epidemico ~ 1,
-                        p_inc100k > limiar_epidemico ~ 2
+                        p_inc100k >= limiar_epidemico ~ 2
                   )
             )
       # --------- checking all required variables ------------#
       varnames <-c("data_iniSE", "SE", "CID10","casos_est", "casos_est_min", "casos_est_max",
                    "casos", "municipio_geocodigo", "p_rt1", "p_inc100k", "Localidade_id",
                    "nivel", "id", "versao_modelo", "municipio_nome", "tweet", "Rt", 
-                   "pop", "tempmin", "umidmax", "receptivo", "transmissao", "nivel_inc") 
+                   "pop", "temp_min", "umid_max", "receptivo", "transmissao", "nivel_inc") 
       
       if(all(varnames %in% names(d1))) {
          dfinal <- d1[,varnames]
@@ -1066,7 +1066,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    assert_that(class(d) == "data.frame", msg = "write_alerta: d is not a data.frame. d should
                   be an output from tabela_historico.")
    
-   assert_that(class(datasource) == "PostgreSQLConnection", msg = "write_alerta: 
+   if(writetofile == FALSE) assert_that(class(datasource) == "PostgreSQLConnection", msg = "write_alerta: 
                  works only for writing into Infodengue's server")
    
    cid10 = unique(d$CID10)
@@ -1099,7 +1099,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
                        "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
                        "nivel","id","versao_modelo","municipio_nome", "tweet", "\"Rt\"", "pop",
-                       "tempmin", "umidmax" ,"receptivo", "transmissao","nivel_inc")
+                       "temp_min", "umid_max" ,"receptivo", "transmissao","nivel_inc")
    
    varnames.sql <- str_c(varnamesforsql, collapse = ",")
    updates = str_c(paste(varnamesforsql,"=excluded.",varnamesforsql,sep=""),collapse=",") # excluidos, se duplicado
@@ -1201,8 +1201,8 @@ write_alerta_local <- function(d, datasource = con){
    
    dados <- d %>%
       select(all_of(dcolumns)) %>%
-      rename(tempmin = temp_min,
-             umidmax = umid_max)
+      rename(temp_min = temp_min,
+             umid_max = umid_max)
    
    # ---------- which table? 
    cid10 <- d$CID10[1]

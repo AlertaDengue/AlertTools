@@ -31,7 +31,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 20
       sqlstations = paste("'", str_c(stations, collapse = "','"),"'", sep="")
       
       
-      if(class(con) == "PostgreSQLConnection"){
+      if(class(datasource) == "PostgreSQLConnection"){
         checkStationComm <- paste("SELECT estacao_id, nome FROM 
                                 \"Municipio\".\"Estacao_wu\" WHERE  estacao_id 
                                 IN (", sqlstations, ")",sep="")
@@ -164,7 +164,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
             
             sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
 
-            if(class(con) == "PostgreSQLConnection"){
+            if(class(datasource) == "PostgreSQLConnection"){
               
               comando <- paste("SELECT \"Municipio_geocodigo\", data_dia, numero
               FROM \"Municipio\".\"Tweet\" WHERE \"Municipio_geocodigo\" IN (",
@@ -363,7 +363,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list){
   
   mun_list_txt <- paste0(mun_list, collapse=',')
   
-  if(class(con) == "PostgreSQLConnection"){
+  if(class(datasource) == "PostgreSQLConnection"){
       sqlquery = paste0("SELECT dt_notific, se_notif, ano_notif, municipio_geocodigo
                         FROM  \"Municipio\".\"Notificacao\" ")
       
@@ -484,7 +484,7 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="s
       sqldate <- paste("'", lastday, "'", sep = "")
       sqlaps = paste("'", str_c(APSid, collapse = "','"),"'", sep="")
       
-      if(class(con) == "PostgreSQLConnection"){
+      if(class(datasource) == "PostgreSQLConnection"){
         sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.dt_digita,
         n.dt_sin_pri, n.se_notif, n.se_sin_pri, l.id, l.nome
         FROM  \"Municipio\".\"Notificacao\" AS n 
@@ -506,7 +506,7 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="s
       
       }
       
-      if(class(con) == "SQLiteConnection"){
+      if(class(datasource) == "SQLiteConnection"){
         sqlquery = paste("SELECT n.dt_notific, n.ano_notif, n.dt_digita,
         n.dt_sin_pri, n.se_notif, n.se_sin_pri, l.id, l.nome
         FROM  \"Notificacao\" AS n 

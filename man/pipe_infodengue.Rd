@@ -54,7 +54,7 @@ wrap of functions used by Infodengue.
 }
 \examples{
 cidades <- getCidades(uf = "Amapá",datasource = con)
-res <- pipe_infodengue(cities = cidades$municipio_geocodigo[15] , cid10 = "A90",
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo[13:15] , cid10 = "A90",
 nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 tail(tabela_historico(res))
 # User's parameters (not working)
