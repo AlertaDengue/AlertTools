@@ -1099,7 +1099,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
                        "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
                        "nivel","id","versao_modelo","municipio_nome", "tweet", "\"Rt\"", "pop",
-                       "temp_min", "umid_max" ,"receptivo", "transmissao","nivel_inc")
+                       "tempmin", "umidmax" ,"receptivo", "transmissao","nivel_inc")
    
    varnames.sql <- str_c(varnamesforsql, collapse = ",")
    updates = str_c(paste(varnamesforsql,"=excluded.",varnamesforsql,sep=""),collapse=",") # excluidos, se duplicado
