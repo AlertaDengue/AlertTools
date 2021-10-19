@@ -134,16 +134,17 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'@param obj data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita 
 #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
 #'@param nowSE week of the nowcasting (ex. 202110). 
-#'@param interacao TRUE (default) se o modelo tiver o termo de interacao efeito-atraso
+#'@param interacao TRUE (default) to include in the model the delay-time interaction term
+#'@param tweet FALSE (default). TRUE to include tweet in the model
 #'@return data.frame with median and 95percent confidence interval for the 
 #'predicted cases-to-be-notified)
 #'@examples
-#' # bayesian
-#'dd <- getdelaydata(cities=2304400, nyears=1, cid10="A90", datasource=con)
-#'resfit<-bayesnowcasting(dd, nowSE = 202111)
-#'resfit
+#'dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
+#'lastday = as.Date("2019-10-30"), datasource=con)  # Not run without connection
+#'resfitcIsT<-bayesnowcasting(dados, nowSE = 201945)
+#'resfitcIcT<-bayesnowcasting(dados, nowSE = 201945, tweet = TRUE)
 
-bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE){
+bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
   
   # check input 
   if(is.null(names(d))) {
@@ -156,7 +157,7 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE){
   
   if(missing(nowSE)) stop("bayesnowcasting requires definition of nowcast week ")
   
-  #d contains columns
+  #check if d contains required columns
   assert_that(all(c("municipio_geocodigo", "dt_notific", "dt_sin_pri", "dt_digita")
                   %in% names(d)), msg = "bayesnowcasting requires data with columns
               municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita")
@@ -182,6 +183,15 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE){
   
   message(paste("nowcast will be calibrated with ", nrow(d), "cases"))
   
+  ## getting tweet data 
+  if(tweet == TRUE){
+    tw <- getTweet(cities = unique(d$municipio_geocodigo), 
+                   lastday = SE2date(nowSE)$ini)
+    tw <- tw %>%
+      mutate(dt_iniweek = SE2date(SE)$ini + 6)  %>%
+      filter(dt_iniweek > min(d$dt_sinpri_week))
+  }
+    
   # nowcasting
   d <- d %>% mutate(
     dt_sinpri_epiweek = epiweek(dt_sin_pri), 
@@ -247,6 +257,14 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE){
     dplyr::arrange(Date) 
   
   
+  ## Juntando tweet (se tweet == TRUE)
+  if (tweet == TRUE){
+    dados.ag <- dados.ag %>% 
+      left_join(tw[,c(3,4)], by = c("Date" = "dt_iniweek" )) %>%
+      mutate(tweet =  replace_na(tweet, 0))
+  }
+  
+  # nao vi esse obj sendo usado
   dados.ag.full <- d %>% 
     group_by(dt_sinpri_week) %>% 
     dplyr::summarise(
@@ -263,8 +281,9 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE){
     # Sorting by date
     dplyr::arrange(Date) 
   
-  # Model equation
-  if(interacao) {
+  
+  # Model equations (4 possibilities)
+  if(interacao & !tweet) {
     model.dengue <- Casos ~ 1 + 
       f(Time, model = "rw2", constr = T
         #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
@@ -278,7 +297,9 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE){
       f(TimeDelay, model = "iid", constr = T
         #   hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
       )
-  } else {
+  } 
+  
+  if(!interacao & !tweet) {
     model.dengue <- Casos ~ 1 + 
       f(Time, model = "rw2", constr = T
         #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
@@ -291,6 +312,34 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE){
     # message("modelo de nowcasting sem interacao")
   }
   
+  if(interacao & tweet) {
+    model.dengue <- Casos ~ 1 + tweet +
+      f(Time, model = "rw2", constr = T
+        #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+      ) +
+      f(Delay, model = "rw1", constr = T
+        # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+      )  + 
+      # Efeito tempo-atraso
+      f(TimeDelay, model = "iid", constr = T
+        #   hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+      )
+  } 
+  
+  if(!interacao & tweet) {
+    model.dengue <- Casos ~ 1 + tweet + 
+      f(Time, model = "rw2", constr = T
+        #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+      ) +
+      f(Delay, model = "rw1", constr = T
+        # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
+        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
+      )
+    # message("modelo de nowcasting sem interacao")
+  }
   
   output.dengue <- nowcast.INLA(
     model.day = model.dengue,
@@ -479,7 +528,8 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE){
 #'@param datasource valid connection to database
 #'@return list with d = data.frame with data.
 #'@examples
-#'dados <- getdelaydata(cities=4100905, nyears=2, cid10="A90", datasource=con)  # Not run without connection
+#'dados <- getdelaydata(cities=4100905, nyears=1, cid10="A90", 
+#'lastday = as.Date("2019-10-30"), datasource=con)  # Not run without connection
 
 getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(), 
                          datasource = con){
@@ -498,12 +548,32 @@ getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(),
   
   firstday <- lastday - nyears * 365
   
-  comando <- paste("SELECT municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita
+  if(class(datasource) == "PostgreSQLConnection"){
+    comando <- paste("SELECT municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita
                        from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
                    "' AND dt_digita > '",firstday, "' AND municipio_geocodigo IN (", sqlcity, 
                    ") AND cid10_codigo IN(", sqlcid,")", sep="")
   
-  dd <- dbGetQuery(datasource,comando)
+    dd <- dbGetQuery(datasource,comando)
+  }
+  
+  if(class(datasource) == "SQLiteConnection"){
+    comando <- paste("SELECT municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita
+                       from \"Notificacao\" WHERE dt_digita <= '",as.numeric(lastday), 
+                     "' AND dt_digita > '",as.numeric(firstday), "' AND municipio_geocodigo IN 
+                     (", sqlcity, ") AND cid10_codigo IN(", sqlcid,")", sep="")
+    
+    dd <- dbGetQuery(datasource,comando)
+    
+    if(nrow(dd)==0)stop("getCases found no data")
+    # fixing dates
+    dd$dt_notific <- as.Date(dd$dt_notific, origin = "1970-01-01")
+    dd$dt_sin_pri <- as.Date(dd$dt_sin_pri, origin = "1970-01-01")
+    dd$dt_digita <- as.Date(dd$dt_digita, origin = "1970-01-01")
+    dd <- dd %>%
+      filter(dt_digita <= lastday & dt_digita > firstday)
+    
+  }
   
   
   if(nrow(dd) == 0){

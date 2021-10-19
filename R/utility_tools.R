@@ -33,7 +33,7 @@ epiYear <- function(se, cut = 41){
 #'(formula generated data).
 #'@title Define Epidemiological Week.
 #'@export
-#'@param date string vector with dates to be converted
+#'@param days string vector with dates to be converted
 #'@param format date format
 #'@return data.frame with the epidemiological weeks. 
 #'@examples
