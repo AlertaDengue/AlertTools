@@ -65,7 +65,7 @@ nowcast.INLA <- function(dados.ag, model.day,...){
                  data = dados.ag,
                  num.threads = 4,
                  control.predictor = list(link = 1, compute = T),
-                 control.compute = list( config = T),
+                 control.compute = list( config = T, waic=TRUE, dic = TRUE),
                  ...
                  # control.family = list( 
                  # hyper = list("theta" = list(

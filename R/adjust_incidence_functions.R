@@ -139,12 +139,13 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
 #'@return data.frame with median and 95percent confidence interval for the 
 #'predicted cases-to-be-notified)
 #'@examples
-#'dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
-#'lastday = as.Date("2019-10-30"), datasource=con)  # Not run without connection
-#'resfitcIsT<-bayesnowcasting(dados, nowSE = 201945)
-#'resfitcIcT<-bayesnowcasting(dados, nowSE = 201945, tweet = TRUE)
+#' dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
+#' lastday = as.Date("2019-10-30"), datasource=con)  # Not run without connection
+#' tw <- getTweet(cities = 3304557, lastday = as.Date("2019-10-30"))
+#' resfitcIsT<-bayesnowcasting(dados, nowSE = 201945)
+#' resfitcIcT<-bayesnowcasting(dados, nowSE = 201945, tweet = tw)
 
-bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
+bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = NULL){
   
   # check input 
   if(is.null(names(d))) {
@@ -161,6 +162,23 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
   assert_that(all(c("municipio_geocodigo", "dt_notific", "dt_sin_pri", "dt_digita")
                   %in% names(d)), msg = "bayesnowcasting requires data with columns
               municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita")
+  
+  # check tweets
+  usingTweet <- FALSE
+  if(!is.null(tweet)) {
+    muntweet <- unique(tweet$Municipio_geocodigo)
+    assert_that(unique(d$municipio_geocodigo) == muntweet, msg = "check tweet data")
+    
+    mtw <- mean(tweet$tweet, na.rm = TRUE)
+    sdtw <- sd(tweet$tweet, na.rm = TRUE)
+    tweet$scaledtw = (tweet$tweet - mtw)/sdtw
+
+    tweet <- tweet %>%
+      mutate(dt_iniweek = SE2date(SE)$ini + 6)%>%
+      filter(dt_iniweek > min(d$dt_sin_pri, na.rm = TRUE))
+    
+    usingTweet <- TRUE
+    }
 
   # remove cases with wrong dt_sin_pri (when is more than 4 weeks before notific 
   # any tine after)
@@ -183,15 +201,7 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
   
   message(paste("nowcast will be calibrated with ", nrow(d), "cases"))
   
-  ## getting tweet data 
-  if(tweet == TRUE){
-    tw <- getTweet(cities = unique(d$municipio_geocodigo), 
-                   lastday = SE2date(nowSE)$ini)
-    tw <- tw %>%
-      mutate(dt_iniweek = SE2date(SE)$ini + 6)  %>%
-      filter(dt_iniweek > min(d$dt_sinpri_week))
-  }
-    
+ 
   # nowcasting
   d <- d %>% mutate(
     dt_sinpri_epiweek = epiweek(dt_sin_pri), 
@@ -235,9 +245,9 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
     group_by(dt_sinpri_week, delay_epiweek) %>% 
     dplyr::summarise(
       Casos = n()
-    ) %>% # View()
+    ) %>% 
     # Passando para o formato wide
-    spread(key = delay_epiweek, value = Casos) %>%  # View()
+    spread(key = delay_epiweek, value = Casos) %>%  
     # Adicianoando todas as data, algumas semanas nao houveram casos
     full_join( 
       y = tbl.dates, 
@@ -258,96 +268,122 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
   
   
   ## Juntando tweet (se tweet == TRUE)
-  if (tweet == TRUE){
+  if (usingTweet){
     dados.ag <- dados.ag %>% 
-      left_join(tw[,c(3,4)], by = c("Date" = "dt_iniweek" )) %>%
+      left_join(tweet[,c(3:5)], by = c("Date" = "dt_iniweek" )) %>%
       mutate(tweet =  replace_na(tweet, 0))
   }
   
-  # nao vi esse obj sendo usado
-  dados.ag.full <- d %>% 
-    group_by(dt_sinpri_week) %>% 
-    dplyr::summarise(
-      Total = n()
-    ) %>% # View()
-    # Adicianoando todas as data, algumas semanas nao houveram casos
-    right_join( 
-      y = tbl.dates, 
-      by = "dt_sinpri_week" ) %>% # View() 
-    mutate(
-      Total = replace_na(Total, 0)
-    ) %>% # View()
-    dplyr::rename( Date = dt_sinpri_week) %>%  #ungroup() %>% 
-    # Sorting by date
-    dplyr::arrange(Date) 
-  
+  # nao vi esse obj sendo usado , comentei aqui
+  # dados.ag.full <- d %>% 
+  #   group_by(dt_sinpri_week) %>% 
+  #   dplyr::summarise(
+  #     Total = n()
+  #   ) %>% # View()
+  #   # Adicianoando todas as data, algumas semanas nao houveram casos
+  #   right_join( 
+  #     y = tbl.dates, 
+  #     by = "dt_sinpri_week" ) %>% # View() 
+  #   mutate(
+  #     Total = replace_na(Total, 0)
+  #   ) %>% # View()
+  #   dplyr::rename( Date = dt_sinpri_week) %>%  #ungroup() %>% 
+  #   # Sorting by date
+  #   dplyr::arrange(Date) 
   
   # Model equations (4 possibilities)
-  if(interacao & !tweet) {
-    model.dengue <- Casos ~ 1 + 
-      f(Time, model = "rw2", constr = T
-        #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-      ) +
-      f(Delay, model = "rw1", constr = T
-        # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-      )  + 
-      # Efeito tempo-atraso
-      f(TimeDelay, model = "iid", constr = T
-        #   hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-      )
+  
+  model.dengue <- Casos ~ 1 +   # basic model
+    f(Time, model = "rw2", constr = T) +
+    f(Delay, model = "rw1", constr = T)
+  
+  # model with interaction
+  model.dengue_i <- Casos ~ 1 +   
+    f(Time, model = "rw2", constr = T) +
+    f(Delay, model = "rw1", constr = T) + 
+    f(TimeDelay, model = "iid", constr = T # Efeito tempo-atraso
+    )
+  
+  # models with tweet
+   if(usingTweet){
+    model.dengue_T <- Casos ~ 1 + tweet +   
+      f(Time, model = "rw2", constr = T) +
+      f(Delay, model = "rw1", constr = T) + tweet  
+    
+    model.dengue_sT <- Casos ~ 1  + scaledtw +   
+      f(Time, model = "rw2", constr = T) +
+      f(Delay, model = "rw1", constr = T)  
+    
+    model.dengue_iT <- Casos ~ 1 + tweet +    
+      f(Time, model = "rw2", constr = T) +
+      f(Delay, model = "rw1", constr = T) + 
+      f(TimeDelay, model = "iid", constr = T)  
+        
+    model.dengue_i_sT <- Casos ~ 1 + scaledtw + 
+      f(Time, model = "rw2", constr = T) +
+      f(Delay, model = "rw1", constr = T) + 
+      f(TimeDelay, model = "iid", constr = T) 
   } 
-  
-  if(!interacao & !tweet) {
-    model.dengue <- Casos ~ 1 + 
-      f(Time, model = "rw2", constr = T
-        #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-      ) +
-      f(Delay, model = "rw1", constr = T
-        # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-      )
-    # message("modelo de nowcasting sem interacao")
-  }
-  
-  if(interacao & tweet) {
-    model.dengue <- Casos ~ 1 + tweet +
-      f(Time, model = "rw2", constr = T
-        #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-      ) +
-      f(Delay, model = "rw1", constr = T
-        # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-      )  + 
-      # Efeito tempo-atraso
-      f(TimeDelay, model = "iid", constr = T
-        #   hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-      )
-  } 
-  
-  if(!interacao & tweet) {
-    model.dengue <- Casos ~ 1 + tweet + 
-      f(Time, model = "rw2", constr = T
-        #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-      ) +
-      f(Delay, model = "rw1", constr = T
-        # hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
-        #hyper = list("prec" = list(prior = half_normal_sd(.1) ))
-      )
-    # message("modelo de nowcasting sem interacao")
-  }
-  
+
+  # Calculating
+    
   output.dengue <- nowcast.INLA(
     model.day = model.dengue,
     dados.ag = dados.ag %>%
       mutate(TimeDelay = paste(Time, Delay))
   )
   
-  pred.dengue <- nowcasting(output.dengue, dados.ag, 
+  output.dengue_i <- nowcast.INLA(
+    model.day = model.dengue_i,
+    dados.ag = dados.ag %>%
+      mutate(TimeDelay = paste(Time, Delay))
+  )
+  
+  goodnessfit <- c(output.dengue$waic[[1]], output.dengue_i$waic[[1]]) 
+  bestmodel <- list(output.dengue, output.dengue_i)[[which.min(goodnessfit)]]
+  
+  if(usingTweet){
+    output.dengue_T <- nowcast.INLA(
+      model.day = model.dengue_T,
+      dados.ag = dados.ag %>%
+        mutate(TimeDelay = paste(Time, Delay))
+    )
+    
+    output.dengue_sT <- nowcast.INLA(
+      model.day = model.dengue_sT,
+      dados.ag = dados.ag %>%
+        mutate(TimeDelay = paste(Time, Delay))
+    )
+    
+    output.dengue_iT <- nowcast.INLA(
+      model.day = model.dengue_iT,
+      dados.ag = dados.ag %>%
+        mutate(TimeDelay = paste(Time, Delay))
+    )
+    
+    output.dengue_i_sT <- nowcast.INLA(
+      model.day = model.dengue_i_sT,
+      dados.ag = dados.ag %>%
+        mutate(TimeDelay = paste(Time, Delay))
+    )
+    
+    goodnessfit <- c(goodnessfit, output.dengue_T$waic[[1]], output.dengue_iT$waic[[1]],
+                     output.dengue_sT$waic[[1]], output.dengue_i_sT$waic[[1]] )
+    
+    bestmodel <- list(output.dengue, output.dengue_i)[[which.min(goodnessfit)]]
+  }
+  
+  message("waics:")
+  print(goodnessfit)
+  
+  # bestmodel
+    mod =c("the baseline", "baseline + interaction","tweet", "tweet + interaction",
+           "tweet std","tweet std + interaction")[[which.min(goodnessfit)]]
+    message(paste("the best nowcasting model is", mod))  
+  
+  
+  # pred
+  pred.dengue <- nowcasting(bestmodel, dados.ag, 
                             Dm = Dmax, Fim = Fim) # max(dados.ag$Date))
   
   
