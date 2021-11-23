@@ -353,15 +353,23 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
 #' and aggregate by epiweek. Used by mem.
 #' @param start_year first year of the time series
 #' @param end_year last year of the time series
+#' @param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"
 #' @param datasource Infodengue connection
 #' @param mun_list vector with the municipalities' 7 digit geocodes 
 #' @author Marcelo F C Gomes
 #' @examples
 #' dd <- read.cases(2019, 2020, mun_list = c(4108304, 3300936))
+#' dd <- read.cases(2019, 2020, cid10 = "A92.0", mun_list = c(4108304, 3300936))
 
-read.cases <- function(start_year, end_year, datasource=con, mun_list){
+read.cases <- function(start_year, end_year, cid10 = "A90", datasource=con, mun_list){
   
   mun_list_txt <- paste0(mun_list, collapse=',')
+  
+  if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
+  
+  
+  sqlcid = paste("'", cid10,"'", sep="")
+  
   
   if(class(datasource) == "PostgreSQLConnection"){
       sqlquery = paste0("SELECT dt_notific, se_notif, ano_notif, municipio_geocodigo
@@ -369,6 +377,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list){
       
       sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
                                " AND ano_notif <= ", end_year,
+                               " AND cid10_codigo = ", sqlcid,
                                " AND municipio_geocodigo IN (", mun_list_txt,"));" )
       
       df.cases.weekly <- dbGetQuery(conn = datasource, sqlquery, 
@@ -383,6 +392,7 @@ read.cases <- function(start_year, end_year, datasource=con, mun_list){
     
     sqlquery <- paste0(sqlquery, " WHERE (ano_notif >= ", start_year,
                        " AND ano_notif <= ", end_year,
+                       " AND AND cid10_codigo = ", sqlcid,
                        " AND municipio_geocodigo IN (", mun_list_txt,"));" )
     
     df.cases.weekly <- dbGetQuery(conn = datasource, sqlquery, 

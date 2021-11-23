@@ -66,6 +66,21 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
   require(data.table, quietly=TRUE, warn.conflicts=FALSE)
 
   #stopifnot(is.numeric(mun_list),"MEM: mun_list should be a numeric vector")
+  
+  # dealing with synonimous cid 
+  if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
+    if (cid10 %in% c("A92", "A920","A92.0")) { # chik
+      cid <-c("A92", "A920","A92.0")
+      cid10 <- "A92.0"}  else{
+        if (cid10 %in% c("A92.8","A928")){  # zika
+          cid <- c("A92.8","A928")
+          cid10 <- "A92.8"                      
+        }                  
+      }
+  }
+  if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
+  
+  
   # Read population table
   sqlcity = paste("'", str_c(mun_list, collapse = "','"),"'", sep="")
   
