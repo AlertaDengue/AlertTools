@@ -4,12 +4,14 @@
 \alias{read.cases}
 \title{Function to extract case count for covered municipalities}
 \usage{
-read.cases(start_year, end_year, datasource = con, mun_list)
+read.cases(start_year, end_year, cid10 = "A90", datasource = con, mun_list)
 }
 \arguments{
 \item{start_year}{first year of the time series}
 
 \item{end_year}{last year of the time series}
+
+\item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"}
 
 \item{datasource}{Infodengue connection}
 
@@ -21,6 +23,7 @@ and aggregate by epiweek. Used by mem.
 }
 \examples{
 dd <- read.cases(2019, 2020, mun_list = c(4108304, 3300936))
+dd <- read.cases(2019, 2020, cid10 = "A92.0", mun_list = c(4108304, 3300936))
 }
 \author{
 Marcelo F C Gomes

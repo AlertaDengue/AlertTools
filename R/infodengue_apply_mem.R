@@ -18,6 +18,7 @@
 #'    'db' writes data.table to InfoDengue's database using \code{write.parameters} from AlerttTools package.
 #' @param con Connection to PostGreSQL database, using \code{dbConnect} from RPostgreSQL package
 #' @param passwd database password for writing output to db if write='db'.
+#' @param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"
 #' @param i.n.max Number of points by seasons to be used for pre-epidemic and epidemic regions to calculate each threshold.
 #'    If 0 (default), uses all points in those regions. Else, uses n max values in each region per season.
 #'    This value is passed to i.n.max parameter in \code{memmodel}, from MEM package.
@@ -46,17 +47,14 @@
 #' mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 #' 4212650,4217006,4212700,4214706,4213104,4200804)
 #' mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
-#' thres <- infodengue_apply_mem(mun_list[1:2], database=con)
+#' thresC <- infodengue_apply_mem(mun_list, cid10 = "A92.0", database=con)
 #'
 #' A nice way to visualize the calculated thresholds
 #' plot(thres)
-#'
-#' Write to database instead of returning object requires password:
-#' thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10])
 
 
 infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
-                                  write='no', database, passwd=NULL, i.n.max=0,
+                                  write='no', database, passwd=NULL, i.n.max=0, cid10 = "A90",
                                   limiar.preseason=0.95, limiar.epidemico=0.95, i.type.curve=2,
                                   i.type.threshold=2, i.type.intensity=2, mincases.pre = 5, mincases.pos = 5,
                                   mincases.epi=10, ...){
@@ -67,19 +65,12 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
 
   #stopifnot(is.numeric(mun_list),"MEM: mun_list should be a numeric vector")
   
-  # dealing with synonimous cid 
-  if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
-    if (cid10 %in% c("A92", "A920","A92.0")) { # chik
-      cid <-c("A92", "A920","A92.0")
-      cid10 <- "A92.0"}  else{
-        if (cid10 %in% c("A92.8","A928")){  # zika
-          cid <- c("A92.8","A928")
-          cid10 <- "A92.8"                      
-        }                  
-      }
-  }
-  if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
   
+  if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
+  if(cid10 %in% c("A92.0","A92.8") & start_year < 2015) {
+    start_year = 2015
+    message("start_year reset to 2015")
+  }
   
   # Read population table
   sqlcity = paste("'", str_c(mun_list, collapse = "','"),"'", sep="")
@@ -114,7 +105,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
   for (mun_chunck in mun_list){
         print(mun_chunck)
     # Read historical cases table
-    df.inc <- read.cases(start_year, end_year, mun_list=mun_chunck)  # o que acontece quando nao ha casos?
+    df.inc <- read.cases(start_year, end_year, cid10 = cid10, mun_list=mun_chunck)  # o que acontece quando nao ha casos?
     effec_start_year <- min(round(df.inc$SE/100))
     # Build incidence
     df.inc <- merge.data.frame(df.inc, df.pop, by='municipio_geocodigo')
@@ -180,6 +171,8 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
     thresholds.table <- rbindlist(list(thresholds.table, thresholds.tab))
 
   }
+  
+  thresholds.table$cid10 <- cid10
 #thresholds.table <- plyr::rename(thresholds.table, replace=c('pre'='limiar_preseason', 'pos'='limiar_posseason',
 #                                                         'muitoalta'='limiar_epidemico'))
 

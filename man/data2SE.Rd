@@ -7,9 +7,9 @@
 data2SE(days, format = "\%d/\%m/\%Y")
 }
 \arguments{
-\item{format}{date format}
+\item{days}{string vector with dates to be converted}
 
-\item{date}{string vector with dates to be converted}
+\item{format}{date format}
 }
 \value{
 data.frame with the epidemiological weeks.

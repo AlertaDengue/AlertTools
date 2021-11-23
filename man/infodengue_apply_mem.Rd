@@ -14,6 +14,7 @@ infodengue_apply_mem(
   database,
   passwd = NULL,
   i.n.max = 0,
+  cid10 = "A90",
   limiar.preseason = 0.95,
   limiar.epidemico = 0.95,
   i.type.curve = 2,
@@ -41,6 +42,8 @@ infodengue_apply_mem(
 \item{i.n.max}{Number of points by seasons to be used for pre-epidemic and epidemic regions to calculate each threshold.
 If 0 (default), uses all points in those regions. Else, uses n max values in each region per season.
 This value is passed to i.n.max parameter in \code{memmodel}, from MEM package.}
+
+\item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"}
 
 \item{limiar.preseason}{Level of confidence interval to calculate pre/post-season thresholds. Default: 0.9.
 This value is passed to i.level.threshold parameter in \code{memmodel}, from MEM package.}
@@ -84,11 +87,8 @@ Return object instead of writing to data base:
 mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 4212650,4217006,4212700,4214706,4213104,4200804)
 mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
-thres <- infodengue_apply_mem(mun_list[1:2], database=con)
+thresC <- infodengue_apply_mem(mun_list, cid10 = "A92.0", database=con)
 
 A nice way to visualize the calculated thresholds
 plot(thres)
-
-Write to database instead of returning object requires password:
-thres <- infodengue_apply_mem(con=cond, passwd=password, mun_list=mun_list[1:10])
 }
