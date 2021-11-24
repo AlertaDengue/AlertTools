@@ -173,6 +173,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
   }
   
   thresholds.table$cid10 <- cid10
+  
 #thresholds.table <- plyr::rename(thresholds.table, replace=c('pre'='limiar_preseason', 'pos'='limiar_posseason',
 #                                                         'muitoalta'='limiar_epidemico'))
 
@@ -213,6 +214,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
 #'    'db' writes data.table to InfoDengue's database using \code{write.parameters} from AlerttTools package.
 #' @param con Connection to PostGreSQL database, using \code{dbConnect} from RPostgreSQL package
 #' @param passwd database password for writing output to db if write='db'.
+#' @param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"
 #' @param i.n.max Number of points by seasons to be used for pre-epidemic and epidemic regions to calculate each threshold.
 #'    If 0 (default), uses all points in those regions. Else, uses n max values in each region per season.
 #'    This value is passed to i.n.max parameter in \code{memmodel}, from MEM package.
@@ -245,7 +247,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
 
 infodengue_apply_mem_agreg <- function(mun_list,  
                                  start_year=2010, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
-                                 nome = "x", database, passwd=NULL, i.n.max=0,
+                                 nome = "x", database, passwd=NULL, i.n.max=0,cid10 = "A90",
                                  limiar.preseason=0.95, limiar.epidemico=0.95, i.type.curve=2,
                                  i.type.threshold=2, i.type.intensity=2, mincases.pre = 5, mincases.pos = 5,
                                  mincases.epi=10, ...){
@@ -253,6 +255,12 @@ infodengue_apply_mem_agreg <- function(mun_list,
   require(mem, quietly=TRUE, warn.conflicts=FALSE)
   #require(plyr, quietly=TRUE, warn.conflicts=FALSE)
   require(data.table, quietly=TRUE, warn.conflicts=FALSE)
+  
+  if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
+  if(cid10 %in% c("A92.0","A92.8") & start_year < 2015) {
+    start_year = 2015
+    message("start_year reset to 2015")
+  }
   
   # Read population table
   sqlcity = paste("'", str_c(mun_list, collapse = "','"),"'", sep="")
@@ -275,8 +283,8 @@ infodengue_apply_mem_agreg <- function(mun_list,
   
    pop = sum(df.pop$populacao) 
      # Read historical cases table
-   df.inc <- read.cases(start_year, end_year, mun_list=mun_list) 
-  
+   df.inc <- read.cases(start_year, end_year, cid10 = cid10, mun_list=mun_chunck)
+   
    # somando tudo
    df.inc <- df.inc %>%
      group_by(SE) %>%
@@ -342,6 +350,7 @@ infodengue_apply_mem_agreg <- function(mun_list,
       thresholds.tab$ano_inicio <- start_year
       thresholds.tab$ano_fim <- end_year
       thresholds.tab$populacao <- pop
+      thresholds.table$cid10 <- cid10
       names(thresholds.tab)[1] <- "nome" 
       
     return(thresholds.tab)
