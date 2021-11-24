@@ -242,8 +242,8 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
 #' Return object instead of writing to data base:
 #' mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 #' 4212650,4217006,4212700,4214706,4213104,4200804)
-#' mun_list <- getCidades(uf = "Maranhão", regional = "Caxias", datasource=con)
-#' thres <- infodengue_apply_mem_agreg(mun_list$municipio_geocodigo, nome = "Caxias", cid10 = "A92.0")
+#' mun_list <- getCidades(uf = "Rio de Janeiro", regional = "Metropolitana I", datasource=con)
+#' thres <- infodengue_apply_mem_agreg(mun_list$municipio_geocodigo, cid10 = "A92.0")
 
 infodengue_apply_mem_agreg <- function(mun_list,  
                                  start_year=2010, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
@@ -255,6 +255,8 @@ infodengue_apply_mem_agreg <- function(mun_list,
   require(mem, quietly=TRUE, warn.conflicts=FALSE)
   #require(plyr, quietly=TRUE, warn.conflicts=FALSE)
   require(data.table, quietly=TRUE, warn.conflicts=FALSE)
+  
+  # check inputs
   
   if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
   if(cid10 %in% c("A92.0","A92.8") & start_year < 2015) {
@@ -285,6 +287,7 @@ infodengue_apply_mem_agreg <- function(mun_list,
      # Read historical cases table
    df.inc <- read.cases(start_year, end_year, 
                         cid10 = cid10, mun_list=mun_list)
+   
    
    # somando tudo
    df.inc <- df.inc %>%
@@ -330,12 +333,13 @@ infodengue_apply_mem_agreg <- function(mun_list,
                                   i.level.intensity=limiar.epidemico,
                                   i.type.curve=i.type.curve, i.type.threshold=i.type.threshold,
                                   i.type.intensity=i.type.intensity)$dfthresholds)#[base.cols]
-
+    
     thresholds.tab <- cbind(thresholdsMEM, quantile.tab[2:length(quantile.tab)])
+    
     thresholds.tab$mininc_pre <- mincases.pre/pop*1e5
     thresholds.tab$mininc_pos <- mincases.pos/pop*1e5
     thresholds.tab$mininc_epi <- mincases.epi/pop*1e5
-      
+    
       # thresholds.tab <- thresholds.tab %>%
       #   mutate(limiar_preseason = case_when(
       #     as.numeric(is.na(pre)) == 0 & pre > mininc_pre ~ pre, TRUE ~ quant_pre),
@@ -347,11 +351,12 @@ infodengue_apply_mem_agreg <- function(mun_list,
       #          inc_posseason = pos,
       #          inc_epidemico = veryhigh)
       # 
-      
+    
+    
       thresholds.tab$ano_inicio <- start_year
       thresholds.tab$ano_fim <- end_year
       thresholds.tab$populacao <- pop
-      thresholds.table$cid10 <- cid10
+      thresholds.tab$cid10 <- cid10
       names(thresholds.tab)[1] <- "nome" 
       
     return(thresholds.tab)
