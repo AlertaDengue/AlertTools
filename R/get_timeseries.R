@@ -351,6 +351,7 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
 #' @title Function to extract case count for covered municipalities
 #' @description Function \code{read.cases} extract notification data from database 
 #' and aggregate by epiweek. Used by mem.
+#' @export
 #' @param start_year first year of the time series
 #' @param end_year last year of the time series
 #' @param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"
