@@ -243,7 +243,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
 #' mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 #' 4212650,4217006,4212700,4214706,4213104,4200804)
 #' mun_list <- getCidades(uf = "Maranhão", regional = "Caxias", datasource=con)
-#' thres <- infodengue_apply_mem_agreg(mun_list$municipio_geocodigo, nome = "Caxias")
+#' thres <- infodengue_apply_mem_agreg(mun_list$municipio_geocodigo, nome = "Caxias", cid10 = "A92.0")
 
 infodengue_apply_mem_agreg <- function(mun_list,  
                                  start_year=2010, end_year=as.integer(format(Sys.Date(), '%Y'))-1,
@@ -283,7 +283,8 @@ infodengue_apply_mem_agreg <- function(mun_list,
   
    pop = sum(df.pop$populacao) 
      # Read historical cases table
-   df.inc <- read.cases(start_year, end_year, cid10 = cid10, mun_list=mun_chunck)
+   df.inc <- read.cases(start_year, end_year, 
+                        cid10 = cid10, mun_list=mun_list)
    
    # somando tudo
    df.inc <- df.inc %>%
