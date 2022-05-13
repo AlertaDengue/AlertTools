@@ -332,7 +332,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       # Reading the meteorological data
       #print('Obtendo os dados de clima...')
       #varscli <- na.omit(unique(c(pars_table$varcli, pars_table$varcli2)))
-      varscli <- c("umid_max", "temp_min", "umid_min")
+      varscli <- c("umid_max", "temp_min", "umid_min","umid_med","temp_med","temp_max")
       cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday)
       
       # Reading Cases
@@ -908,7 +908,7 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
       
       # ------------removing umid_min ----------------------#
       # just because it is not implemented yet in the dataset
-      if("umid_min" %in% names(d)) d <- subset(d, select = -umid_min)
+      # if("umid_min" %in% names(d)) d <- subset(d, select = -umid_min)
       
       # ---------- filtering dates -------------------------#
       if(missing(iniSE)) iniSE <- 0
@@ -949,9 +949,10 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
             )
       # --------- checking all required variables ------------#
       varnames <-c("data_iniSE", "SE", "CID10","casos_est", "casos_est_min", "casos_est_max",
-                   "casos", "municipio_geocodigo", "p_rt1", "p_inc100k", "Localidade_id",
-                   "nivel", "id", "versao_modelo", "municipio_nome", "tweet", "Rt", 
-                   "pop", "temp_min", "umid_max", "receptivo", "transmissao", "nivel_inc") 
+                "casos", "municipio_geocodigo", "p_rt1", "p_inc100k", "Localidade_id",
+                "nivel", "id", "versao_modelo", "municipio_nome", "tweet", "Rt", 
+                "pop", "temp_min","temp_med","temp_max","umid_min","umid_med","umid_max", 
+                "receptivo", "transmissao", "nivel_inc") 
       
       if(all(varnames %in% names(d1))) {
          dfinal <- d1[,varnames]
@@ -1075,7 +1076,8 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
                  "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
                  "nivel","id","versao_modelo","municipio_nome","Rt", "pop", "tweet",
-                 "receptivo","transmissao","nivel_inc","temp_min","umid_max")
+                 "receptivo","transmissao","nivel_inc","temp_min","temp_med","temp_max",
+                 "umid_min","umid_med","umid_max")
    
    if(!("temp_min" %in% names(d))) d$temp_min <- NA
    if(!("umid_max" %in% names(d))) d$umid_max <- NA
@@ -1099,7 +1101,8 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
                        "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
                        "nivel","id","versao_modelo","municipio_nome", "tweet", "\"Rt\"", "pop",
-                       "tempmin", "umidmax" ,"receptivo", "transmissao","nivel_inc")
+                       "tempmin","tempmed","tempmax","umidmin","umidmed","umidmax",
+                       "receptivo", "transmissao","nivel_inc")
    
    varnames.sql <- str_c(varnamesforsql, collapse = ",")
    updates = str_c(paste(varnamesforsql,"=excluded.",varnamesforsql,sep=""),collapse=",") # excluidos, se duplicado
@@ -1113,7 +1116,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
                                      "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","),",'",
                      as.character(vetor$versao_modelo),"','",
                      as.character(vetor$municipio_nome),"',",
-                     str_c(vetor[1,c("tweet","Rt","pop","temp_min","umid_max")], collapse = ","), ",",
+                     str_c(vetor[1,c("tweet","Rt","pop","temp_min","temp_med","temp_max","umid_min","umid_med","umid_max")], collapse = ","), ",",
                      str_c(vetor[1,c("receptivo","transmissao","nivel_inc")], collapse = ",")
       )
       
@@ -1128,9 +1131,9 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
                                      DO UPDATE SET ",updates, ";",sep="")
       
       if(writetofile == FALSE) {
-            try(dbGetQuery(datasource, insert_sql))    
+         try(dbGetQuery(datasource, insert_sql))    
       }
-     
+      
       insert_sql
    }
    
