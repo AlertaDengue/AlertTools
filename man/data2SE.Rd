@@ -12,7 +12,7 @@ data2SE(days, format = "\%d/\%m/\%Y")
 \item{format}{date format}
 }
 \value{
-data.frame with the epidemiological weeks.
+numeric vector with the epidemiological weeks.
 }
 \description{
 Find to which epidemiological week belongs a given day. Uses episem function 

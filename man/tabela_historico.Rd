@@ -4,10 +4,13 @@
 \alias{tabela_historico}
 \title{Convert the alert object into a data.frame and calculate indicators}
 \usage{
-tabela_historico(obj, iniSE, lastSE, versao = Sys.Date())
+tabela_historico(obj, iniSE, lastSE, type = "notified", versao = Sys.Date())
 }
 \arguments{
 \item{obj}{object created by the pipeline.}
+
+\item{type}{"notified", if it should return total counts, disregarding the 
+final classification. For compatibility reasons.}
 
 \item{versao}{Default is current's date}
 

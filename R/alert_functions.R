@@ -338,11 +338,11 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       # Reading Cases
       print("Obtendo dados de notificacao ...")
       print(cities)
-      casos <- getCases(cities, lastday = finalday, cid10 = cid10, 
+      casos <- getCases(cities, lastday = finalday, cid10 = cid10, type = "all", # novo
                         dataini = dataini, completetail = completetail) 
       message("getCases done")
       casos$inc <- casos$casos/casos$pop*100000
-      
+      casos$inc_prov <- casos$cas_prov/casos$pop*100000 # novo
       
       # Reading tweets 
       if(cid10 == "A90"){
@@ -871,14 +871,16 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'@param obj object created by the pipeline.
 #'@param ini_se first week of the table. Default is the first date in obj.
 #'@param last_se last week of the table. Default is the last date in obj. To do.
+#'@param type "notified", if it should return total counts, disregarding the 
+#'final classification. For compatibility reasons. 
 #'@param versao Default is current's date
 #'@return data.frame with the data to be written. 
 #'@examples
 #'# Several cities at once:
-#'cidades <- getCidades(uf = "Mato Grosso", datasource = mycon)
+#'cidades <- getCidades(uf = "Mato Grosso", datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1:3], cid10 = "A90", 
 #'finalday= "2018-01-10")
-#'restab <- tabela_historico(res, iniSE = 201701) 
+#'restab <- tabela_historico(res, iniSE = 201701,type = "all") 
 #'tail(restab)
 #'# One city:
 #'res <- pipe_infodengue(cities = 3304557, cid10 = "A90", 
@@ -886,7 +888,7 @@ geraMapa<-function(alerta, subset, se, cores = c("green","yellow","orange","red"
 #'restab <- tabela_historico(res) 
 #'tail(restab)
 
-tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
+tabela_historico <- function(obj, iniSE, lastSE, type = "notified", versao = Sys.Date()){
       
       # --------- create single data.frame ------------------#
       # if object created by pipe_infodengue():
@@ -948,12 +950,24 @@ tabela_historico <- function(obj, iniSE, lastSE, versao = Sys.Date()){
                   )
             )
       # --------- checking all required variables ------------#
-      varnames <-c("data_iniSE", "SE", "CID10","casos_est", "casos_est_min", "casos_est_max",
-                "casos", "municipio_geocodigo", "p_rt1", "p_inc100k", "Localidade_id",
-                "nivel", "id", "versao_modelo", "municipio_nome", "tweet", "Rt", 
-                "pop", "temp_min","temp_med","temp_max","umid_min","umid_med","umid_max", 
-                "receptivo", "transmissao", "nivel_inc") 
+      varnames <-c("data_iniSE", "SE", "CID10","casos", "casos_est", 
+                   "casos_est_min", "casos_est_max", "municipio_geocodigo", 
+                   "p_rt1", "p_inc100k", "Localidade_id", "nivel", "id", "versao_modelo", 
+                   "municipio_nome", "tweet", "Rt", "pop", "temp_min","temp_med",
+                   "temp_max","umid_min","umid_med","umid_max", "receptivo", 
+                   "transmissao", "nivel_inc") 
       
+      if(type != "notified" & all(c("cas_prov","cas_lab","inc_prov") %in% names(d1))) {
+            varnames <-c("data_iniSE", "SE", "CID10","casos", "cas_prov", "cas_lab",
+                         "casos_est", "casos_est_min", "casos_est_max", "municipio_geocodigo", 
+                         "p_rt1", "p_inc100k", "inc", "Localidade_id", "nivel", "id", "versao_modelo", 
+                         "municipio_nome", "tweet", "Rt", "pop", "temp_min","temp_med",
+                         "temp_max","umid_min","umid_med","umid_max", "receptivo", 
+                         "transmissao", "nivel_inc")
+      } else {
+             message("probable cases not returned, returning all cases")
+      }
+       
       if(all(varnames %in% names(d1))) {
          dfinal <- d1[,varnames]
          return(dfinal)

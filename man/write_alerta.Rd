@@ -27,8 +27,8 @@ using the connection.
 \examples{
 # Parameters for the model 
 cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
-res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90", 
-finalday= "2021-07-12",nowcasting="none")
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+finalday= "2016-07-12",nowcasting="none")
 restab <- tabela_historico(res)
 # NOT RUN 
 t1 <- Sys.time()

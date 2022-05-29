@@ -10,6 +10,7 @@ getCases(
   cid10 = "A90",
   dataini = "notific",
   completetail = NA,
+  type = "notified",
   datasource = con
 )
 }
@@ -25,10 +26,15 @@ if aggregated by date of first symptoms}
 
 \item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
 
+\item{type}{case definition. Default = "notified". Other options: "probable", 
+"lab_confirmed", "all". All means returning the three counts.}
+
 \item{datasource}{PostgreSQLConnection to project database.}
 }
 \value{
 data.frame with the data aggregated per week according to disease onset date.
+Notice that the names of the columns and the number of columns will change according to type. 
+To recover the original function behavior, use the default type.
 }
 \description{
 Create weekly time series from case data from server. The source is the SINAN.

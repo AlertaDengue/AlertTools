@@ -231,8 +231,12 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'@param dataini "notific" if data aggregated by notification date or "sinpri" if data aggregated
 #' if aggregated by date of first symptoms
 #'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8", 
+#'@param type case definition. Default = "notified". Other options: "probable", 
+#'"lab_confirmed", "all". All means returning the three counts. 
 #'@param datasource PostgreSQLConnection to project database. 
 #'@return data.frame with the data aggregated per week according to disease onset date.
+#'Notice that the names of the columns and the number of columns will change according to type. 
+#'To recover the original function behavior, use the default type.
 #'@examples
 #'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
 #'d <- getCases(cities = 4314902, dataini = "sinpri") # dengue
@@ -243,7 +247,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'tail(d)
 
 getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "notific", 
-                     completetail = NA, datasource=con) {
+                     completetail = NA, type = "notified", datasource=con) {
       
       assert_that(class(cities) %in% c("integer","numeric"), 
                   msg = "cities should be a vector of numeric geocodes") 
@@ -308,41 +312,58 @@ getCases <- function(cities, lastday = Sys.Date(), cid10 = "A90", dataini = "not
         
       }
       
-      # agregando casos por semana por cidade 
+      # definindo a data para calculo da semana
       if(dataini == "notific"){
             message("case aggregated by notification date")
-            casos <- dd %>% 
-                  mutate(SE = ano_notif*100+se_notif) %>%
-                  group_by(municipio_geocodigo) %>%
-                  count(SE)
-      }
+            dd <- dd %>% 
+                  mutate(SE = ano_notif*100+se_notif)
+            }
       if(dataini == "sinpri"){
             message("case aggregated by symptoms date")
-            casos <- dd %>% 
+            dd <- dd %>% 
                   mutate(ano_sinpri = lubridate::year(dt_sin_pri),
-                        SE = ano_sinpri*100+se_sin_pri) %>%
-                  group_by(municipio_geocodigo) %>%
-                  count(SE)
-      }
+                         SE = ano_sinpri*100+se_sin_pri)
+            }
+         
+      # identificando os casos de acordo com a definicao
+      dd$tipo <- "notified"
+      dd$tipo[dd$classi_fin != 5] <- "probable"
+      dd$tipo[dd$classi_fin != 5 & dd$criterio == 1] <- "lab_confirmed"
+      
+      # contando os casos de acordo com a definicao   
+      casos <- dd %>% 
+            group_by(municipio_geocodigo, SE) %>%
+            summarise(
+                  casos = length(tipo),
+                  cas_prov = sum(tipo == "probable"),
+                  cas_lab = sum(tipo == "lab_confirmed"))
       
       lastSE <- data2SE(lastday, format = "%Y-%m-%d")  
       # criando serie 
       sem <-  expand.grid(municipio_geocodigo = cities, SE = seqSE(from = 201001, to = lastSE[1])$SE)
-      st <- left_join(sem,casos,by = c("municipio_geocodigo", "SE")) %>% 
-            arrange(municipio_geocodigo,SE) %>%
+      
+      st <- left_join(sem, casos, by = c("municipio_geocodigo", "SE")) %>% 
+            arrange(municipio_geocodigo, SE) %>%
             mutate(localidade = 0) %>%  # para uso qdo tiver divisao submunicipal
             mutate(geocodigo = municipio_geocodigo) %>%
             mutate(CID10 = cid10)%>%
             full_join(.,varglobais,"geocodigo") %>%
-            select(SE, cidade = municipio_geocodigo,CID10, casos =n,localidade,nome,
-                   pop=populacao) 
+            select(SE, cidade = municipio_geocodigo,CID10, casos, cas_prov, 
+                   cas_lab, localidade, nome, pop=populacao) 
       
-      SElastcase <- max(st$SE[st$casos > 0], na.rm = TRUE)
-      st$casos[(is.na(st$casos) & st$SE <= SElastcase)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
-      if(!is.na(completetail)) st$casos[st$SE > SElastcase] <- completetail
+      # preenchendo os NAs 
+      #SElastcase <- max(st$SE[st$casos > 0], na.rm = TRUE)
+      st$casos[(is.na(st$casos) & st$SE <= lastSE)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
+      st$cas_prov[(is.na(st$cas_prov) & st$SE <= lastSE)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
+      st$cas_lab[(is.na(st$cas_lab) & st$SE <= lastSE)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
       
+      #if(!is.na(completetail)) st$casos[st$SE > SElastcase] <- completetail
       if(any(is.na(st$pop)))warning("getCases function failed to import pop data for one or more cities", cities)
       
+      # choosing what to return
+      if(type == "notified") return(subset(st, select = -c(cas_prov, cas_lab)))
+      if(type == "probable") return(subset(st, select = -c(casos, cas_lab)))
+      if(type == "lab_confirmed") return(subset(st, select = -c(casos, cas_prov)))
       st  
 }
 

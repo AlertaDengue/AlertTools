@@ -18,5 +18,5 @@ Return the first day of the Epidemiological Week and vice-versa
 \examples{
 daySEday(x=201812)
 daySEday(x = c(202041:202104))
-daySEday(x = c("2015-12-23", "2015-10-23", "2014-10-16"))
+daySEday(x = c("2015-12-23", "2015-10-23", "2022-10-16"))
 }

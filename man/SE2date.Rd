@@ -17,5 +17,5 @@ Return the first day of the Epidemiological Week
 }
 \examples{
 SE2date(se=201812)
-SE2date(se = c(202001:202109))
+SE2date(se = c(202001:202209))
 }
