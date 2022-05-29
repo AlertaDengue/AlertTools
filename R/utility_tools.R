@@ -776,15 +776,20 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
 }
 
 # read.parameters ------------------------------------
-#'@description  Read the alert parameters for a set of cities from the database, to be used in the infodengue pipeline. 
-#'Currently, the parameters are: "limiar_preseason" (pre-season incidence threshold calculated using MEM), 
-#'"limiar_posseason" (pos-season incidence threshold), "limiar_epidemico"(epidemic threshold), "varcli" (name of the critical 
-#'meteorological variable), "clicrit" (critical value of the meteorological variable), "cid10",
-#'"codmodelo" (name of the heuristic decision model, see serCriteria()). These parameters are specified when the city is initiated 
+#'@description  Read the alert parameters for a set of cities from the database,
+#' to be used in the infodengue pipeline. #'Currently, the parameters are: 
+#' "limiar_preseason" (pre-season incidence threshold calculated using MEM), 
+#'"limiar_posseason" (pos-season incidence threshold), 
+#'"limiar_epidemico"(epidemic threshold), "varcli" (name of the critical 
+#'meteorological variable), "clicrit" (critical value of the meteorological 
+#'variable), "cid10", "codmodelo" (name of the heuristic decision model,
+#' see serCriteria()). These parameters are specified when the city is initiated 
 #'in the pipeline.
-#'@title Get city-level alert parameters for the infodengue pipeline.
+#'@title Get uf or city-level alert parameters for the infodengue pipeline.
 #'@export 
-#'@param cities cities' geocodes. Tip: find them using getCidades(). 
+#'@param cities if city level pipeline. Use the cities' geocodes. 
+#' Tip: find them using getCidades().
+#'@param uf if state level. Use the two digits the geocode (33) or abbrev name ("rj"). 
 #'@param cid10 Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"
 #'@param datasource SQL connection to the database
 #'@return dataframe with all parameters
@@ -792,29 +797,61 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
 #'read.parameters(cities = 3118601, cid10 = "A90")
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'read.parameters(cities = cid$municipio_geocodigo, cid10 = "A90")
+#'read.parameters(uf = 35, cid10 = "A90")
 
-read.parameters<-function(cities, cid10 = "A90", datasource=con){
+read.parameters<-function(cities, uf, cid10 = "A90", datasource=con){
       
-      cities <- sapply(cities, function(x) sevendigitgeocode(x))
+      # checking inputs
+      if (!(cid10 %in% c("A90","A92.0","A92.8")))
+            stop(paste("read.parameters: cid10 ",cid10," not known"))
+      
       if(cid10 != "A90")print("tab de parametros so tem dengue. Usando-os.")
       cid10 = "A90"
-      # reading parameters from database
       
-      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
-      
-      if(class(datasource) == "PostgreSQLConnection"){
-      comando = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
-                        "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
+      # if no filter is specified:
+      if(missing(cities) & missing(uf)) {
+            message("read.parameters received no geocode. returning the whole table")
+            comandoSQL = paste("SELECT * FROM \"Dengue_global\".parameters WHERE
+                               cid10 = '", cid10 , "'" , sep="")
+            comandoLite = paste("SELECT * FROM parameters WHERE cid10 = '", cid10 , 
+                            "'", sep="")
       }
       
-      if(class(datasource) == "SQLiteConnection"){
-        comando = paste("SELECT * FROM parameters WHERE cid10 = '", cid10 , 
-                        "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
+      # if a vector of cities are specified:
+      if(!missing(cities)){
+            cities <- sapply(cities, function(x) sevendigitgeocode(x))
+            # reading parameters from the cities in the database
+            sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")      
+            comandoSQL = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
+                            "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
+            comandoLite = paste("SELECT * FROM parameters WHERE cid10 = '", cid10 , 
+                            "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
       }
       
-      try(dd <- dbGetQuery(datasource,comando))
-            
-      assert_that(all(cities %in% dd$municipio_geocodigo),msg = ("check if cities and cid10 are in the parameter table"))      
+      
+      # if a vector of ufs are specified:
+      if(!missing(uf)){
+            load("data/ufs.rda")  # AlertTools ufs table with uf info
+            if(class(uf)=="character") { # convert to name to geocode
+                  assert_that(all(uf %in% ufs$uf), msg = "read.parameters: check the uf argument")
+                  ufgeo <- ufs$geocodigo[ufs$uf %in% uf] 
+            }
+            if(class(uf) %in% c("numeric","integer")) {
+                  assert_that(all(uf %in% ufs$geocodigo), msg = "read.parameters: check the uf argument")
+                  ufgeo <- uf
+            }
+
+            # reading parameters from the UFs in the parameter database (if 2 digits, means UF)
+            sqluf = paste("'", str_c(ufgeo, collapse = "','"),"'", sep="")      
+            comandoSQL = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
+                               "' AND municipio_geocodigo  IN (", sqluf,")", sep="")
+            comandoLite = paste("SELECT * FROM parameters WHERE cid10 = '", cid10 , 
+                                "' AND municipio_geocodigo  IN (", sqluf,")", sep="")
+      }
+      
+      # call
+      if(class(con) == "PostgreSQLConnection") try(dd <- dbGetQuery(datasource,comandoSQL))
+      if(class(con) == "SQLiteConnection") try(dd <- dbGetQuery(datasource,comandoLite))
       
       return(dd)
 }
@@ -855,20 +892,19 @@ getWUstation <- function(cities, datasource = con){
 #'@title set meteorological stations
 #'@export
 #'@param st data.frame containing municipio_geocodigo, primary_station, 
-#'secondary_station
-#'@param UF name of the state.Ex. "Rio de Janeiro"
+#'secondary_station.  If state level, municipio_geocodigo receives 2 digits 
 #'@param senha for the connection to the project database
 #'@return 
 #'@examples
 #'NOT RUN
 #'wudata = data.frame(municipio_geocodigo = 3107802, primary_station = "SBIP",
 #'secondary_station = "SBGV")
-#'setWUstation(wudata, UF = "Minas Gerais")
-#'getWUstation(cities =wudata$municipio_geocodigo)
+#'setWUstation(wudata)
+#'getWUstation(cities =3107802)
 
-setWUstation <- function(st, UF, datasource = con){
+setWUstation <- function(st, datasource = con){
       
-      ncities <- nrow(st)
+      ngeo <- nrow(st)
       
       # checking inputs
       assert_that(class(st) == "data.frame", 
@@ -882,17 +918,19 @@ setWUstation <- function(st, UF, datasource = con){
       assert_that(class(datasource) == "PostgreSQLConnection", 
                   msg = paste("setWUstation: datasource must be a connection to the Infodengue server"))
       
-      # check if city is already in the system (Regional table)
-      cities_table <- getCidades(uf = UF, datasource = datasource)
-      cities_in <- st$municipio_geocodigo %in% cities_table$municipio_geocodigo
-       
-      assert_that(sum(cities_in)==ncities, 
-                  msg = paste("geocodes", st$municipio_geocodigo[cities_in == FALSE] , 
-                              "not implemented in Infodengue.") )
+      # check if city/uf is already in the system (they should be)
+      # if(nchar(st$municipio_geocodigo[1]) >=6) geo_table <- read.parameters(cities = st$municipio_geocodigo, datasource = datasource)
+      # if(nchar(st$municipio_geocodigo[1]) ==2) geo_table <- read.parameters(uf = st$municipio_geocodigo, datasource = datasource)
+      # 
+      #       geo_in <- st$municipio_geocodigo %in% geo_table$municipio_geocodigo
+      #       
+      #     assert_that(sum(geo_in)==ngeo, 
+      #                   msg = paste("geocodes", st$municipio_geocodigo[geo_in == FALSE] , 
+      #                               "were not in the parameter table. Not done.") )      
       
       ## writing 
     
-      for (i in 1:ncities) {
+      for (i in 1:ngeo) {
             el1 = paste("'", as.character(st$primary_station[i]),"'",sep="")
             el2 = paste("'", as.character(st$secondary_station[i]),"'",sep="")
             linha = paste("codigo_estacao_wu = ", el1, ",", "estacao_wu_sec = ", el2, sep = "")
@@ -901,7 +939,7 @@ setWUstation <- function(st, UF, datasource = con){
             cityline = try(dbGetQuery(datasource, update_sql))
       }
       
-      return()
+      return("stations are set")
 }
 
 

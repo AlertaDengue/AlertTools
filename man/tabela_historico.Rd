@@ -27,10 +27,10 @@ in the database. Also computes receptivity, transmission and incidence levels.
 }
 \examples{
 # Several cities at once:
-cidades <- getCidades(uf = "Mato Grosso", datasource = mycon)
+cidades <- getCidades(uf = "Mato Grosso", datasource = con)
 res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1:3], cid10 = "A90", 
 finalday= "2018-01-10")
-restab <- tabela_historico(res, iniSE = 201701) 
+restab <- tabela_historico(res, iniSE = 201701,type = "all") 
 tail(restab)
 # One city:
 res <- pipe_infodengue(cities = 3304557, cid10 = "A90", 
