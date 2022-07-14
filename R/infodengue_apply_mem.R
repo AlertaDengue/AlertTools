@@ -188,7 +188,7 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
                     thresholds = thresholds.table[,c('municipio_geocodigo','limiar_preseason','limiar_posseason',
                                                   'limiar_epidemico','ano_inicio','ano_fim')])
         class(obj) <- "infomem"
-        return(obj)
+        return(list(infomem = obj, data = df.inc))
   }
 
 }
