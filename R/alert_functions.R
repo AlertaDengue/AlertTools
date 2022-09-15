@@ -251,8 +251,12 @@ weeks_w_transmission <- function(d, alpha = 0.1, maxw = 30){
       #checking input
       assert_that(all(c("p1") %in% names(d)), 
                   msg = "weeks_w_transmission says that d should contain:
-                  lwr. Check if Rt was computed")      
-      
+                  p1. Check if Rt was computed")      
+    
+        cidade <- unique(d$cidade) 
+        assert_that(length(cidade) == 1, 
+                    msg = "weeks_w_transmission works for one city at a time")      
+        
       # time lag matrix
       m <- matrix(data = NA, nrow = nrow(d), ncol = maxw)
       m[,1] <- d$p1
@@ -263,7 +267,50 @@ weeks_w_transmission <- function(d, alpha = 0.1, maxw = 30){
       
       # check output
       assert_that(class(d$weeks_transmission) == "numeric", 
-                  msg = "check is.receptive. output not correct")
+                  msg = "check weeks_w_transmission. output not correct")
+      d
+}
+
+# weeks_above_threshold -----------------------------------------------------------------
+#'@title Counts the number of successive weeks with incidence above a given threshold
+#'@description Indicator used for raising the red alert  
+#'@export
+#'@param d dataset with data to feed the alert. It is recommended the adjustment of incidence first
+#'@param threshold incidence threshold (default is limiar_epidemico)
+#'@param var incidence variable (default = inc)
+#'@param maxw max number of weeks (default = 52)
+#'@return returns the data, and the number of weeks with transmission.  
+#'@examples
+#' # Parameters of the alert model (requires connection)
+#' casos <- getCases(4209102, cid10 = "A90", type = "all", completetail = 0, dataini = "sinpri") 
+#' casos <- casos %>% Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) 
+#' casos <- casos %>% weeks_w_transmission()
+#' plot(casos$weeks_transmission, type = "s", main = "weeks with transmission)
+#' # for the pipeline, we use maxw = 2
+#' casos <- casos %>% weeks_w_transmission(maxw = 2)
+#' plot(casos$weeks_transmission > 1, type = "h", main = "orange")
+
+weeks_above_threshold <- function(d, var = "inc", threshold = 100, maxw = 52){
+      
+      #checking input
+      assert_that(all(var %in% names(d)), 
+                  msg = "weeks_above_threshold says that the incidence variable is missing.")      
+      
+      cidade <- unique(d$cidade) 
+      assert_that(length(cidade) == 1, 
+                  msg = "weeks_above_threshold works for one city at a time")      
+      
+      # time lag matrix
+      m <- matrix(data = NA, nrow = nrow(d), ncol = maxw)
+      m[,1] <- d[,var]
+      for(i in 2:maxw) m[,i] = lag(d[,var], i)
+      
+      # compute weeks with transmission
+      d$weeks_above_thres <- rowSums(m > threshold)
+      
+      # check output
+      assert_that(class(d$weeks_above_thres) == "numeric", 
+                  msg = "check weeks_above_threshold. output not correct")
       d
 }
 
@@ -387,6 +434,8 @@ fouralert <- function(obj, crit, miss="last",dy=4){
       return(ale)      
 }
 
+
+
 #pipe_infodengue ---------------------------------------------------------------------
 #'@title pipeline used by infodengue 
 #'@description wrap of functions used by Infodengue.
@@ -429,25 +478,6 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       } else { # if datarelatorio & finalday are given, priority is datarelatorio
             finalday <- SE2date(datarelatorio)$ini+6
       }
-      
-      # check dates
-      #last_sinan_date <- lastDBdate(tab = "sinan", cid10 = cid10, cities = cities)
-      #print(paste("last sinan date for",cid10 ,"is", last_sinan_date$se))
-      
-      #assert_that(!is.na(last_sinan_date$se), msg = paste("no sinan data for cid10", cid10)) 
-      
-      #if(last_sinan_date$se < datarelatorio) {
-      #      
-      #      if (userinput){
-      #            message(paste("last date in database is",last_sinan_date$se,
-      #                          ". Should I continue with SE =", datarelatorio,
-      #                          "? tecle Y if YES, or change to new date"))
-      #            x <- scan("stdin", character(), n = 1)
-      #             if(x!="Y") { 
-      #                   datarelatorio <- as.numeric(x)   
-      #                   } else {completetail <- 0} # complete the tail with zeros
-      #      } 
-      #}
       
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
       if (class(cities) %in% c("integer","numeric")) {
