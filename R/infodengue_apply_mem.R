@@ -164,7 +164,9 @@ infodengue_apply_mem <- function(mun_list, start_year=2010, end_year=as.integer(
                  inc_posseason = pos,
                  inc_epidemico = veryhigh)
 
-
+    thresholds.tab$populacao <- pop # novo
+    thresholds.tab$cid10 <- cid10 # novo
+    
     thresholds.tab$ano_inicio <- start_year
     thresholds.tab$ano_fim <- end_year
     #thresholds.tab <- thresholds.tab[, c('municipio_geocodigo', 'ano_inicio', 'ano_fim','pre', 'pos', 'muitoalta')]

@@ -118,6 +118,155 @@ setCriteria <- function(rule=NULL, values=NULL,
       criteria
 }
 
+# is_receptive -----------------------------------------------------------------
+#'@title Define conditions to issue Yellow alert.
+#'@description Yellow is raised when environmental and epidemiological conditions
+#' required for transmission are detected.  
+#'@export
+#'@param d dataset with data to feed the alert, containing the variables specified in crit.
+#'only one place at a time.
+#'@param crit criteria for receptivity. 
+#'Ex: "(inc_3 > 4 & temp_min_1 > 20) | (inc_3 > 0 & temp_min_2 > 30)". Valid variables 
+#'are: inc, temp_min, temp_max, umid_min, umid_max, with 0 to 3 time lags.
+#'@param values vector with the required variables
+#'@param miss how missing data is treated. "last" if last value is repeated. 
+#'It is currently the only option
+#'@return returns the data, and the receptivity (1 = receptive, 0 = not receptive).  
+#'@examples
+#' # Parameters of the alert model
+#' rule <- "(inc_3 > 4 & temp_min_1 > 20) | (inc_3 > 0 & temp_min_2 > 30)"
+#' dat <- data.frame(SE = 201001:201052, inc = rnorm(52, 50, 20), temp_min = rnorm(52, 20, 5),
+#' temp_max = rnorm(52, 25, 5), umid_min = rnorm(52, 60, 10), umid_max = rnorm(52, 80, 5))
+#' dat <- is_receptive(dat, rule)
+
+is_receptive <- function(d, crit = rule){
+      require("sjmisc")
+      require("imputeTS")
+      require("quantmod") #lag
+      
+      #checking input
+      vars <- c("inc_1", "inc_2", "inc_3", 
+               "temp_min_1", "temp_min_2", "temp_min_3",
+               "temp_max_1", "temp_max_2", "temp_max_3", 
+               "umid_min_1", "umid_min_2", "umid_min_3",
+               "umid_max_1", "umid_max_2", "umid_max_3")
+
+      assert_that(all(names(values) %in% vars), 
+                  msg = "is.receptive says that crit contains unknown variables")      
+      
+      assert_that(all(c("inc","temp_min","temp_max","umid_min","umid_max") %in% names(d)), 
+                  msg = "is.receptive says that d should contain:
+                  inc,temp_min,temp_max,umid_min,umid_max")      
+      # imputation
+      d$umid_max[d$umid_max > 100] <- 100
+      d$umid_min[d$umid_min > 100] <- 100
+      d$temp_max[d$temp_max > 40] <- 40
+      d$temp_min[d$temp_min > 40] <- 40
+      
+      ini.y.SE <- floor(min(d$SE)/100) 
+      ini.s.SE <- min(d$SE) - ini.y.SE * 100  
+      
+      d$temp_max <- ts(d$temp_max, frequency = 52, start = c(ini.y.SE, ini.s.SE))
+      d$temp_min <- ts(d$temp_min, frequency = 52, start = c(ini.y.SE, ini.s.SE))
+      d$umid_max <- ts(d$umid_max, frequency = 52, start = c(ini.y.SE, ini.s.SE))
+      d$umid_min <- ts(d$umid_min, frequency = 52, start = c(ini.y.SE, ini.s.SE))
+      
+      d <- d %>%  # interpolation
+            mutate(temp_max = na_seadec(temp_max),
+                   temp_min = na_seadec(temp_min),
+                   umid_max = na_seadec(umid_max),
+                   umid_min = na_seadec(umid_min)) 
+      # time lag
+      d <- d %>% 
+            mutate(temp_min = round(temp_min,1),
+             temp_max = round(temp_max,1),
+             umid_min = round(umid_min,1),
+             umid_max = round(umid_max,1),
+             inc = round(inc, 2),
+             inc_3 = Lag(inc, 3),
+             temp_min_1 = Lag(temp_min, 1),
+             temp_max_1 = Lag(temp_max, 1),
+             umid_min_1 = Lag(umid_min, 1),
+             umid_max_1 = Lag(umid_max, 1),
+             temp_min_2 = Lag(temp_min, 2),
+             temp_max_2 = Lag(temp_max, 2),
+             umid_min_2 = Lag(umid_min, 2),
+             umid_max_2 = Lag(umid_max, 2),
+             temp_min_3 = Lag(temp_min, 3),
+             temp_max_3 = Lag(temp_max, 3),
+             umid_min_3 = Lag(umid_min, 3),
+             umid_max_3 = Lag(umid_max, 3))
+      
+      # check if all required variables were created
+      assert_that(all(names(values) %in% names(d)), 
+                  msg = "is.receptive says that data do not contain required variables") 
+      
+      # compute receptivity
+      d$regra <- crit
+      d$receptivo <- NA
+      for(i in 1:nrow(d)) {
+            d$regra[i] = str_replace_all(d$regra[i], 
+                                                c("temp_min_1" = as.character(d$temp_min_1[i]),
+                                                   "temp_min_2" = as.character(d$temp_min_2[i]),
+                                                   "temp_min_3" = as.character(d$temp_min_3[i]),
+                                                   "umid_min_1" = as.character(d$umid_min_1[i]),
+                                                   "umid_min_2" = as.character(d$umid_min_2[i]),
+                                                   "umid_min_3" = as.character(d$umid_min_3[i]),
+                                                   "temp_max_1" = as.character(d$temp_max_1[i]),
+                                                   "temp_max_2" = as.character(d$temp_max_2[i]),
+                                                   "temp_max_3" = as.character(d$temp_max_3[i]),
+                                                   "umid_max_1" = as.character(d$umid_max_1[i]),
+                                                   "umid_max_2" = as.character(d$umid_max_2[i]),
+                                                   "umid_max_3" = as.character(d$umid_max_3[i]),
+                                                   "inc_3" = as.character(d$inc_3[i])))
+      d$receptivo[i] = as.numeric(eval(parse(text = d$regra[i])))
+      }
+      
+      # check output
+      assert_that(class(d$receptivo) == "numeric", msg = "check is.receptive. output not correct")
+      d
+}
+
+# weeks_w_transmission -----------------------------------------------------------------
+#'@title Counts the number of successive weeks with Rt > 1
+#'@description Indicator used for raising the orange alert  
+#'@export
+#'@param d dataset with data to feed the alert. It requires the previous 
+#'computation of Rt.
+#'@param alpha significance level for considering Rt > 1 (default = 0.1)
+#'@param maxw maximum value for the indicator (default = 20)
+#'@return returns the data, and the number of weeks with transmission.  
+#'@examples
+#' # Parameters of the alert model (requires connection)
+#' casos <- getCases(4209102, cid10 = "A90", type = "all", completetail = 0, dataini = "sinpri") 
+#' casos <- casos %>% Rt(count = "casos",gtdist="normal", meangt=3, sdgt = 1) 
+#' casos <- casos %>% weeks_w_transmission()
+#' plot(casos$weeks_transmission, type = "s", main = "weeks with transmission)
+#' # for the pipeline, we use maxw = 2
+#' casos <- casos %>% weeks_w_transmission(maxw = 2)
+#' plot(casos$weeks_transmission > 1, type = "h", main = "orange")
+
+weeks_w_transmission <- function(d, alpha = 0.1, maxw = 30){
+      
+      #checking input
+      assert_that(all(c("p1") %in% names(d)), 
+                  msg = "weeks_w_transmission says that d should contain:
+                  lwr. Check if Rt was computed")      
+      
+      # time lag matrix
+      m <- matrix(data = NA, nrow = nrow(d), ncol = maxw)
+      m[,1] <- d$p1
+      for(i in 2:maxw) m[,i] = lag(d$p1, i)
+      
+      # compute weeks with transmission
+      d$weeks_transmission <- rowSums(m > (1 - alpha))
+      
+      # check output
+      assert_that(class(d$weeks_transmission) == "numeric", 
+                  msg = "check is.receptive. output not correct")
+      d
+}
+
 
 #fouralert ---------------------------------------------------------------------
 #'@title Define conditions to issue a four level alert Green-Yellow-Orange-Red.
