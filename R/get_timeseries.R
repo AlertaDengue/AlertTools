@@ -10,17 +10,18 @@
 #'@param vars vector with meteorological variables. Available variables: "temp_min" (default), 
 #'"temp_max","temp_med","data_dia","umid_min","umid_med","umid_max","pressao_min","pressao_med","pressao_max"
 #'@param finalday last day. Default is the last available. Format = Y-m-d. 
+#'@param imput if TRUE, performs imputation using function.  
 #'@param datasource Use "data/WUdata.rda" to use test dataset. Use the connection to the Postgresql server if using project data. See also DenguedbConnect
 #' to open the database connection. 
 #'@return data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
 #'@examples
-#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-#'res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201201)
-#'res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"))
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../mydengue.sqlite")
+#'res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201701)
+#'res = getWU(stations = c('SBRJ','SBGL'), vars=c("temp_min", "temp_med"), imput = TRUE)
 #'tail(res)
 
 getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 201001,
-                  datasource=con) {
+                  datasource=con, imput = FALSE) {
       
       # validade climate variables
       wuvars <- c("temp_min","temp_max","temp_med","umid_min","umid_med","umid_max",
@@ -76,7 +77,6 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 20
           } 
       }
       
-      
       # agregando vars climaticas por semana (ignora NAs)
       d1 = d %>% 
             mutate(estacao = Estacao_wu_estacao_id) %>% 
@@ -90,6 +90,49 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 20
                         stringsAsFactors = FALSE) %>%
                 left_join(.,d1,by = c("estacao", "SE")) %>%
             arrange(estacao,SE)
+      
+      # imputation --------------------------
+      if(imput == TRUE){
+            require("imputeTS")
+            message("performing imputation...")
+            for(i in 1:length(vars)) print(tapply(st[, vars[i]], st$estacao, summary))
+            
+            # fixing wrong values
+            if("umid_max" %in% vars) st$umid_max[st$umid_max > 100] <- 100
+            if("umid_min" %in% vars) st$umid_min[st$umid_min > 100] <- 100
+            if("temp_min" %in% vars) st$temp_min[st$temp_min > 40] <- 40
+            if("temp_max" %in% vars) st$temp_max[st$temp_max > 50] <- 50
+            
+            # # imputation
+            iniY <- floor(iniSE/100)
+            iniS <- iniSE - iniY*100
+            # 
+            cli.est <- vector("list", length(stations))
+            names(cli.est) <- stations
+            # 
+            for(i in 1:length(cli.est)){
+                  met <- st %>% filter(estacao == stations[i]) %>% arrange(SE)
+                  for(j in 1:length(vars)){
+                        met[,vars[j]] <- ts(met[,vars[j]], frequency = 52, start = c(iniY, iniS))
+                        met[,vars[j]] <- na_seadec(met[,vars[j]])
+                  }
+
+                  #met$temp_min <- ts(met$temp_min, frequency = 52, start = c(iniY, iniS))
+                  #met$umid_max <- ts(met$umid_max, frequency = 52, start = c(iniY, iniS))
+                  #met$umid_min <- ts(met$umid_min, frequency = 52, start = c(iniY, iniS))
+                  
+                  #met <- met %>%  # interpolation
+                  #      mutate(temp_max = na_seadec(temp_max),
+                  #             temp_min = na_seadec(temp_min),
+                  #             umid_max = na_seadec(umid_max),
+                  #             umid_min = na_seadec(umid_min)) 
+                  #       
+                  cli.est[[stations[i]]] <- met
+            }
+            st <- cli.est %>% bind_rows()
+            message("after imputation")
+            for(i in 1:length(vars)) print(tapply(st[, vars[i]], st$estacao, summary))
+      }
     st
     
 }
@@ -149,7 +192,7 @@ bestWU <- function(series,var){
 #'@return data.frame with weekly counts of people tweeting on dengue.
 #'@examples
 #'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-#'tw <- getTweet(cities = c(3302205,3200300), lastday = "2014-03-01")
+#'tw <- getTweet(cities = c(3302205,3200300), lastday = "2021-03-01")
 #'tw <- getTweet(cities = 3304557, finalday = "2016-03-01")
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'tw <- getTweet(cities = cid$municipio_geocodigo) 
@@ -239,7 +282,7 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
 #'To recover the original function behavior, use the default type.
 #'@examples
 #'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-#'d <- getCases(cities = 4314902, dataini = "sinpri") # dengue
+#'d <- getCases(cities = 4314902, dataini = "sinpri", type = "all") # dengue
 #'d <- getCases(cities = 3300936, completetail = 0) # dengue
 #'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")

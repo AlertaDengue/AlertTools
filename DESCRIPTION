@@ -1,8 +1,8 @@
 Package: AlertTools
 Type: Package
 Title: utility functions for the Alerta Dengue System
-Version: 1.1.0
-Date: 2015-10-05
+Version: 2.0.0
+Date: 2022-10-05
 Authors@R: person("Claudia", "Codeco", email="claudia.codeco@gmail.com",
    role = c("aut", "cre"))
 Maintainer: Claudia Codeco <claudia.codeco@gmail.com>
@@ -15,12 +15,14 @@ Imports:
     foreign,
     RPostgreSQL,
     zoo,
-    maptools,
     knitr,
     survival,
     forecast,
     tidyverse,
-    assertthat
+    assertthat,
+    quantmod,
+    sjmisc,
+    imputeTS
 VignetteBuilder: knitr
 RoxygenNote: 7.1.2
 LazyData: true

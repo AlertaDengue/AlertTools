@@ -64,7 +64,8 @@ Rtoriginal<-function(obj, count = "casos", meangt, CI = "beta", alpha = .95, a0 
 #'ratio between two Poissons (see Luis Max documentation). 
 #'@title Computes the effective reproductive number using alternative 
 #'distributions for the generation interval.
-#'@param object a data.frame with variables "casos" and "SE", ideally from getCases().
+#'@param obj a data.frame with variables "casos" and "SE", ideally from getCases().
+#'@param group a variable in data.frame indicating a stratification (city, p.e.)
 #'@param meangt if gtdist = "delta" it is the exact period between primary and 
 #'secondary infections). If gtdist = "normal", it is the mean generation time.
 #'@param sdgt if gtdist = "normal", it is the standard deviation of the generation time 
@@ -73,56 +74,57 @@ Rtoriginal<-function(obj, count = "casos", meangt, CI = "beta", alpha = .95, a0 
 #'@export  
 #'@return data.frame with estimated Rt and confidence intervals. 
 #'@examples
-#'d <- getCases(cities = 3302205, lastday ="2018-03-10") # dengue
-#' # Rt original
-#'rt<-Rtoriginal(obj = d, count = "casos", meangt=3)
-#'plot(rt$Rt, type="l", xlab = "weeks", ylab = "Rt")
-#'lines(rt$lwr,lty=3); lines(rt$upr,lty=3)
-#'abline(h = 1, col = 2)
-#' # Rt delta and normal
-#'rtdelta<-Rt(obj = d, count = "casos", gtdist="delta", meangt=3)
-#'rtnorm<-Rt(obj = d, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
-#'lines(rtdelta$Rt, col = 3)
-#'lines(rtdelta$lwr,lty = 3, col = 3)
-#'lines(rtdelta$upr,lty = 3, col = 3)
-#'lines(rtnorm$Rt, col = 4)
-#'lines(rtnorm$lwr,lty = 3, col = 4)
-#'lines(rtnorm$upr,lty = 3, col = 4)
-#'legend(30,3,c("original","delta","normal"),lty=1, col = c(1,3,4), cex = 0.7)
+#'d <- getCases(cities = c(3302205, 3304557), lastday ="2018-03-10") # dengue
+#' Rt delta and normal
+#'rtdelta <- Rt(obj = d, count = "casos", gtdist="delta", meangt=3)
+#'rtnorm <- Rt(obj = d, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
+#'d <- d %>% Rt(count = "casos", gtdist="delta", group = "cidade", meangt=3)
 
-Rt<-function(obj, count = "casos", gtdist, meangt, sdgt, CI = "beta", alpha = .95, a0 = 2 , b0 = 3){
+Rt<-function(obj, count = "casos", group = "cidade", gtdist, meangt, sdgt, CI = "beta", 
+             alpha = .95, a0 = 2 , b0 = 3){
   
+  assert_that(any(c(count,"SE") %in% names(obj)), msg =  "obj must be a data.frame with variables 
+                                              SE, var at least. Consider using getCases")
+  assert_that(group %in% names(obj), msg = "Rt says that the group argument is wrong.")      
   
-  if(!any(c(count,"SE") %in% names(obj))) stop("obj must be a data.frame with variables 
-                                              SE and var, at least. Consider using getCases")
-  y <- obj[,count]
-  le <- length(y)
-  if (le < 2*meangt) warning("you need a time series                           
+  groups <- unique(obj[[group]])
+  ngroups <- length(groups)
+  
+  res <- list()
+  for(i in 1:ngroups){
+        d <- obj[obj[[group]] == groups[i], ]
+        
+        y <- d[[count]]  
+        le <- length(y)
+        assert_that(le > 2*meangt, msg = "you need a time series                           
                              with size at least 2 generation intervals to estimate Rt")
-  
-  if (gtdist == "normal") ga <- rev(dnorm(x = 1:le, mean = meangt, sd = sdgt))
-  if (gtdist == "delta")  {
-    ga <- rep(0, le)
-    ga[le - meangt] <- 1
-  }
-  
-  obj$Rt <- NA
-  obj$lwr <- NA
-  obj$upr <- NA
-  obj$p1 <- NA
-  
-    for (t in ceiling(2*meangt):le){
-    num = y[t]
-    deno = sum(y[1:t] * ga[(le-t+1):le]) # equation 4.1 in Wallinga and Lipsitch 2007
-    obj$Rt[t]<-num/deno
-    if (CI == "beta"){
-       obj$p1[t] <- 1 - pbeta(.5, shape1 = num, shape2 = deno)
-       obj[t, c("lwr","upr")] <- ll(betaconf(alpha = alpha, x = num, 
-                               n = num + deno, a = a0, b = b0 ))
-    }
-  }
-  
-  obj
+        
+        if (gtdist == "normal") ga <- rev(dnorm(x = 1:le, mean = meangt, sd = sdgt))
+        if (gtdist == "delta")  {
+              ga <- rep(0, le)
+              ga[le - meangt] <- 1
+        }
+        d$Rt <- NA; d$lwr <- NA
+        d$upr <- NA; d$p1 <- NA
+        
+       d <- d %>% arrange(SE)
+        
+        for (t in ceiling(2*meangt):le){
+              num = y[t]
+              deno = sum(y[1:t] * ga[(le-t+1):le]) # equation 4.1 in Wallinga and Lipsitch 2007
+              d$Rt[t]<-num/deno
+              if (CI == "beta"){
+                    d$p1[t] <- 1 - pbeta(.5, shape1 = num, shape2 = deno)
+                    d[t, c("lwr","upr")] <- ll(betaconf(alpha = alpha, x = num, 
+                                                          n = num + deno, a = a0, b = b0 ))
+              }
+        }
+         res[[i]] <- d
+         rm(d)
+        }
+        obj <- res %>% bind_rows()
+        print(tapply(obj$Rt, obj[,group], summary))
+    obj
 }
 
 

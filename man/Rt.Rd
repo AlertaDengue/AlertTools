@@ -8,6 +8,7 @@ distributions for the generation interval.}
 Rt(
   obj,
   count = "casos",
+  group = "cidade",
   gtdist,
   meangt,
   sdgt,
@@ -18,6 +19,10 @@ Rt(
 )
 }
 \arguments{
+\item{obj}{a data.frame with variables "casos" and "SE", ideally from getCases().}
+
+\item{group}{a variable in data.frame indicating a stratification (city, p.e.)}
+
 \item{meangt}{if gtdist = "delta" it is the exact period between primary and 
 secondary infections). If gtdist = "normal", it is the mean generation time.}
 
@@ -25,8 +30,6 @@ secondary infections). If gtdist = "normal", it is the mean generation time.}
 distribution.}
 
 \item{CI}{Model used to compute the confidence interval. Possible choice: "beta".}
-
-\item{object}{a data.frame with variables "casos" and "SE", ideally from getCases().}
 }
 \value{
 data.frame with estimated Rt and confidence intervals.
@@ -37,20 +40,9 @@ of cases. Uses formula 4.2 in Wallinga and Lispitch (2007). Confidence interval 
 ratio between two Poissons (see Luis Max documentation).
 }
 \examples{
-d <- getCases(cities = 3302205, lastday ="2018-03-10") # dengue
-# Rt original
-rt<-Rtoriginal(obj = d, count = "casos", meangt=3)
-plot(rt$Rt, type="l", xlab = "weeks", ylab = "Rt")
-lines(rt$lwr,lty=3); lines(rt$upr,lty=3)
-abline(h = 1, col = 2)
-# Rt delta and normal
-rtdelta<-Rt(obj = d, count = "casos", gtdist="delta", meangt=3)
-rtnorm<-Rt(obj = d, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
-lines(rtdelta$Rt, col = 3)
-lines(rtdelta$lwr,lty = 3, col = 3)
-lines(rtdelta$upr,lty = 3, col = 3)
-lines(rtnorm$Rt, col = 4)
-lines(rtnorm$lwr,lty = 3, col = 4)
-lines(rtnorm$upr,lty = 3, col = 4)
-legend(30,3,c("original","delta","normal"),lty=1, col = c(1,3,4), cex = 0.7)
+d <- getCases(cities = c(3302205, 3304557), lastday ="2018-03-10") # dengue
+Rt delta and normal
+rtdelta <- Rt(obj = d, count = "casos", gtdist="delta", meangt=3)
+rtnorm <- Rt(obj = d, count = "casos", gtdist="normal", meangt=3, sdgt = 1)
+d <- d \%>\% Rt(count = "casos", gtdist="delta", group = "cidade", meangt=3)
 }

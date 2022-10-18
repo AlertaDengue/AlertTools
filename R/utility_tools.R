@@ -905,6 +905,56 @@ setWUstation <- function(st, UF, datasource = con){
 }
 
 
+# lag_variables ------------------------------------
+#'@description  Compute time lagged variables for the receptive function
+#'@title compute time lagged variables 
+#'@export
+#'@param d dataset with the variables to be lagged 
+#'@param vars variables to be lagged
+#'@param group column containing the geocode or other geographical identifier. For now,
+#'only works with "cidade". 
+#'@param lags lags. default: 1:3   
+#'@return 
+#'@examples
+#'summary(dd) # dd is a dataset with all variables used by Infodengue
+#'ddl <- lag_variables(dd)
+
+lag_variables <- function(d, group = "cidade", 
+                          vars = c("temp_min","temp_max","umid_min","umid_max","inc"),
+                          lags = 1:3) {
+      require(quantmod)
+      
+      assert_that(all(vars %in% names(d)), 
+                  msg = "lag_variables: variables missing in the dataset")
+      
+      assert_that((group %in% names(d)), 
+                  msg = "lag_variables: var_geo must be named cidade")
+      
+      nlags <- length(lags)
+      nvars <- length(vars)
+      colgeo <- which(names(d) == group)
+      n <- nlags * nvars
+      
+      d <- d %>%
+            group_by(cidade) %>%
+            mutate(temp_min_1 = Lag(temp_min, 1),
+                   temp_max_1 = Lag(temp_max, 1),
+                   umid_min_1 = Lag(umid_min, 1),
+                   umid_max_1 = Lag(umid_max, 1),
+                   temp_min_2 = Lag(temp_min, 2),
+                   temp_max_2 = Lag(temp_max, 2),
+                   umid_min_2 = Lag(umid_min, 2),
+                   umid_max_2 = Lag(umid_max, 2),
+                   temp_min_3 = Lag(temp_min, 3),
+                   temp_max_3 = Lag(temp_max, 3),
+                   umid_min_3 = Lag(umid_min, 3),
+                   umid_max_3 = Lag(umid_max, 3),
+                   inc_3 = Lag(inc, 3))
+      d
+}
+
+
+
 # insert_city_infodengue ------------------------------------
 #'@description  Initial setup of a new city in the alerta system.  Can be integrated later with 
 #'the delay model and write.parameters. DEPRECATED

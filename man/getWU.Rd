@@ -9,7 +9,8 @@ getWU(
   vars = "temp_min",
   finalday = Sys.Date(),
   iniSE = 201001,
-  datasource = con
+  datasource = con,
+  imput = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ getWU(
 
 \item{datasource}{Use "data/WUdata.rda" to use test dataset. Use the connection to the Postgresql server if using project data. See also DenguedbConnect
 to open the database connection.}
+
+\item{imput}{if TRUE, performs imputation using function.}
 }
 \value{
 data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
@@ -30,8 +33,8 @@ data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin ume
 Create weekly time series from meteorological station data in server taking the mean of the daily values.
 }
 \examples{
-NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201201)
-res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"))
+NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../mydengue.sqlite")
+res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201701)
+res = getWU(stations = c('SBRJ','SBGL'), vars=c("temp_min", "temp_med"), imput = TRUE)
 tail(res)
 }
