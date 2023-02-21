@@ -38,6 +38,7 @@ epiYear <- function(se, cut = 41){
 #'@return numeric vector with the epidemiological weeks. Ex: 202105
 #'@examples
 #'data2SE("01-02-2020",format="%d-%m-%Y")
+#'data2SE("2018-02-20",format="%Y-%m-%d")
 #'data2SE(c("03-04-2013","07-01-2019"),format="%d-%m-%Y")
 
 data2SE <- function(days, format = "%d/%m/%Y"){

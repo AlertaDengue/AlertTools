@@ -17,7 +17,7 @@ pipe_infodengue_22(
   recept_rules,
   orange_rule = 3,
   completetail = NA,
-  dataini = "notific"
+  dataini = "sinpri"
 )
 }
 \arguments{
@@ -25,7 +25,8 @@ pipe_infodengue_22(
 
 \item{datarelatorio}{epidemiological week}
 
-\item{finalday}{if provided, uses only disease data reported up to that day}
+\item{finalday}{if provided, uses only disease data reported up to that day. 
+class must be Date.}
 
 \item{iniSE}{first date of the disease data. Default = 201501. Minimum = 201001.}
 
@@ -40,7 +41,8 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 
 \item{orange_rule}{number of weeks with Rt > 1 above which orange is raised}
 
-\item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
+\item{completetail}{if sinan data is older than final_day, fill in the tail 
+with NA (default) or 0.}
 
 \item{dataini}{"notif" (default) or "sinpri"}
 
@@ -58,7 +60,7 @@ wrap of functions used by Infodengue.
 }
 \examples{
 d <- pipe_infodengue_22(state = "Acre", cid10 = "A90", iniSE = 201801,
-finalday= "2021-08-12",nowcasting="bayesian", completetail = 0, dataini = "sinpri",
-recept_rules = AlertTools::regras)
+finalday= as.Date("2021-08-12"),nowcasting="none", completetail = 0, 
+dataini = "sinpri", recept_rules = AlertTools::regras)
 restab <- tabela_historico(d)
 }

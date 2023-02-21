@@ -11,16 +11,19 @@
 #'"temp_max","temp_med","data_dia","umid_min","umid_med","umid_max","pressao_min","pressao_med","pressao_max"
 #'@param finalday last day. Default is the last available. Format = Y-m-d. 
 #'@param imput if TRUE, performs imputation using function.  
-#'@param datasource Use "data/WUdata.rda" to use test dataset. Use the connection to the Postgresql server if using project data. See also DenguedbConnect
+#'@param datasource Use "data/WUdata.rda" to use test dataset. Use the connection
+#' to the Postgresql server if using project data. See also DenguedbConnect
 #' to open the database connection. 
-#'@return data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
+#'@return data.frame with the weekly data (cidade estacao data temp_min tmed tmax
+#' umin umed umax pressaomin pressaomed pressaomax)
 #'@examples
 #'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../mydengue.sqlite")
-#'res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201701)
+#'res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201701, 
+#'finalday = "2020-01-01")
 #'res = getWU(stations = c('SBRJ','SBGL'), vars=c("temp_min", "temp_med"), imput = TRUE)
 #'tail(res)
 
-getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 201001,
+getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 201501,
                   datasource=con, imput = FALSE) {
       
       # validade climate variables
@@ -31,7 +34,10 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 20
       # check if all stations exist
       sqlstations = paste("'", str_c(stations, collapse = "','"),"'", sep="")
       
+      # initial date
+      iniday <- SE2date(iniSE)$ini
       
+      # sql 
       if(class(datasource) == "PostgreSQLConnection"){
         checkStationComm <- paste("SELECT estacao_id, nome FROM 
                                 \"Municipio\".\"Estacao_wu\" WHERE  estacao_id 
@@ -48,7 +54,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 20
         
         comando <- paste("SELECT * from \"Municipio\".\"Clima_wu\" WHERE 
                         \"Estacao_wu_estacao_id\" IN  (", sqlstations, ") AND 
-                         data_dia <= '",finalday,"'",sep="")
+                         data_dia <= '",finalday,"' AND data_dia >=", iniday, "'",sep="")
         
         d <- dbGetQuery(datasource,comando) 
       }
@@ -83,7 +89,7 @@ getWU <- function(stations, vars = "temp_min", finalday = Sys.Date(), iniSE = 20
             mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) %>% # creating column SE
             group_by(estacao,SE)  %>%
             summarise_at(vars(vars),list(mean),na.rm=TRUE) 
-      
+      return(d1)
       # criar serie temporal-----------------------------------------
         st <-  expand.grid(estacao = stations, 
                         SE = seqSE(from = iniSE, to = max(d1$SE))$SE,
@@ -182,7 +188,7 @@ bestWU <- function(series,var){
 
 # getWeather --------------------------------------------------------
 #'@description Create weekly time series from satellite data in 
-#'server taking the mean of the daily values.
+#'server taking the mean of the daily values. UNDER CONSTRUCTION
 #'@title Get climate data from Copernicus 
 #'@export
 #'@param cities geocode vector (with seven digits)
@@ -202,7 +208,7 @@ bestWU <- function(series,var){
 
 getWeather <- function(cities, finalday = Sys.Date(), 
                        iniSE = 201001, datasource=con) {
-      
+      stop("this function is under construction")
       # climate variables in the database
       wvars <- c("temp_min","temp_max","temp_med","umid_min","umid_med",
                        "umid_max", "pressao_min","pressao_med","pressao_max",

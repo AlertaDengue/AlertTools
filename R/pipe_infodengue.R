@@ -11,11 +11,13 @@
 #'@param cid10 default is A90 (dengue). Chik = A92.0, Zika = A92.8
 #'@param narule how to treat missing climate data. Do nothing (default), "zero" fills 
 #'with zeros, "linear" for linear interpolation, "arima" for inter and extrapolation.
-#'@param finalday if provided, uses only disease data reported up to that day
+#'@param finalday if provided, uses only disease data reported up to that day. 
+#'class must be Date.
 #'@param iniSE first date of the disease data. Default = 201501. Minimum = 201001. 
 #'@param datarelatorio epidemiological week
 #'@param nowcasting   "bayesian" for the dynamic model; "none" for not doing nowcast (default) 
-#'@param completetail if sinan data is older than final_day, fill in the tail with NA (default) or 0.  
+#'@param completetail if sinan data is older than final_day, fill in the tail 
+#'with NA (default) or 0.  
 #'@param dataini "notif" (default) or "sinpri" 
 #'@param yellow_rule decision rule for yellow alert (climate receptivity) 
 #'@param orange_rule number of weeks with Rt > 1 above which orange is raised
@@ -25,14 +27,15 @@
 #'last lag weeks with conditions = TRUE.
 #'@examples
 #'d <- pipe_infodengue_22(state = "Acre", cid10 = "A90", iniSE = 201801,
-#'finalday= "2021-08-12",nowcasting="bayesian", completetail = 0, dataini = "sinpri",
-#'recept_rules = AlertTools::regras)
+#'finalday= as.Date("2021-08-12"),nowcasting="none", completetail = 0, 
+#'dataini = "sinpri")
 #'restab <- tabela_historico(d)
 
 pipe_infodengue_22 <- function(state, cid10="A90", datarelatorio, finalday = Sys.Date(), 
                                iniSE = 201001, nowcasting="none", narule=NULL,
-                               writedb = FALSE, datasource = con, recept_rules, orange_rule = 3, 
-                               completetail = NA, dataini = "notific"){
+                               writedb = FALSE, datasource = con, recept_rules, 
+                               orange_rule = 3, completetail = NA, 
+                               dataini = "sinpri"){
       
       # check inputs
       if(missing(datarelatorio)) {
@@ -40,6 +43,9 @@ pipe_infodengue_22 <- function(state, cid10="A90", datarelatorio, finalday = Sys
       } else { # if datarelatorio & finalday are given, priority is datarelatorio
             finalday <- SE2date(datarelatorio)$ini+6
       }
+      
+      assert_that(is.Date(finalday), msg = "finalday must be a valid date")
+      
       if(missing(recept_rules)){
             print("receptivity rules not provided, using standard:")
             recept_rules <- "temp_min_1 > 22 & umid_min_1 > 60 & inc_3 > 0"
@@ -122,10 +128,10 @@ pipe_infodengue_22 <- function(state, cid10="A90", datarelatorio, finalday = Sys
       
       out <- lapply(mun$municipio_geocodigo, calc.nowcast)
       d <- out %>% bind_rows()
-      assert_that(nrow(d) > 0, msg = "check organize data. returning null or empty")
+      assert_that(nrow(d) > 0, msg = "check harmonized data. returning null or empty")
       rm(out)
       
-      # calculating nowcasted incidence
+      # calculating incidence
       d <- d %>% 
             mutate(inc = tcasesmed/pop * 100000, # this is the one used in the receptivity model
                    inc_min = tcasesICmin/pop * 100000,
@@ -172,8 +178,8 @@ pipe_infodengue_22 <- function(state, cid10="A90", datarelatorio, finalday = Sys
       # Threshold crossing  
       #message("computing thresholds...")
       d <- d %>%
-            weeks_above_threshold(var = "inc", varname = "weeks_epidemic", maxw = 12,
-                                  threshold = pars_table[, c("municipio_geocodigo","limiar_epidemico")]) %>%
+            weeks_above_threshold(var = "inc", varname = "weeks_epidemic", 
+                                  maxw = 12, threshold = pars_table[, c("municipio_geocodigo","limiar_epidemico")]) %>%
             weeks_above_threshold(var = "inc", varname = "w_above_preseason", maxw = 12,
                                   threshold = pars_table[, c("municipio_geocodigo","limiar_preseason")]) %>%
             weeks_above_threshold(var = "inc", varname = "w_above_posseason", maxw = 12,

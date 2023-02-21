@@ -7,19 +7,19 @@
 data2SE(days, format = "\%d/\%m/\%Y")
 }
 \arguments{
-\item{days}{string vector with dates to be converted}
+\item{days}{string vector with dates to be converted, format: "%d-%m-%Y"}
 
 \item{format}{date format}
 }
 \value{
-numeric vector with the epidemiological weeks.
+numeric vector with the epidemiological weeks. Ex: 202105
 }
 \description{
-Find to which epidemiological week belongs a given day. Uses episem function 
-(formula generated data).
+Find to which epidemiological week belongs a given day.
+Uses lubridate funtions
 }
 \examples{
 data2SE("01-02-2020",format="\%d-\%m-\%Y")
-data2SE("12-02-2008",format="\%d-\%m-\%Y")
+data2SE("2018-02-20",format="\%Y-\%m-\%d")
 data2SE(c("03-04-2013","07-01-2019"),format="\%d-\%m-\%Y")
 }

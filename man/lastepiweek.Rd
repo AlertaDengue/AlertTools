@@ -10,7 +10,8 @@ lastepiweek(ano)
 \item{ano}{Year}
 }
 \description{
-Calculate number of year's last epidemiological week using Brazilian standard.
+Calculate number of year's last epidemiological week using
+ Brazilian standard.
 }
 \examples{
 lastepiweek(2018)
