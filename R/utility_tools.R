@@ -29,25 +29,29 @@ epiYear <- function(se, cut = 41){
 
 
 # data2SE ---------------------------------------------------------------------
-#'@description Find to which epidemiological week belongs a given day. Uses episem function 
-#'(formula generated data).
+#'@description Find to which epidemiological week belongs a given day.
+#' Uses lubridate funtions
 #'@title Define Epidemiological Week.
 #'@export
-#'@param days string vector with dates to be converted
+#'@param days string vector with dates to be converted, format: "%d-%m-%Y"
 #'@param format date format
-#'@return numeric vector with the epidemiological weeks. 
+#'@return numeric vector with the epidemiological weeks. Ex: 202105
 #'@examples
 #'data2SE("01-02-2020",format="%d-%m-%Y")
-#'data2SE("12-02-2008",format="%d-%m-%Y")
 #'data2SE(c("03-04-2013","07-01-2019"),format="%d-%m-%Y")
 
 data2SE <- function(days, format = "%d/%m/%Y"){
-  sem <- rep(NA,length(days))      
-  days<-as.Date(as.character(days),format=format)
-  for (i in 1:length(days)) {
-    sem[i]<-episem(days[i])      
-  }
-  sem
+      require(lubridate)
+      days<-as.Date(as.character(days),format=format)
+      
+      assert_that(noNA(days), msg = "data2SE error: check date format")
+      ano <- lubridate::year(days)
+      sem <- lubridate::epiweek(days)
+      SE <- ano*100 + sem
+      
+      assert_that(all(SE > 100000), msg = "check data2SE function, 
+                  output should be like 201501")
+      SE  
 }
 
 # episem ---------------------------------------------------------------------
@@ -128,7 +132,8 @@ episem <- function(x, format="%Y-%m-%d", separa='', retorna='YW') {
 
 
 #' lastepiweek -----------------------------------
-#' @description Calculate number of year's last epidemiological week using Brazilian standard.
+#' @description Calculate number of year's last epidemiological week using
+#'  Brazilian standard.
 #' @name lastepiweek
 #' @author Marcelo F Gomes
 #' @param ano Year
@@ -160,7 +165,8 @@ lastepiweek <- function(ano){
 #'SE2date(se = c(202001:202209))
 
 SE2date <- function(se){
-      if(!class(se[1]) %in% c("numeric","integer")) stop("se should be numeric or integer")
+      if(!class(se[1]) %in% c("numeric","integer")) 
+            stop("se should be numeric or integer")
 
       #load("R/sysdata.rda")
       #SE$sem <- SE$Ano*100 + SE$SE
@@ -206,12 +212,14 @@ daySEday <- function(x, format = "%Y-%m-%d"){
 
 
 # seqSE ---------------------------------------------------------------------
-#'@description Creates a sequence of epidemiological weeks and respective initial and final days
+#'@description Creates a sequence of epidemiological weeks and respective initial
+#' and final days
 #'@title Sequence of epidemiological weeks.
 #'@export
 #'@param from first week in format 201401
 #'@param to first week in format 201401
-#'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works from 2010 to 2020.
+#'@return data.frame with the epidemiological weeks and corresponding extreme days.
+#' WARNING: only works from 2010 to 2023.
 #'@examples
 #'seqSE(202042, 202210)
 
@@ -381,29 +389,6 @@ lastDBdate <- function(tab, cities, cid10 = "A90", stations, datasource = con){
       return(c(data = ult_day, se = ult_se))
 }
 
-
-
-# DenguedbConnect ---------------------------------------------------------------------
-#'@description  Opens a connection to the Project database. 
-#'@title Returns the connection to the database.
-#'@export 
-#'@param pass password
-#'@return "PostgreSQLConnection" object   
-#'@examples
-#'con <- DenguedbConnect(pass)
-#'dbListTables(con) 
-#'dbDisconnect(con)
-
-DenguedbConnect <- function(pass){
-      dbname <- "dengue"
-      user <- "dengueadmin"
-      password <- pass
-      host <- "localhost"
-      
-      dbConnect(dbDriver("PostgreSQL"), user=user,
-                       password=password, dbname=dbname)
-      
-}
 
 
 # sevendigitgeocode ---------------------------------------------------------------------
@@ -951,6 +936,23 @@ lag_variables <- function(d, group = "cidade",
                    umid_max_3 = Lag(umid_max, 3),
                    inc_3 = Lag(inc, 3))
       d
+}
+
+
+# abs_humidity -------------------
+#'@description  calculates absolute humidity (g/m3) from temperature and
+#' relative humidity.
+#'Uses the formula from Peci et al. Appl Environ Microbiol (2019)
+#'@title Asolute humidity calculator 
+#'@export
+#'@param t temperature 
+#'@param rh relative humidity
+#'@return  
+#'@examples
+#'abs_humidity(t = 2, rh = 90)
+
+abs_humidity <- function(t, rh){
+      (6.112 * exp((17.67*t)/(t+243.5)) * rh * 2.1674) / (273.15 + t)
 }
 
 

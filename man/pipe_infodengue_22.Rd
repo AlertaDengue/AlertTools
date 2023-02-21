@@ -29,8 +29,7 @@ pipe_infodengue_22(
 
 \item{iniSE}{first date of the disease data. Default = 201501. Minimum = 201001.}
 
-\item{nowcasting}{"fixedprob" for static model, "bayesian" for the dynamic model.
-"none" for not doing nowcast (default)}
+\item{nowcasting}{"bayesian" for the dynamic model; "none" for not doing nowcast (default)}
 
 \item{narule}{how to treat missing climate data. Do nothing (default), "zero" fills 
 with zeros, "linear" for linear interpolation, "arima" for inter and extrapolation.}
@@ -39,9 +38,7 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 
 \item{datasource}{posgreSQL connection to project's database}
 
-\item{recept_rules}{}
-
-\item{orange_rule}{number of weeks with transmission above which orange is raised}
+\item{orange_rule}{number of weeks with Rt > 1 above which orange is raised}
 
 \item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
 
@@ -49,6 +46,8 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 
 \item{cities}{In general, a vector of 7-digit geocodes. If it is a data.frame containing geocodes
 and all parameters, these will replace the database's parameters.}
+
+\item{yellow_rule}{decision rule for yellow alert (climate receptivity)}
 }
 \value{
 data.frame with the week condition and the number of weeks within the 
@@ -59,7 +58,7 @@ wrap of functions used by Infodengue.
 }
 \examples{
 d <- pipe_infodengue_22(state = "Acre", cid10 = "A90", iniSE = 201801,
-finalday= "2021-08-12",nowcasting="none", completetail = 0, dataini = "sinpri",
+finalday= "2021-08-12",nowcasting="bayesian", completetail = 0, dataini = "sinpri",
 recept_rules = AlertTools::regras)
 restab <- tabela_historico(d)
 }

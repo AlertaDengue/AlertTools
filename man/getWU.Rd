@@ -12,6 +12,15 @@ getWU(
   datasource = con,
   imput = FALSE
 )
+
+getWU(
+  stations,
+  vars = "temp_min",
+  finalday = Sys.Date(),
+  iniSE = 201001,
+  datasource = con,
+  imput = FALSE
+)
 }
 \arguments{
 \item{stations}{station code (4 digits).}
@@ -28,11 +37,20 @@ to open the database connection.}
 }
 \value{
 data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
+
+data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
 }
 \description{
 Create weekly time series from meteorological station data in server taking the mean of the daily values.
+
+Create weekly time series from satellite data in 
+server taking the mean of the daily values.
 }
 \examples{
+NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../mydengue.sqlite")
+res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201701)
+res = getWU(stations = c('SBRJ','SBGL'), vars=c("temp_min", "temp_med"), imput = TRUE)
+tail(res)
 NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../mydengue.sqlite")
 res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201701)
 res = getWU(stations = c('SBRJ','SBGL'), vars=c("temp_min", "temp_med"), imput = TRUE)

@@ -180,6 +180,78 @@ bestWU <- function(series,var){
             }
 }
 
+# getWeather --------------------------------------------------------
+#'@description Create weekly time series from satellite data in 
+#'server taking the mean of the daily values.
+#'@title Get climate data from Copernicus 
+#'@export
+#'@param cities geocode vector (with seven digits)
+#'@param vars vector with meteorological variables. Available variables: 
+#'"temp_min", "temp_max","temp_med","umid_min","umid_med","umid_max","abs_min",
+#'"abs_med","abs_max", "precip_max"
+#'@param finalday last day. Default is the last available. Format = Y-m-d. 
+#'@param datasource Use the connection to the Postgresql server if using project 
+#'data. See also DenguedbConnect to open the database connection. # IP port 25432 Info.dengue.mat.br
+#'@return data.frame with the weekly data (cidade estacao data temp_min tmed tmax 
+#'umin umed umax pressaomin pressaomed pressaomax)
+#'@examples
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../mydengue.sqlite")
+#'h <- SE2date(201801)$ini    
+#'res = getWeather(cities = c(4126603,4119301), iniSE = 201701, finalday = h)
+#'tail(res)
+
+getWeather <- function(cities, finalday = Sys.Date(), 
+                       iniSE = 201001, datasource=con) {
+      
+      # climate variables in the database
+      wvars <- c("temp_min","temp_max","temp_med","umid_min","umid_med",
+                       "umid_max", "pressao_min","pressao_med","pressao_max",
+                       "precip_min", "precip_med", "precip_max")
+      
+      iniday <- SE2date(iniSE)$ini 
+     # mudar ----
+      if(class(datasource) == "PostgreSQLConnection"){
+        
+      # Geting the data from the available stations
+      sqlcities = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+            
+      comando <- paste("SELECT * from \"Municipio\".\"copernicus\" WHERE 
+                        geocodigo IN  (", sqlcities, ") AND 
+                         time <= '",finalday,"' AND time >=", iniday,"'",sep="")
+            
+            d <- dbGetQuery(datasource,comando) 
+      }
+      
+      # compute absolute humidity (daily)
+      d <- d %>%
+            mutate(ahum_min = abs_humidity(temp_min, umid_min),
+                   ahum_med = abs_humidity(temp_med, umid_med),
+                   ahum_max = abs_humidity(temp_max, umid_max))
+      
+      # ----
+      # agregando vars climaticas por semana 
+      d$SE <- data2SE(d$time, format = "%Y-%m-%d") # creating column SE
+      
+      d <- d  %>% 
+            group_by(geocodigo,SE)  %>%
+            summarise_at(vars(vars),list(mean),na.rm=TRUE) 
+      
+      # criar serie temporal-----------------------------------------
+      if(iniSE < min(d$SE)){
+            warning("dataset does not include iniSE, using min(SE)")
+            iniSE <- min(d$SE)
+      } 
+      
+      st <-  expand.grid(geocodigo = cities, 
+                         SE = seqSE(from = iniSE, to = max(d$SE))$SE,
+                         stringsAsFactors = FALSE) %>%
+            left_join(.,d,by = c("geocodigo", "SE")) %>%
+            arrange(geocodigo,SE)
+      
+      st
+}
+
+
 # getTweet --------------------------------------------------------------
 #'@description Create weekly time series from tweeter data from server. The 
 #'source of this data is the Observatorio da Dengue (UFMG).

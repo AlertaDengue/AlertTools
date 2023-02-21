@@ -14,12 +14,11 @@
 #'@param finalday if provided, uses only disease data reported up to that day
 #'@param iniSE first date of the disease data. Default = 201501. Minimum = 201001. 
 #'@param datarelatorio epidemiological week
-#'@param nowcasting  "fixedprob" for static model, "bayesian" for the dynamic model.
-#'"none" for not doing nowcast (default) 
+#'@param nowcasting   "bayesian" for the dynamic model; "none" for not doing nowcast (default) 
 #'@param completetail if sinan data is older than final_day, fill in the tail with NA (default) or 0.  
 #'@param dataini "notif" (default) or "sinpri" 
-#'@param recept_rules 
-#'@param orange_rule number of weeks with transmission above which orange is raised
+#'@param yellow_rule decision rule for yellow alert (climate receptivity) 
+#'@param orange_rule number of weeks with Rt > 1 above which orange is raised
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param datasource posgreSQL connection to project's database
 #'@return data.frame with the week condition and the number of weeks within the 
