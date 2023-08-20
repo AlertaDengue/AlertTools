@@ -5,10 +5,18 @@ setwd("../..")
 ####================================================
 
 # data2SE
-out1 <- data2SE(c("03-04-2013","07-01-2019"),format="%d-%m-%Y")
+out1 <- data2SE(c("03-04-2013","07-01-2019","01-03-1998"),format="%d-%m-%Y")
 
 test_that("dataSE output should be numeric", {
       expect_true(class(out1) == "numeric")
+})
+
+test_that("dataSE output should have 6 digits", {
+      expect_true(nchar(as.numeric(out1[1])) == 6)
+})
+
+test_that("dataSE for 01-03-1998 should be 199753", {
+      expect_true(data2SE("03-01-1998",format="%d-%m-%Y") == 199753)
 })
 
 # SE2date

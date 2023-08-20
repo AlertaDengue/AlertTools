@@ -7,6 +7,7 @@
 getCases(
   cities,
   lastday = Sys.Date(),
+  firstday = as.Date("2010-01-01"),
   cid10 = "A90",
   dataini = "notific",
   completetail = NA,
@@ -18,6 +19,8 @@ getCases(
 \item{cities}{cities' geocode.}
 
 \item{lastday}{last day. Default is the last available. Format: "yyyy-mm-dd"}
+
+\item{firstday}{is the first date of the time series to be produced.  Format: "yyyy-mm-dd"}
 
 \item{cid10}{cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8",}
 

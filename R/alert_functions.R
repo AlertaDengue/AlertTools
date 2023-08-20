@@ -223,15 +223,15 @@ fouralert <- function(obj, crit, miss="last",dy=4){
       
       # from orange-red to yellow:
       # if rt was orange or red at least once in the past dy weeks -> level yellow
-      contains_34 <- which(zoo::rollapply(indices$level,list(c(-dy:0)),
-                                          function(x) any(x>=3), fill=NA))
+      #contains_34 <- which(zoo::rollapply(indices$level,list(c(-dy:0)),
+      #                                    function(x) any(x>=3), fill=NA))
       
       # to visualize how it works, descomment the following lines
       #indices$dy <- NA
       #indices$dy[contains_34]<-pmax(indices$level[contains_34], rep(2, length(contains_34)))
       
-      indices$level[contains_34]<-pmax(indices$level[contains_34], 
-                                       rep(2, length(contains_34)))
+      #indices$level[contains_34]<-pmax(indices$level[contains_34], 
+      #                                 rep(2, length(contains_34)))
       
       ale <- list(data=obj, indices=indices, crit = crit, n=4)
       class(ale)<-"alerta" 
@@ -263,6 +263,9 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[13:15] , cid10 = "A90",
 #'nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 #'tail(tabela_historico(res))
+#'res <- pipe_infodengue(cities = 3304557 , cid10 = "A90",
+                       #'nowcasting="none", dataini= "sinpri", completetail = 0,
+                       #' datarelatorio = 202320)
 #'# User's parameters (not working)
 #'dd <- read.parameters(cities = c(3200300)) %>% mutate(limiar_epidemico = 100)
 #'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
@@ -941,7 +944,8 @@ tabela_historico <- function(obj, iniSE, lastSE, type = "notified", versao = Sys
                   transmissao = cotrue)   # weeks with sustained transm
       
       d1 <- d %>%
-            left_join(pars[2:5]) %>%
+            left_join(pars[c("municipio_geocodigo", "limiar_preseason", 
+                             "limiar_epidemico")]) %>%
             mutate(  # compating estimated incidence with thresholds
                   nivel_inc = case_when(
                         p_inc100k < limiar_preseason ~ 0,

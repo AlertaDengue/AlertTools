@@ -57,6 +57,9 @@ cidades <- getCidades(uf = "Amapá",datasource = con)
 res <- pipe_infodengue(cities = cidades$municipio_geocodigo[13:15] , cid10 = "A90",
 nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 tail(tabela_historico(res))
+res <- pipe_infodengue(cities = 3304557 , cid10 = "A90",
+nowcasting="none", dataini= "sinpri", completetail = 0,
+datarelatorio = 202320)
 # User's parameters (not working)
 dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)
 res <- pipe_infodengue(cities = dd, cid10 = "A90", 

@@ -6,7 +6,7 @@
 \usage{
 adjustIncidence(
   obj,
-  method = "fixedprob",
+  method = "none",
   pdig = plnorm((1:20) * 7, 2.5016, 1.1013),
   Dmax = 10,
   nyears = 2,
@@ -16,17 +16,14 @@ adjustIncidence(
 )
 }
 \arguments{
-\item{obj}{data.frame with crude weekly cases (not adjusted). This data.frame comes from the getCases
-function (if withdivision = FALSE), of getCases followed by casesinlocality (if dataframe is available
-per bairro)}
+\item{obj}{data.frame with crude weekly cases (not adjusted). This data.frame 
+comes from the getCases function (if withdivision = FALSE), of getCases followed
+by casesinlocality (if dataframe is available per bairro)}
 
-\item{method}{"fixedprob" for fixed delay prob per week; "bayesian" for the 
-dynamic model . If "none" just repeats case values}
+\item{method}{"bayesian" or "none". The later just repeats case values}
 
 \item{pdig}{for the "fixedprob" method. It is a vector of probability of been 
-typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
-The length of the vector corresponds to the maximum delay. After day, it is 
-assumed that p = 1. The default was obtained from Rio de Janeiro.}
+typed in the database up to 1, 2, 3, n, weeks after symptoms onset. DEPRECATED.}
 
 \item{Dmax}{for the "bayesian" method. Maximum number of weeks that is modeled}
 
@@ -39,22 +36,15 @@ for the nowcast. If NA, the maximum SE in obj is used.}
 'sum(tail(cases, n=5))', nowcasting fails.}
 }
 \value{
-data.frame with pdig (proportion reported), median and 95percent 
-confidence interval for the predicted cases-to-be-notified)
+data.frame with median and 95percent 
+confidence interval for the predicted cases-to-be-notified
 }
 \description{
-This function estimate the time series of reported cases by adding the cases that will be reported in the future.
-Two methods were implemented, the "fixedprob" requires knowing the probability of notification per week passed. This function assumes a stationary
-notification process, there is, no influence of covariates or any temporal inhomogeneity.  The "bayesian"
-is dynamic.
+This function estimate the time series of reported cases by adding
+the cases that will be reported in the future.
 }
 \examples{
-# fixedprob
-d <- getCases(cities = 2304400, dataini = "sinpri",  completetail = 0) 
-tail(d)
-resfit<-adjustIncidence(obj = d)
-tail(resfit)
-# bayesian
+d <- getCases(cities = 4314902, dataini = "sinpri")
 resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202111, datasource = con)
 tail(resfit2)
 }

@@ -5,42 +5,31 @@
 
 
 # adjustIncidence ---------------------------------------------------------------------
-#'@description This function estimate the time series of reported cases by adding the cases that will be reported in the future.
-#'Two methods were implemented, the "fixedprob" requires knowing the probability of notification per week passed. This function assumes a stationary
-#'notification process, there is, no influence of covariates or any temporal inhomogeneity.  The "bayesian"
-#'is dynamic. 
+#'@description This function estimate the time series of reported cases by adding
+#' the cases that will be reported in the future.
 #'@title Correct incidence data with notification delay (nowcasting).
 #'@export
-#'@param obj data.frame with crude weekly cases (not adjusted). This data.frame comes from the getCases
-#' function (if withdivision = FALSE), of getCases followed by casesinlocality (if dataframe is available
-#' per bairro)  
-#'@param method "fixedprob" for fixed delay prob per week; "bayesian" for the 
-#'dynamic model . If "none" just repeats case values
+#'@param obj data.frame with crude weekly cases (not adjusted). This data.frame 
+#'comes from the getCases function (if withdivision = FALSE), of getCases followed
+#' by casesinlocality (if dataframe is available per bairro)  
+#'@param method "bayesian" or "none". The later just repeats case values
 #'@param pdig for the "fixedprob" method. It is a vector of probability of been 
-#'typed in the database up to 1, 2, 3, n, weeks after symptoms onset.
-#'The length of the vector corresponds to the maximum delay. After day, it is 
-#'assumed that p = 1. The default was obtained from Rio de Janeiro. 
+#'typed in the database up to 1, 2, 3, n, weeks after symptoms onset. DEPRECATED.
 #'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
 #'@param nyears for the "bayesian" method. Number of years of data used for fitting the model  
 #'@param safelimit if median estimate is larger than 'safelimit' times 
 #''sum(tail(cases, n=5))', nowcasting fails. 
 #'@param nowSE for the "bayesian" method. Epidemiological week to be considered 
 #'for the nowcast. If NA, the maximum SE in obj is used.
-#'@return data.frame with pdig (proportion reported), median and 95percent 
-#'confidence interval for the predicted cases-to-be-notified)
+#'@return data.frame with median and 95percent 
+#'confidence interval for the predicted cases-to-be-notified
 #'@examples
-#'# fixedprob
-#'d <- getCases(cities = 2304400, dataini = "sinpri",  completetail = 0) 
-#'tail(d)
-#'resfit<-adjustIncidence(obj = d)
-#'tail(resfit)
-#' # bayesian
+#'d <- getCases(cities = 4314902, dataini = "sinpri")
 #'resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202111, datasource = con)
 #'tail(resfit2)
 
-adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
+adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
                           Dmax=10, nyears = 2, datasource = con, nowSE, safelimit = 5){
-  
   city <- unique(obj$cidade)  
   cid <- obj$CID10[1]
   # checking if only one city in obj
@@ -69,22 +58,6 @@ adjustIncidence<-function(obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5
             in the last month. Nowcasting not done")
     return(obj)
   } 
-  
-  if (method == "fixedprob"){
-        # creating the proportion vector
-        obj$pdig <- NA
-        lp <- length(pdig)
-        
-        if(le > lp) {obj$pdig <- c(rep(1, times = (le - lp)), rev(pdig))
-        } else if (le == lp) {obj$pdig <- rev(pdig)
-        } else obj$pdig <- rev(pdig)[1:le]
-        
-        lambda <- (obj$casos/obj$pdig) - obj$casos   
-        corr <- function(lamb,n=500) sort(rpois(n,lambda=lamb))[c(02,50,97)] # calcula 95% IC e mediana estimada da parte estocastica 
-        
-        for(i in 1:length(obj$casos)) obj[i,c("tcasesICmin","tcasesmed","tcasesICmax")] <- corr(lamb = lambda[i]) + obj$casos[i]
-        obj %>% mutate(pdig=NULL)
-         }
   
  if (method == "bayesian"){
        message(paste("computing nowcasting for city ",city," date ",nowSE, "..."))

@@ -125,8 +125,6 @@ episem <- function(x, format="%Y-%m-%d", separa='', retorna='YW') {
       }
 }
 
-
-
 #' lastepiweek -----------------------------------
 #' @description Calculate number of year's last epidemiological week using Brazilian standard.
 #' @name lastepiweek
