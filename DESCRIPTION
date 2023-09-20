@@ -1,12 +1,12 @@
 Package: AlertTools
 Type: Package
-Title: utility functions for the Alerta Dengue System
+Title: utility functions for the Infodengue Alert System
 Version: 1.1.0
 Date: 2015-10-05
 Authors@R: person("Claudia", "Codeco", email="claudia.codeco@gmail.com",
    role = c("aut", "cre"))
 Maintainer: Claudia Codeco <claudia.codeco@gmail.com>
-Description: Set of functions to get data from the Alerta Dengue server,
+Description: Set of functions to get data from the Infodengue Alert server,
     organize into time series, correct the notification data, calculate alert
     indices. Also includes utility functions to create reports and maps.
 License: CCO
@@ -17,10 +17,11 @@ Imports:
     zoo,
     maptools,
     knitr,
-    survival,
     forecast,
     tidyverse,
-    assertthat
+    lubridate,
+    assertthat,
+    brpop
 VignetteBuilder: knitr
 RoxygenNote: 7.1.2
 LazyData: true

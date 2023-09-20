@@ -139,7 +139,7 @@ bestWU <- function(series,var){
 
 # getClima --------------------------------------------------------
 #'@description Create weekly climate time series from satellite data in server 
-#'taking the mean of the daily values.
+#'taking the mean of the daily values. Data source: ERA5.
 #'@title Get Climate Data
 #'@export
 #'@param cities list of geocodes.
@@ -196,88 +196,45 @@ getClima <- function(cities, vars = c("temp_min","temp_max","temp_med","umid_min
       
 }
 
-
-# getTweet --------------------------------------------------------------
-#'@description Create weekly time series from tweeter data from server. The 
-#'source of this data is the Observatorio da Dengue (UFMG).
-#'@title Get Tweeter Data
+# getPop --------------------------------------------------------
+#'@description Get population time series, using the brpop package. 
+#'Currently has estimates from 2000 to 2021
+#'@title Get population data at municipal level.   
 #'@export
-#'@param cities cities's geocode. Use getCidades()
-#'@param cid10 default is A90 (dengue). If not dengue, returns NA
-#'@param finalday last day. Default is the last available.
-#'@param datasource Use the connection to the Postgresql server for using project data.  
-#'@return data.frame with weekly counts of people tweeting on dengue.
+#'@param cities list of geocodes.
+#'@param iniY first year. Default is 2010 
+#'@param lastY last year. Default is the last available
+#'@return tibble with columns geocode, year, pop 
 #'@examples
-#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-#'tw <- getTweet(cities = c(3302205,3200300), lastday = "2014-03-01")
-#'tw <- getTweet(cities = 3304557, finalday = "2016-03-01")
-#'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
-#'tw <- getTweet(cities = cid$municipio_geocodigo) 
-#'tail(tw)
+#'cities <- getCidades(uf = "Paraná")$municipio_geocodigo
+#'pop <- getPop(cities, iniY = 2018, endY = 2019)
+#'tail(pop)
 
-getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con) {
+getPop <- function(cities, iniY = 2010, endY) {
       
-      cities <- sapply(cities, function(x) sevendigitgeocode(x))
+      # check input
+      assert_that(all(c(iniY) >= 2000), 
+                  msg = "getPop: check dates, getPop only has data from 2000 to 2021.")
       
-      # get tweets on dengue 
-      if (cid10 == "A90"){ 
-            
-            sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      assert_that(all(c(iniY,endY) <= 2021), 
+                  msg = "getPop: check dates, getPop only has data from 2000 to 2021.")
+      
+      require(brpop)
+      cities6 <- sapply(cities, function(x) floor(x/10))
 
-            if(class(datasource) == "PostgreSQLConnection"){
-              
-              comando <- paste("SELECT \"Municipio_geocodigo\", data_dia, numero
-              FROM \"Municipio\".\"Tweet\" WHERE \"Municipio_geocodigo\" IN (",
-                               sqlcity,") AND data_dia <= '", lastday,"'",sep="")
-            
-              tw <- dbGetQuery(datasource,comando) 
-            }
-            
-            if(class(datasource) == "SQLiteConnection"){
-              
-             comando <- paste("SELECT * from tweet WHERE  
-                        \"Municipio_geocodigo\" IN  (", sqlcity, ")" ,sep="")
-                
-             tw <- dbGetQuery(datasource, comando)
-                
-             # fixing dates and filtering
-             tw$data_dia <- as.Date(tw$data_dia, origin = "1970-01-01")
-             tw <- tw %>%
-                  filter(tw$data_dia <= as.Date(lastday))
-              } 
-              
-            } else {stop(paste("there is no tweet for", cid10,"in the database"))}
+      x <- mun_pop_totals() %>% 
+            filter(mun %in% cities6 & year >= iniY & year <= endY) %>%
+            select(geocode6 = mun,
+                   year,
+                   pop) 
       
-      # no tweets found for these cities 
-      if(nrow(tw) == 0){
-            message(paste("cidade(s)",cities,"nunca tweetou sobre dengue"))
-            tw <- expand.grid(Municipio_geocodigo = cities,
-                             SE = seqSE(from = 201001, 
-                                        to = data2SE(lastday, 
-                                        format = "%Y-%m-%d"))$SE)
-            tw$tweet <- 0
-            return(tw)
-      }
+      x$geocode <- sapply(x$geocode6, function(x) sevendigitgeocode(x))
       
-      # checking if tweets were partially found
-      tots = tapply(tw$numero,tw$Municipio_geocodigo,sum)
-      if (any(tots==0)) message(paste("cidade(s)",cities[which(tots==0)],"nunca tweetou sobre dengue"))
+      # check output
+      assert_that(all(cities %in% x$geocode), 
+                  msg = "getPop: not all cities with pop data. check geocodes")
       
-      # Counting number of tweets per SE and city
-      tw <- tw %>%  # 
-            mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) # creating column SE
-            
-      sem <-  expand.grid(Municipio_geocodigo = cities, 
-                          SE = seqSE(from = 201001, to = data2SE(lastday, 
-                                                                 format = "%Y-%m-%d"))$SE)
-      st <- full_join(sem,tw,by = c("Municipio_geocodigo", "SE")) %>% 
-                  arrange(Municipio_geocodigo,SE) %>%
-                  group_by(Municipio_geocodigo,SE)  %>%
-                  summarize(tweet = sum(numero, na.rm = TRUE))  %>%
-                  select(Municipio_geocodigo, SE, tweet)
-            
-      return(as.data.frame(st))      
-      
+      x[,c("geocode", "year", "pop")]
 }
 
 
@@ -685,5 +642,87 @@ getCasesinRio <- function(APSid, lastday = Sys.Date(), cid10 = "A90", dataini="s
 }
 
 
+# getTweet --------------------------------------------------------------
+#'@description Create weekly time series from tweeter data from server. The 
+#'source of this data is the Observatorio da Dengue (UFMG).
+#'@title Get Tweeter Data
+#'@export
+#'@param cities cities's geocode. Use getCidades()
+#'@param cid10 default is A90 (dengue). If not dengue, returns NA
+#'@param finalday last day. Default is the last available.
+#'@param datasource Use the connection to the Postgresql server for using project data.  
+#'@return data.frame with weekly counts of people tweeting on dengue.
+#'@examples
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
+#'tw <- getTweet(cities = c(3302205,3200300), lastday = "2014-03-01")
+#'tw <- getTweet(cities = 3304557, finalday = "2016-03-01")
+#'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+#'tw <- getTweet(cities = cid$municipio_geocodigo) 
+#'tail(tw)
+
+getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con) {
+      
+      cities <- sapply(cities, function(x) sevendigitgeocode(x))
+      
+      # get tweets on dengue 
+      if (cid10 == "A90"){ 
+            
+            sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+            
+            if(class(datasource) == "PostgreSQLConnection"){
+                  
+                  comando <- paste("SELECT \"Municipio_geocodigo\", data_dia, numero
+              FROM \"Municipio\".\"Tweet\" WHERE \"Municipio_geocodigo\" IN (",
+                                   sqlcity,") AND data_dia <= '", lastday,"'",sep="")
+                  
+                  tw <- dbGetQuery(datasource,comando) 
+            }
+            
+            if(class(datasource) == "SQLiteConnection"){
+                  
+                  comando <- paste("SELECT * from tweet WHERE  
+                        \"Municipio_geocodigo\" IN  (", sqlcity, ")" ,sep="")
+                  
+                  tw <- dbGetQuery(datasource, comando)
+                  
+                  # fixing dates and filtering
+                  tw$data_dia <- as.Date(tw$data_dia, origin = "1970-01-01")
+                  tw <- tw %>%
+                        filter(tw$data_dia <= as.Date(lastday))
+            } 
+            
+      } else {stop(paste("there is no tweet for", cid10,"in the database"))}
+      
+      # no tweets found for these cities 
+      if(nrow(tw) == 0){
+            message(paste("cidade(s)",cities,"nunca tweetou sobre dengue"))
+            tw <- expand.grid(Municipio_geocodigo = cities,
+                              SE = seqSE(from = 201001, 
+                                         to = data2SE(lastday, 
+                                                      format = "%Y-%m-%d"))$SE)
+            tw$tweet <- 0
+            return(tw)
+      }
+      
+      # checking if tweets were partially found
+      tots = tapply(tw$numero,tw$Municipio_geocodigo,sum)
+      if (any(tots==0)) message(paste("cidade(s)",cities[which(tots==0)],"nunca tweetou sobre dengue"))
+      
+      # Counting number of tweets per SE and city
+      tw <- tw %>%  # 
+            mutate(SE = data2SE(data_dia, format = "%Y-%m-%d")) # creating column SE
+      
+      sem <-  expand.grid(Municipio_geocodigo = cities, 
+                          SE = seqSE(from = 201001, to = data2SE(lastday, 
+                                                                 format = "%Y-%m-%d"))$SE)
+      st <- full_join(sem,tw,by = c("Municipio_geocodigo", "SE")) %>% 
+            arrange(Municipio_geocodigo,SE) %>%
+            group_by(Municipio_geocodigo,SE)  %>%
+            summarize(tweet = sum(numero, na.rm = TRUE))  %>%
+            select(Municipio_geocodigo, SE, tweet)
+      
+      return(as.data.frame(st))      
+      
+}
 
 

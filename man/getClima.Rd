@@ -33,7 +33,7 @@ data.frame with the weekly data (cidade data temp_min tmed tmax umin umed umax p
 }
 \description{
 Create weekly climate time series from satellite data in server 
-taking the mean of the daily values.
+taking the mean of the daily values. Data source: ERA5.
 }
 \examples{
 NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
