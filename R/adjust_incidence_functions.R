@@ -139,7 +139,7 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
   # this condition must be equal in the getCases function
   
   d$ininotif <- d$dt_notific - d$dt_sin_pri
-  wrongdates <- which(d$ininotif < 0 | is.na(d$dt_sin_pri))  
+  wrongdates <- which(d$ininotif > 240 | d$ininotif < 0 | is.na(d$dt_sin_pri))  
   if(length(wrongdates) > 0) {
     message(paste(length(wrongdates), "registros com datas de inicio de sintomas invalidas"))
     d <- d[-wrongdates,]
