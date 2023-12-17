@@ -60,7 +60,7 @@ nowcasting <- function(output.day, dadosRio.ag, Dm, Fim){
 nowcast.INLA <- function(dados.ag, model.day,...){
   
   output <- tryCatch(
-    {inla(formula = model.day, 
+    {inla.group(formula = model.day, 
                  family = "nbinomial", 
                  data = dados.ag,
                  num.threads = 4,
