@@ -348,7 +348,7 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-0
             # this condition must be equal in the bayesnowcasting function
   
             dd$ininotif <- dd$dt_notific - dd$dt_sin_pri
-            wrongdates <- which(dd$ininotif < 0 | is.na(dd$dt_sin_pri))  
+            wrongdates <- which(dd$ininotif > 240 | dd$ininotif < 0 | is.na(dd$dt_sin_pri))  
             if(length(wrongdates) > 0) {
             message(paste(length(wrongdates), "registros com datas de inicio de sintomas invalidas"))
             dd <- dd[-wrongdates,]
