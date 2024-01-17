@@ -114,7 +114,7 @@ adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 
 #'@examples
 #'dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
 #'lastday = as.Date("2019-10-30"), datasource=con)  # Not run without connection
-#'resfitcIsT<-bayesnowcasting(dados, nowSE = 201945)
+#'resfitcIsT<-bayesnowcasting(dados, nowSE = 202345)
 #'resfitcIcT<-bayesnowcasting(dados, nowSE = 201945, tweet = TRUE)
 
 bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){

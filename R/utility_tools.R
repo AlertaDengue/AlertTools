@@ -513,7 +513,6 @@ temp.predict <- function(v, plotar = FALSE){
 }
 
 
-
 # getRegionais ------------------------------------
 #'@description  consult database to get list of regionais 
 #'@title get list of regionais. 
@@ -619,8 +618,9 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
         
         
         d <- dbGetQuery(datasource, sqlquery) 
-        assert_that(nrow(d)>0, msg = "getCidades: found no city")
-        names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id", "macroregional","macroregional_id","uf")
+        assert_that(nrow(d) > 0, msg = "getCidades: found no city")
+        names(d) <- c("municipio_geocodigo", "cidade", "regional", 
+                      "regional_id", "macroregional","macroregional_id","uf")
         return(d)    
       }
   

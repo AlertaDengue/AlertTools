@@ -257,7 +257,7 @@ getPop <- function(cities, iniY = 2010, endY) {
 #'To recover the original function behavior, use the default type.
 #'@examples
 #'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-#'d <- getCases(cities = 4314902, dataini = "sinpri") # dengue
+#'d <- getCases(cities = 4209102, dataini = "sinpri") # dengue
 #'d <- getCases(cities = 3300936, completetail = 0) # dengue
 #'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
@@ -267,6 +267,7 @@ getPop <- function(cities, iniY = 2010, endY) {
 getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-01"), cid10 = "A90", 
                      dataini = "notific", completetail = NA, type = "notified", datasource=con) {
       
+      require(lubridate)
       assert_that(class(cities) %in% c("integer","numeric"), 
                   msg = "cities should be a vector of numeric geocodes") 
   
@@ -338,18 +339,18 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-0
             }
       if(dataini == "sinpri"){
             # fixing wrong dt_sinpri's using the median time to notification (3days) 
-            w <- (dd$dt_notific - dd$dt_sin_pri) > 60   
-            lw <- sum(w, na.rm = TRUE); plw <- round((lw / nrow(dd) * 100), digits = 2)
+            #w <- (dd$dt_notific - dd$dt_sin_pri) > 60   
+            #lw <- sum(w, na.rm = TRUE); plw <- round((lw / nrow(dd) * 100), digits = 2)
             
-            message(paste("there are", lw, "(",plw ,"%)","cases with implausible dt_sinpri. Imputed with dt_notific"))
-            dd$dt_sin_pri[which(w==TRUE)] <- dd$dt_notific[which(w==TRUE)] - 3  # median delay
+            #message(paste("there are", lw, "(",plw ,"%)","cases with implausible dt_sinpri. Imputed with dt_notific"))
+            #dd$dt_sin_pri[which(w==TRUE)] <- dd$dt_notific[which(w==TRUE)] - 3  # median delay
             
             # calculating  epiweek from dt_sin_pri
             dd$se_sin_pri <- epiweek(as.Date(dd$dt_sin_pri, format = "%Y-%m-%d"))
             dd <- dd %>% 
                   mutate(ano_sinpri = lubridate::year(dt_sin_pri),
                          SE = ano_sinpri*100+se_sin_pri)
-            message("cases aggregated by notification date")
+            message("cases aggregated by simptom onset date")
             
             }
          
