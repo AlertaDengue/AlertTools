@@ -27,7 +27,8 @@ getdelaydata(
 list with d = data.frame with data.
 }
 \description{
-Gets delay data for one or more cities. Internal function used in the delay fitting using inla.
+Gets delay data for one or more cities. Internal function used in
+the delay fitting using inla.
 }
 \details{
 # bayesnowcasting ---------------------------------------------------------------------
@@ -181,6 +182,6 @@ pred.dengue.summy
 }
 }
 \examples{
-dados <- getdelaydata(cities=4100905, nyears=1, cid10="A90", 
-lastday = as.Date("2019-10-30"), datasource=con)  # Not run without connection
+dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
+lastday = as.Date("2023-12-31"), datasource=con)  # Not run without connection
 }

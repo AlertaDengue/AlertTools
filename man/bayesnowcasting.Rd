@@ -4,12 +4,14 @@
 \alias{bayesnowcasting}
 \title{Correct incidence data with notification delay (nowcasting).}
 \usage{
-bayesnowcasting(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F)
+bayesnowcasting(d, Dmax = 10, nowSE, nweeks = 50, interacao = TRUE, tweet = F)
 }
 \arguments{
-\item{Dmax}{for the "bayesian" method. Maximum number of weeks that is modeled}
+\item{Dmax}{for the "bayesian" method. Maximum number of weeks that is nowcasted}
 
 \item{nowSE}{week of the nowcasting (ex. 202110).}
+
+\item{nweeks}{number of weeks used for model calibration, default is 50.}
 
 \item{interacao}{TRUE (default) to include in the model the delay-time interaction term}
 
@@ -26,7 +28,7 @@ This function estimate the Bayesian nowcast (new version)
 }
 \examples{
 dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
-lastday = as.Date("2019-10-30"), datasource=con)  # Not run without connection
-resfitcIsT<-bayesnowcasting(dados, nowSE = 201945)
+lastday = as.Date("2023-12-30"), datasource=con)  # Not run without connection
+resfitcIsT<-bayesnowcasting(dados, nowSE = 202352)
 resfitcIcT<-bayesnowcasting(dados, nowSE = 201945, tweet = TRUE)
 }
