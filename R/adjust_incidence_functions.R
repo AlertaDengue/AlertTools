@@ -67,6 +67,7 @@ adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 
         
        resfit<-bayesnowcasting(dados, Dmax = Dmax, nowSE = nowSE)
        
+       # checking estimates
        if(!is.null(resfit)){
          if(tail(resfit$Median, n = 1) > 
             safelimit * sum(tail(obj$casos, n = 5),na.rm = TRUE)){
@@ -105,7 +106,8 @@ adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 
 #'@title Correct incidence data with notification delay (nowcasting).
 #'@export
 #'@param obj data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita 
-#'@param Dmax for the "bayesian" method. Maximum number of weeks that is modeled
+#'@param Dmax for the "bayesian" method. Maximum number of weeks that is nowcasted
+#'@param nweeks number of weeks used for model calibration, default is 50.
 #'@param nowSE week of the nowcasting (ex. 202110). 
 #'@param interacao TRUE (default) to include in the model the delay-time interaction term
 #'@param tweet FALSE (default). TRUE to include tweet in the model
@@ -113,11 +115,11 @@ adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 
 #'predicted cases-to-be-notified)
 #'@examples
 #'dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
-#'lastday = as.Date("2019-10-30"), datasource=con)  # Not run without connection
-#'resfitcIsT<-bayesnowcasting(dados, nowSE = 202345)
+#'lastday = as.Date("2023-12-30"), datasource=con)  # Not run without connection
+#'resfitcIsT<-bayesnowcasting(dados, nowSE = 202352)
 #'resfitcIcT<-bayesnowcasting(dados, nowSE = 201945, tweet = TRUE)
 
-bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
+bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = TRUE, tweet = F){
   
   # check input 
   if(is.null(names(d))) {
@@ -129,13 +131,13 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
     return(NULL)}    
   
   if(missing(nowSE)) stop("bayesnowcasting requires definition of nowcast week ")
-  
+      
   #check if d contains required columns
   assert_that(all(c("municipio_geocodigo", "dt_notific", "dt_sin_pri", "dt_digita")
                   %in% names(d)), msg = "bayesnowcasting requires data with columns
               municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita")
 
-  # remove cases with wrong dt_sin_pri  
+   # remove cases with wrong dt_sin_pri  
   # this condition must be equal in the getCases function
   
   d$ininotif <- d$dt_notific - d$dt_sin_pri
@@ -158,25 +160,26 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
   message(paste("nowcast will be calibrated with ", nrow(d), "cases"))
   
   ## getting tweet data 
-  if(tweet == TRUE){
-    tw <- getTweet(cities = unique(d$municipio_geocodigo), 
-                   lastday = SE2date(nowSE)$ini)
-    tw <- tw %>%
-      mutate(dt_iniweek = SE2date(SE)$ini + 6)  %>%
-      filter(dt_iniweek > min(d$dt_sinpri_week))
-  }
-    
+  # if(tweet == TRUE){
+  #   tw <- getTweet(cities = unique(d$municipio_geocodigo), 
+  #                  lastday = SE2date(nowSE)$ini)
+  #   tw <- tw %>%
+  #     mutate(dt_iniweek = SE2date(SE)$ini + 6)  %>%
+  #     filter(dt_iniweek > min(d$dt_sinpri_week))
+  # }
+  #   
   # nowcasting
   d <- d %>% mutate(
-    dt_sinpri_epiweek = epiweek(dt_sin_pri), 
-    dt_sinpri_aux =  as.numeric(format(as.Date(dt_sin_pri), "%w")),
-    dt_sinpri_week = dt_sin_pri + 6 - dt_sinpri_aux,
+    dt_sinpri_epiweek = epiweek(dt_sin_pri),  # se da data sinpri
+    dt_sinpri_aux =  as.numeric(format(as.Date(dt_sin_pri), "%w")), # dia da semana (0 = sunday)
+    dt_sinpri_week =  dt_sin_pri + 3 - dt_sinpri_aux, # colocar na quarta feira da SE (y = -x+3)
     dt_sinpri_epiyear = epiyear(dt_sin_pri), 
     dt_digita_epiweek = epiweek(dt_digita),
     dt_digita_epiyear = epiyear(dt_digita),
     delay_epiweek = ifelse( dt_digita_epiyear == dt_sinpri_epiyear,
                             as.numeric(dt_digita_epiweek - dt_sinpri_epiweek),
-                            as.numeric(dt_digita_epiweek - dt_sinpri_epiweek) + 52
+                            as.numeric(dt_digita_epiweek - dt_sinpri_epiweek) + 
+                                  52 * (dt_digita_epiyear - dt_sinpri_epiyear)
     )
   ) 
   
@@ -184,13 +187,13 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
   obs <- d %>%
     group_by(dt_sinpri_week) %>%
     summarize(casos = n())
-  
-  Inicio <- min(d$dt_sinpri_week)
-  # Ultimo dia com notificacao ou digitacao
-  Fim <- SE2date(nowSE)$ini + 6 
-  #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
+ 
+  # quarta-feira da semana nowcasted
+  Fim <- SE2date(nowSE)$ini + 3 # 3 ini é domingo, soma 3 para quarta-feira 6 
   #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
   #Fim <- Fim + 6 - as.numeric(format(as.Date(Fim), "%w")) # why?
+  Inicio <- max(min(d$dt_sinpri_week), Fim - nweeks*7) # if data is shorter than nweeks, get all data 
+                
   
   # contruindo a matriz de atraso - running triang
   tibble(Date = c(Inicio,Fim) ) %>% 
@@ -198,14 +201,14 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
   
   tbl.dates <- tibble(dt_sinpri_week = seq(Inicio, Fim, by = 7)) %>% 
     rowid_to_column(var = "Time")
-  Today <- max(tbl.dates$Time)
+  Today <- max(tbl.dates$Time)  # running time
   
   dados.ag <- d %>% 
-    filter( dt_digita <= Fim) %>% 
+    filter( dt_digita <= Fim & dt_digita >= Inicio) %>% 
     mutate(
       delay_epiweek = ifelse(delay_epiweek > Dmax, NA, delay_epiweek)
     ) %>% 
-    drop_na(delay_epiweek) %>% 
+    drop_na(delay_epiweek) %>% # discard cases with delay > 10 weeks
     group_by(dt_sinpri_week, delay_epiweek) %>% 
     dplyr::summarise(
       Casos = n()
@@ -232,11 +235,11 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
   
   
   ## Juntando tweet (se tweet == TRUE)
-  if (tweet == TRUE){
-    dados.ag <- dados.ag %>% 
-      left_join(tw[,c(3,4)], by = c("Date" = "dt_iniweek" )) %>%
-      mutate(tweet =  replace_na(tweet, 0))
-  }
+  # if (tweet == TRUE){
+  #   dados.ag <- dados.ag %>% 
+  #     left_join(tw[,c(3,4)], by = c("Date" = "dt_iniweek" )) %>%
+  #     mutate(tweet =  replace_na(tweet, 0))
+  # }
   
   # nao vi esse obj sendo usado
   dados.ag.full <- d %>% 
@@ -273,7 +276,7 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
       )
   } 
   
-  if(!interacao & !tweet) {
+  if(!interacao & !tweet) {  #default
     model.dengue <- Casos ~ 1 + 
       f(Time, model = "rw2", constr = T
         #hyper = list("prec" = list(prior = "loggamma", param = c(0.001, 0.001) ))
@@ -321,6 +324,7 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
       mutate(TimeDelay = paste(Time, Delay))
   )
   
+  # we could save other features, like prob greater threshold
   pred.dengue <- nowcasting(output.dengue, dados.ag, 
                             Dm = Dmax, Fim = Fim) # max(dados.ag$Date))
   
@@ -492,7 +496,8 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
 #' 
 
 # getdelaydata ------------------------------------------------------------------
-#'@description Gets delay data for one or more cities. Internal function used in the delay fitting using inla. 
+#'@description Gets delay data for one or more cities. Internal function used in
+#' the delay fitting using inla. 
 #'@title Get delay data for one or more cities for delay analysis
 #'@export
 #'@param cities vector with geocodes
@@ -502,8 +507,8 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
 #'@param datasource valid connection to database
 #'@return list with d = data.frame with data.
 #'@examples
-#'dados <- getdelaydata(cities=4100905, nyears=1, cid10="A90", 
-#'lastday = as.Date("2019-10-30"), datasource=con)  # Not run without connection
+#'dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
+#'lastday = as.Date("2023-12-31"), datasource=con)  # Not run without connection
 
 getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(), 
                          datasource = con){
@@ -525,7 +530,7 @@ getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(),
   if(class(datasource) == "PostgreSQLConnection"){
     comando <- paste("SELECT municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita
                        from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
-                   "' AND dt_digita > '",firstday, "' AND municipio_geocodigo IN (", sqlcity, 
+                   "' AND dt_digita >= '",firstday, "' AND municipio_geocodigo IN (", sqlcity, 
                    ") AND cid10_codigo IN(", sqlcid,")", sep="")
   
     dd <- dbGetQuery(datasource,comando)
@@ -562,16 +567,13 @@ getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(),
     nb <- nrow(dd)
     dd <- dd[!is.na(dd$dt_digita),]
     na.dtdigita <- nb - nrow(dd)
-    if (na.dtdigita > 0) message(paste("getdelaydata: number of records with missing dates: ",na.dtdigita,
-                                       " out of ",nb, "notifications" ))
+    if (na.dtdigita > 0) message(paste("getdelaydata: number of records with 
+                                       missing dates: ",na.dtdigita,
+                                       " out of ",nb, "notifications. 
+                                       This may cause consistency problems 
+                                       between obs and pred cases" ))
     
-    # Create SE_digit
-    #dd$se_digit <- mapply(function(x) episem(x, retorna='W'), dd[, 'dt_digita'])
-    #dd$ano_digit <- mapply(function(x) episem(x, retorna='Y'), dd[, 'dt_digita'])
-    #dd$SE_digit <- daySEday(dd$dt_digita)$SE
-    #dd$ano_digit <- floor(dd$SE_digit/100)
-    #dd$se_digit <- dd$SE_digit - dd$ano*100
-    dd
+     dd
   }
 }
 

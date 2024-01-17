@@ -261,7 +261,7 @@ getPop <- function(cities, iniY = 2010, endY) {
 #'d <- getCases(cities = 3300936, completetail = 0) # dengue
 #'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
-#'d <- getCases(cities = cid$municipio_geocodigo, datasource = con, dataini = "sinpri") 
+#'d <- getCases(cities = 3304557, firstday = as.Date("2023-01-01"),dataini = "sinpri") 
 #'tail(d)
 
 getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-01"), cid10 = "A90", 
@@ -360,7 +360,7 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-0
             dd <- dd %>% 
                   mutate(ano_sinpri = lubridate::year(dt_sin_pri),
                          SE = ano_sinpri*100+se_sin_pri)
-            message("cases aggregated by simptom onset date")
+            message("cases aggregated by symptom onset date")
             
             }
          
