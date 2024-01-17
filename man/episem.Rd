@@ -9,13 +9,15 @@ episem(x, format = "\%Y-\%m-\%d", separa = "", retorna = "YW")
 \arguments{
 \item{separa}{symbol between year and week}
 
-\item{retorna}{What should be return, if epidemiological year and week ('YW'), epi. year only ('Y') or epi. week only ('W').
-Default: 'YW'.}
+\item{retorna}{What should be return, if epidemiological year and week ('YW'),
+epi. year only ('Y') or epi. week only ('W').
+  Default: 'YW'.}
 
 \item{date}{date to be converted (class Date)}
 }
 \value{
-epidemiological week or year. If separa = '', the output is numeric; otherwise is a character.
+epidemiological week or year. If separa = '', the output is numeric; 
+otherwise is a character.
 }
 \description{
 Find to which epidemiological week belongs a given day

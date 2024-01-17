@@ -57,9 +57,11 @@ data2SE <- function(days, format = "%d/%m/%Y"){
 #' @export
 #' @param date date to be converted (class Date)
 #' @param separa symbol between year and week
-#' @param retorna What should be return, if epidemiological year and week ('YW'), epi. year only ('Y') or epi. week only ('W').
+#' @param retorna What should be return, if epidemiological year and week ('YW'),
+#' epi. year only ('Y') or epi. week only ('W').
 #'   Default: 'YW'.
-#' @return epidemiological week or year. If separa = '', the output is numeric; otherwise is a character.
+#' @return epidemiological week or year. If separa = '', the output is numeric; 
+#' otherwise is a character.
 #' @examples
 #' episem(x= as.Date("2018-12-31", format="%Y-%m-%d"))
 #' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), separa='-')
@@ -182,8 +184,8 @@ daySEday <- function(x, format = "%Y-%m-%d"){
       #load("R/sysdata.rda")
       n <- length(x)
             if(class(x[1]) %in% c("numeric","integer")) {
-            assert_that(all(x > 200952 & x < 202400), msg = "day2SE: SE format = 
-                        201612, btw 201001 and 202352")
+            assert_that(all(x > 200952 & x < 202500), msg = "day2SE: SE format = 
+                        201612, btw 201001 and 202452")
                   
             res <- data.frame(SE = x, ini = as.Date("1970-01-01"))
                   
@@ -192,7 +194,7 @@ daySEday <- function(x, format = "%Y-%m-%d"){
             
             }
       if(class(x[1]) == "character") x <- as.Date(x, format = format)
-      assert_that(all(x <= "2023/12/31" & x >= "2010/01/01"))
+      assert_that(all(x <= "2024/12/31" & x >= "2010/01/01"))
       res <- data.frame(SE = NA, ini = x)
       for (i in 1:n) res$SE[i] <- SE[which(SE$Inicio<=x[i] & SE$Termino >= x[i]), "SE"]
       return(res)
@@ -209,7 +211,8 @@ daySEday <- function(x, format = "%Y-%m-%d"){
 #'@export
 #'@param from first week in format 201401
 #'@param to first week in format 201401
-#'@return data.frame with the epidemiological weeks and corresponding extreme days. WARNING: only works from 2010 to 2020.
+#'@return data.frame with the epidemiological weeks and corresponding extreme days. 
+#'WARNING: only works from 2010 to 2024.
 #'@examples
 #'seqSE(202042, 202210)
 
