@@ -214,7 +214,7 @@ daySEday <- function(x, format = "%Y-%m-%d"){
 #'@return data.frame with the epidemiological weeks and corresponding extreme days. 
 #'WARNING: only works from 2010 to 2024.
 #'@examples
-#'seqSE(202042, 202210)
+#'seqSE(202042, 202410)
 
 seqSE <- function(from, to){
       #load("R/sysdata.rda")
