@@ -338,12 +338,22 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-0
             }
       if(dataini == "sinpri"){
             # fixing wrong dt_sinpri's using the median time to notification (3days) 
-            w <- (dd$dt_notific - dd$dt_sin_pri) > 60   
-            lw <- sum(w, na.rm = TRUE); plw <- round((lw / nrow(dd) * 100), digits = 2)
+            #w <- (dd$dt_notific - dd$dt_sin_pri) > 60   
+            #lw <- sum(w, na.rm = TRUE); plw <- round((lw / nrow(dd) * 100), digits = 2)
             
-            message(paste("there are", lw, "(",plw ,"%)","cases with implausible dt_sinpri. Imputed with dt_notific"))
-            dd$dt_sin_pri[which(w==TRUE)] <- dd$dt_notific[which(w==TRUE)] - 3  # median delay
+            #message(paste("there are", lw, "(",plw ,"%)","cases with implausible dt_sinpri. Imputed with dt_notific"))
+            #dd$dt_sin_pri[which(w==TRUE)] <- dd$dt_notific[which(w==TRUE)] - 3  # median delay
             
+            # remove cases with wrong dt_sin_pri  
+            # this condition must be equal in the bayesnowcasting function
+  
+            dd$ininotif <- dd$dt_notific - dd$dt_sin_pri
+            wrongdates <- which(dd$ininotif > 30 | dd$ininotif < 0 | is.na(dd$dt_sin_pri))  
+            if(length(wrongdates) > 0) {
+            message(paste(length(wrongdates), "registros com datas de inicio de sintomas invalidas"))
+            dd <- dd[-wrongdates,]
+            }
+
             # calculating  epiweek from dt_sin_pri
             dd$se_sin_pri <- epiweek(as.Date(dd$dt_sin_pri, format = "%Y-%m-%d"))
             dd <- dd %>% 
