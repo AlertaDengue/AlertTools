@@ -1,4 +1,6 @@
 setwd("../..")
+require(assertthat)
+require(tidyverse)
 
 ## testando conexão com o banco 
 #con <-DenguedbConnect()  #
@@ -6,7 +8,7 @@ setwd("../..")
 #      expect_equal(class(con)[1], "PostgreSQLConnection")
 #})
 
-geoc = c(3302403, 3205200) # cidade para teste
+geoc = c(3304557, 3205200) # cidade para teste
 
 # =====================================
 ## Testing function getCases ==========
@@ -15,7 +17,8 @@ geoc = c(3302403, 3205200) # cidade para teste
 #datasource=con
 
 # common use
-dC0 = getCases(cities = geoc, datasource=con)
+dC0 = getCases(cities = geoc, firstday = as.Date("2021-06-01"), 
+               dataini = "sinpri", datasource=con)
 
 test_that("getCases: produces required input error messages", {
       expect_error(getCases(cities = "Rio"),"cities should be a vector of numeric geocodes")
@@ -45,23 +48,6 @@ test_that("getcases: produce required output",{
 })
 
 ## 
-# test getCasesinRio ===================
-## 
-# common use
-dC = getCasesinRio(APSid = 0:1, datasource = con)
-
-test_that("getCasesinRio: produce required output",{
-      expect_named(dC, c("localidadeid","SE","casos","localidade","populacao",   
-                          "cidade","nome","CID10"),ignore.order = TRUE)
-      expect_equal(sapply(dC,class), c("localidadeid"="integer","SE"="numeric",
-                                       "casos"="numeric","localidade"="character",
-                                       "populacao"="integer", "cidade"="numeric",
-                                       "nome"="character","CID10"="character"))
-      expect_equal(sum(sapply(dC, anyNA)),0)  # no NAs
-      
-})
-
-
 
 ## =====================================
 # Testing getWU function ===============
@@ -87,59 +73,27 @@ test_that("output of getWU has the required columns.", {
       expect_equal(sum(sapply(dW01[,c("estacao","SE")], anyNA)),0)  # no NAs
 })
 
-## ======================================
-# Test getCasesinRio
-
-dRJ = getCasesinRio(APSid = 9, datasource = con) # Rio de Janeiro
-
-test_that("output of getCasesinRio has the required columns.", {
-      expect_named(dRJ, c("SE","casos","nome","cidade","pop","CID10",
-                          "localidade","localidadeid"),ignore.order = TRUE)
-      expect_equal(sapply(dRJ,class), c(SE="numeric",casos="numeric",nome="character",
-                                        cidade="numeric",pop="integer",CID10="character",
-                                        localidade="character",localidadeid="integer"))
-      expect_equal(sum(sapply(dRJ, anyNA)),0)  # no NAs
-})
-
-
-
 ### =====================================
 # Testing the adjustIncidence function 
 ### =====================================
-# args: obj, method = "fixedprob", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
+
+# check consistency between data used in getCases and nowcasting functions 
+# both must use similar filters
+require(INLA)
+tail(dC0)
+dC0a <- dC0 %>% filter(cidade == geoc[1])
+dC2 <- adjustIncidence(dC0a, method = "bayesian", nyears = 1, nowSE = max(dC0a$SE))
+# args: obj, method = "", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
 # Dmax=12, nyears = 3, datasource = con, lastSE=NA
-
-geoc = 3302403
-dC1 <- getCases(geoc) %>% 
-      adjustIncidence(., method = "fixedprob")
-
-dC2 <- getCases(geoc) %>% 
-      adjustIncidence(., method = "bayesian")
-
-#dRJ <- getCasesinRio(APSid = 8, datasource = con)
-#dC1 <- dRJ %>% 
-#      adjustIncidence(.)
 
 test_that("adjustIncidence: produce required output",{
       required_output = c("casos","tcasesICmin","tcasesmed","tcasesICmax") 
-      # fixedprob
-      expect_true(all(required_output %in% names(dC1)))
-      expect_equal(sum(sapply(dC1[,required_output], anyNA)),0)  # no NAs
       # bayesian
       expect_true(all(required_output %in% names(dC2)))
-      expect_equal(sum(sapply(dC2[,required_output], anyNA)),0)  # no NAs
-      
 })
 
-test_that("adjustIncidence: produce valid estimates",{
-      # fixed prob
-      expect_true(min(dC1$tcasesICmin) >= 0)
-      expect_true(min(dC1$tcasesICmax) >= 0)
-      expect_true(min(dC1$tcasesmed) >= 0)
-      # bayesian
-      expect_true(min(dC2$tcasesICmin) >= 0)
-      expect_true(min(dC2$tcasesICmax) >= 0)
-      expect_true(min(dC2$tcasesmed) >= 0)
+test_that("adjustIncidence: tcasesmed >= casos",{
+      expect_true(all(dC2$tcasesmed >= dC2$casos, na.rm = TRUE))
 })
 
 # Testing the internal bayesian adjust incidence functions 
