@@ -135,15 +135,16 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, interacao = TRUE, tweet = F){
                   %in% names(d)), msg = "bayesnowcasting requires data with columns
               municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita")
 
-  # remove cases with wrong dt_sin_pri (when is more than 4 weeks before notific 
-  # any tine after)
+  # remove cases with wrong dt_sin_pri  
+  # this condition must be equal in the getCases function
   
   d$ininotif <- d$dt_notific - d$dt_sin_pri
   wrongdates <- which(d$ininotif > 30 | d$ininotif < 0 | is.na(d$dt_sin_pri))  
   if(length(wrongdates) > 0) {
     message(paste(length(wrongdates), "registros com datas de inicio de sintomas invalidas"))
     d <- d[-wrongdates,]
-  }
+  }      
+    
   
   # checking again
   if(is.null(names(d))) {
