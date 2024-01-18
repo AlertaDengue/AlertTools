@@ -183,5 +183,5 @@ pred.dengue.summy
 }
 \examples{
 dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
-lastday = as.Date("2023-12-31"), datasource=con)  # Not run without connection
+lastday = as.Date("2023-12-31"))  # Not run without connection
 }

@@ -116,10 +116,10 @@ adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 
 #'@examples
 #'dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
 #'lastday = as.Date("2023-12-30"), datasource=con)  # Not run without connection
-#'resfitcIsT<-bayesnowcasting(dados, nowSE = 202352)
+#'resfitcIsT<-bayesnowcasting(dados, nowSE = 202403)
 #'resfitcIcT<-bayesnowcasting(dados, nowSE = 201945, tweet = TRUE)
 
-bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = TRUE, tweet = F){
+bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = FALSE, tweet = F){
   
   # check input 
   if(is.null(names(d))) {
@@ -141,12 +141,20 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = TRUE, 
   # this condition must be equal in the getCases function
   
   d$ininotif <- d$dt_notific - d$dt_sin_pri
-  wrongdates <- which(d$ininotif > 30 | d$ininotif < 0 | is.na(d$dt_sin_pri))  
+  wrongdates <- which(d$ininotif > 365 | d$ininotif < 0 | is.na(d$dt_sin_pri))  
   if(length(wrongdates) > 0) {
     message(paste(length(wrongdates), "registros com datas de inicio de sintomas invalidas"))
     d <- d[-wrongdates,]
   }      
+  
+  # defining time period 
+  # termino da semana nowcasted
+  Fim <- SE2date(nowSE)$ini + 6 # soma 6 para obter sabado (fim da semana) 
+  Inicio <- Fim - nweeks * 7  
     
+  # removing those cases with onset prior to Inicio
+  d <- d[-(which(d$dt_sin_pri < Inicio)),]
+  
   
   # checking again
   if(is.null(names(d))) {
@@ -172,10 +180,12 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = TRUE, 
   d <- d %>% mutate(
     dt_sinpri_epiweek = epiweek(dt_sin_pri),  # se da data sinpri
     dt_sinpri_aux =  as.numeric(format(as.Date(dt_sin_pri), "%w")), # dia da semana (0 = sunday)
-    dt_sinpri_week =  dt_sin_pri + 3 - dt_sinpri_aux, # colocar na quarta feira da SE (y = -x+3)
+    dt_sinpri_week =  dt_sin_pri + 3 - dt_sinpri_aux, # colocar centrado na quarta da SE (formula y = -aux+3)
     dt_sinpri_epiyear = epiyear(dt_sin_pri), 
+    dt_sinpri_SE = dt_sinpri_epiyear*100 + dt_sinpri_epiweek,
     dt_digita_epiweek = epiweek(dt_digita),
     dt_digita_epiyear = epiyear(dt_digita),
+    dt_digita_SE = dt_digita_epiyear*100 + dt_digita_epiweek,
     delay_epiweek = ifelse( dt_digita_epiyear == dt_sinpri_epiyear,
                             as.numeric(dt_digita_epiweek - dt_sinpri_epiweek),
                             as.numeric(dt_digita_epiweek - dt_sinpri_epiweek) + 
@@ -188,23 +198,20 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = TRUE, 
     group_by(dt_sinpri_week) %>%
     summarize(casos = n())
  
-  # quarta-feira da semana nowcasted
-  Fim <- SE2date(nowSE)$ini + 3 # 3 ini é domingo, soma 3 para quarta-feira 6 
-  #Fim <- max(d$dt_digita, d$dt_notific, na.rm = T)
-  #Fim <- Fim + 6 - as.numeric(format(as.Date(Fim), "%w")) # why?
-  Inicio <- max(min(d$dt_sinpri_week), Fim - nweeks*7) # if data is shorter than nweeks, get all data 
                 
   
-  # contruindo a matriz de atraso - running triang
-  tibble(Date = c(Inicio,Fim) ) %>% 
+  # contruindo a matriz de atraso - running triang - tem que ser quarta.
+  Fim_now <- SE2date(nowSE)$ini + 3 # soma 3 para obter quarta (meio da semana) 
+  Ini_now <- Fim_now - nweeks * 7  
+  tibble(Date = c(Ini_now,Fim_now) ) %>% 
     mutate(Weekday = weekdays(Date) )
   
-  tbl.dates <- tibble(dt_sinpri_week = seq(Inicio, Fim, by = 7)) %>% 
+  tbl.dates <- tibble(dt_sinpri_week = seq(Ini_now, Fim_now, by = 7)) %>% 
     rowid_to_column(var = "Time")
   Today <- max(tbl.dates$Time)  # running time
   
   dados.ag <- d %>% 
-    filter( dt_digita <= Fim & dt_digita >= Inicio) %>% 
+    filter( dt_digita <= Fim & dt_digita >= Ini_now) %>% 
     mutate(
       delay_epiweek = ifelse(delay_epiweek > Dmax, NA, delay_epiweek)
     ) %>% 
@@ -242,22 +249,22 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = TRUE, 
   # }
   
   # nao vi esse obj sendo usado
-  dados.ag.full <- d %>% 
-    group_by(dt_sinpri_week) %>% 
-    dplyr::summarise(
-      Total = n()
-    ) %>% # View()
-    # Adicianoando todas as data, algumas semanas nao houveram casos
-    right_join( 
-      y = tbl.dates, 
-      by = "dt_sinpri_week" ) %>% # View() 
-    mutate(
-      Total = replace_na(Total, 0)
-    ) %>% # View()
-    dplyr::rename( Date = dt_sinpri_week) %>%  #ungroup() %>% 
-    # Sorting by date
-    dplyr::arrange(Date) 
-  
+  # dados.ag.full <- d %>% 
+  #   group_by(dt_sinpri_week) %>% 
+  #   dplyr::summarise(
+  #     Total = n()
+  #   ) %>% # View()
+  #   # Adicianoando todas as data, algumas semanas nao houveram casos
+  #   right_join( 
+  #     y = tbl.dates, 
+  #     by = "dt_sinpri_week" ) %>% # View() 
+  #   mutate(
+  #     Total = replace_na(Total, 0)
+  #   ) %>% # View()
+  #   dplyr::rename( Date = dt_sinpri_week) %>%  #ungroup() %>% 
+  #   # Sorting by date
+  #   dplyr::arrange(Date) 
+  # 
   
   # Model equations (4 possibilities)
   if(interacao & !tweet) {
@@ -508,7 +515,7 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = TRUE, 
 #'@return list with d = data.frame with data.
 #'@examples
 #'dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
-#'lastday = as.Date("2023-12-31"), datasource=con)  # Not run without connection
+#'lastday = as.Date("2023-12-31"))  # Not run without connection
 
 getdelaydata <- function(cities, nyears= 2, cid10 = "A90", lastday = Sys.Date(), 
                          datasource = con){

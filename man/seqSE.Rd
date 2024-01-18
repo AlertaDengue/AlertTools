@@ -19,5 +19,5 @@ WARNING: only works from 2010 to 2024.
 Creates a sequence of epidemiological weeks and respective initial and final days
 }
 \examples{
-seqSE(202042, 202210)
+seqSE(202042, 202410)
 }

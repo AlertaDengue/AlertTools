@@ -264,7 +264,7 @@ getPop <- function(cities, iniY = 2010, endY) {
 #'d <- getCases(cities = 3304557, firstday = as.Date("2023-01-01"),dataini = "sinpri") 
 #'tail(d)
 
-getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-01"), cid10 = "A90", 
+getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2018-01-01"), cid10 = "A90", 
                      dataini = "notific", completetail = NA, type = "notified", datasource=con) {
       
       require(lubridate)
@@ -295,7 +295,7 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-0
       
       if(class(datasource) == "PostgreSQLConnection"){
         comando <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
-                         "' AND municipio_geocodigo IN (", sqlcity, 
+                         "' AND dt_digita >= '",firstday, "' AND municipio_geocodigo IN (", sqlcity, 
                          ") AND cid10_codigo IN(", sqlcid,")", sep="")
             
         dd <- dbGetQuery(datasource,comando)
@@ -349,7 +349,7 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-0
             # this condition must be equal in the bayesnowcasting function
   
             dd$ininotif <- dd$dt_notific - dd$dt_sin_pri
-            wrongdates <- which(dd$ininotif > 30 | dd$ininotif < 0 | is.na(dd$dt_sin_pri))  
+            wrongdates <- which(dd$ininotif > 365 | dd$ininotif < 0 | is.na(dd$dt_sin_pri))  # tirar o 30?
             if(length(wrongdates) > 0) {
             message(paste(length(wrongdates), "registros com datas de inicio de sintomas invalidas"))
             dd <- dd[-wrongdates,]
@@ -358,14 +358,15 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-0
             # calculating  epiweek from dt_sin_pri
             dd$se_sin_pri <- epiweek(as.Date(dd$dt_sin_pri, format = "%Y-%m-%d"))
             dd <- dd %>% 
-                  mutate(ano_sinpri = lubridate::year(dt_sin_pri),
+                  mutate(ano_sinpri = epiyear(dt_sin_pri),
                          SE = ano_sinpri*100+se_sin_pri)
             message("cases aggregated by symptom onset date")
             
             }
          
       # identificando os casos de acordo com a definicao
-      dd$tipo <- "notified"  # esse grupo deveria ser os descartados
+      dd$tipo <- NA
+      dd$tipo[dd$classi_fin == 5] <- "discarded"
       dd$tipo[dd$classi_fin != 5] <- "probable"
       dd$tipo[dd$classi_fin != 5 & dd$criterio == 1] <- "lab_confirmed"
       
@@ -377,28 +378,30 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2010-01-0
                   cas_prov = sum(tipo == "probable"),
                   cas_lab = sum(tipo == "lab_confirmed"))
       
-      lastSE <- data2SE(lastday, format = "%Y-%m-%d")  
+      
       # criando serie 
+      lastSE <- data2SE(lastday, format = "%Y-%m-%d")  
+      firstSE <- data2SE(firstday, format = "%Y-%m-%d") 
+      
       sem <-  expand.grid(municipio_geocodigo = cities, 
-                          SE = seqSE(from = 201001, to = lastSE[1])$SE)
+                          SE = seqSE(from = firstSE, to = lastSE)$SE)
       
       st <- left_join(sem, casos, by = c("municipio_geocodigo", "SE")) %>% 
             arrange(municipio_geocodigo, SE) %>%
             mutate(localidade = 0) %>%  # para uso qdo tiver divisao submunicipal
             mutate(geocodigo = municipio_geocodigo) %>%
             mutate(CID10 = cid10)%>%
-            full_join(.,varglobais,"geocodigo") %>%
+            left_join(.,varglobais,"geocodigo") %>%
             select(SE, cidade = municipio_geocodigo,CID10, casos, cas_prov, 
                    cas_lab, localidade, nome, pop=populacao) 
       
-      # preenchendo os NAs 
-      #SElastcase <- max(st$SE[st$casos > 0], na.rm = TRUE)
-      st$casos[(is.na(st$casos) & st$SE <= lastSE)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
-      st$cas_prov[(is.na(st$cas_prov) & st$SE <= lastSE)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
-      st$cas_lab[(is.na(st$cas_lab) & st$SE <= lastSE)] <- 0 # substitute NA for zero to indicate that no case was reported that week 
+      # substitute NA for zero to indicate that no case was reported that week
+      st$casos[(is.na(st$casos))] <- 0  
+      st$cas_prov[(is.na(st$cas_prov))] <- 0  
+      st$cas_lab[(is.na(st$cas_lab))] <- 0  
       
-      #if(!is.na(completetail)) st$casos[st$SE > SElastcase] <- completetail
-      if(any(is.na(st$pop)))warning("getCases function failed to import pop data for one or more cities", cities)
+      if(any(is.na(st$pop)))
+            warning("getCases function failed to import pop data for one or more cities", cities)
       
       # choosing what to return
       if(type == "notified") return(subset(st, select = -c(cas_prov, cas_lab)))

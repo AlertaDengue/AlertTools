@@ -7,7 +7,7 @@
 getCases(
   cities,
   lastday = Sys.Date(),
-  firstday = as.Date("2010-01-01"),
+  firstday = as.Date("2018-01-01"),
   cid10 = "A90",
   dataini = "notific",
   completetail = NA,

@@ -17,7 +17,7 @@ geoc = c(3304557, 3205200) # cidade para teste
 #datasource=con
 
 # common use
-dC0 = getCases(cities = geoc, firstday = as.Date("2021-06-01"), 
+dC0 = getCases(cities = geoc, firstday = as.Date("2023-06-01"), 
                dataini = "sinpri", datasource=con)
 
 test_that("getCases: produces required input error messages", {
@@ -32,9 +32,9 @@ test_that("getCases: produces required input error messages", {
 })
 
 
-test_that("getcases: produce required warnings",{
+#test_that("getcases: produce required warnings",{
       #expect_message(getCases(cities = 3302403, lastday = "2050-12-31"),"this date is greater than the lastday, returning the most recent data available")       
-})
+#})
 
 test_that("getcases: produce required output",{
       expect_named(dC0, c("SE","cidade","CID10","casos","localidade","nome","pop"),ignore.order = TRUE)
@@ -80,7 +80,7 @@ test_that("output of getWU has the required columns.", {
 # check consistency between data used in getCases and nowcasting functions 
 # both must use similar filters
 require(INLA)
-tail(dC0)
+
 dC0a <- dC0 %>% filter(cidade == geoc[1])
 dC2 <- adjustIncidence(dC0a, method = "bayesian", nyears = 1, nowSE = max(dC0a$SE))
 # args: obj, method = "", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
