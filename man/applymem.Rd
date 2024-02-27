@@ -4,7 +4,7 @@
 \alias{applymem}
 \title{Get epidemic thresholds  for a list of cities}
 \usage{
-applymem(df.data, l.seasons, ...)
+applymem(df.data, l.seasons, typicalcurve = FALSE, ...)
 }
 \arguments{
 \item{df.data}{data frame with municipio_geocodigo in a column named municipio_geocodigo,

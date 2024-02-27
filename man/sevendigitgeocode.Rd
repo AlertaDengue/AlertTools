@@ -2,18 +2,41 @@
 % Please edit documentation in R/utility_tools.R
 \name{sevendigitgeocode}
 \alias{sevendigitgeocode}
-\title{convert 6 to 7 digits geocodes.}
+\title{Returns the most recent date present in the database table.}
 \usage{
 sevendigitgeocode(dig)
 }
+\arguments{
+\item{tab}{table in the database. Either (sinan, clima_wu, tweet, historico,
+historico_mrj).}
+
+\item{cities}{vector of geocodes.}
+
+\item{cid10}{relevant for sinan, tweeter or historico. Codes are: dengue "A90", 
+chik "A92.0", zika "A92.8".}
+
+\item{stations}{vector with wu stations. Ex. c("SGBL", "SBRL")}
+
+\item{datasource}{}
+}
 \value{
+vector with two elements: data.max = most recent date in the collection of cities or stations;
+se = corresponding epidemiological week.
+
 7 digits municipality geocode.
 }
 \description{
+Useful to check if the database is up-to-date.
+
 calculates the verification digit of brazilian municipalities. Required 
 to convert 6 digits to 7 digits geocodes.
 }
 \examples{
+cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
+lastDBdate(tab = "tweet", cities = cidades$municipio_geocodigo, cid10 = "A90")
+lastDBdate(tab = "sinan", cities = cidades$municipio_geocodigo, cid10 = "A92.8")
+lastDBdate(tab = "clima_wu", stations = "SBAF", datasource=con)  
+lastDBdate(tab = "clima_wu", cities = cidades$municipio_geocodigo, datasource=con)  
 sevendigitgeocode(330455)
 sevendigitgeocode(3304557)
 }
