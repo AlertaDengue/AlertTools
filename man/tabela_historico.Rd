@@ -4,7 +4,7 @@
 \alias{tabela_historico}
 \title{Convert the alert object into a data.frame and calculate indicators}
 \usage{
-tabela_historico(obj, iniSE, lastSE, type = "notified", versao = Sys.Date())
+tabela_historico(obj, iniSE, lastSE, type = "all", versao = Sys.Date())
 }
 \arguments{
 \item{obj}{object created by the pipeline.}
@@ -30,7 +30,7 @@ in the database. Also computes receptivity, transmission and incidence levels.
 cidades <- getCidades(uf = "Mato Grosso", datasource = con)
 res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1:3], cid10 = "A90", 
 finalday= "2018-01-10")
-restab <- tabela_historico(res, iniSE = 201701,type = "all") 
+restab <- tabela_historico_comp(res, iniSE = 202301, type = "all") 
 tail(restab)
 # One city:
 res <- pipe_infodengue(cities = 3304557, cid10 = "A90", 

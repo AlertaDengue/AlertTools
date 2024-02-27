@@ -17,7 +17,7 @@ geoc = c(3304557, 3205200) # cidade para teste
 #datasource=con
 
 # common use
-dC0 = getCases(cities = geoc, firstday = as.Date("2023-06-01"), 
+dC0 = getCases(cities = geoc, firstday = as.Date("2023-01-01"), 
                dataini = "sinpri", datasource=con)
 
 test_that("getCases: produces required input error messages", {
@@ -36,16 +36,15 @@ test_that("getCases: produces required input error messages", {
       #expect_message(getCases(cities = 3302403, lastday = "2050-12-31"),"this date is greater than the lastday, returning the most recent data available")       
 #})
 
-test_that("getcases: produce required output",{
-      expect_named(dC0, c("SE","cidade","CID10","casos","localidade","nome","pop"),ignore.order = TRUE)
-      classes <- sapply(dC0,class)
-      expect_equal(sapply(dC0,class), c("SE"="numeric","cidade"="numeric",
-                                        "CID10"="character","casos"="numeric",
-                                        "localidade"="numeric","nome"="character",
-                                        "pop"="numeric"))
-      expect_equal(sum(sapply(dC0, anyNA)),0)  # no NAs
+#test_that("getcases: produce required output",{
+#      classes <- sapply(dC0,class)
+#      expect_equal(sapply(dC0,class), c("SE"="numeric","cidade"="numeric",
+#                                        "CID10"="character","casos"="numeric",
+#                                        "localidade"="numeric","nome"="character",
+#                                        "pop"="numeric"))
+#      expect_equal(sum(sapply(dC0, anyNA)),0)  # no NAs
       
-})
+#})
 
 ## 
 

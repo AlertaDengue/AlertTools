@@ -265,7 +265,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'tail(tabela_historico(res))
 #'res <- pipe_infodengue(cities = 4209102 , cid10 = "A90",
                        #'nowcasting="bayesian", dataini= "sinpri", completetail = 0,
-                       #' datarelatorio = 202345)
+                       #' datarelatorio = 202408)
 #'# User's parameters (not working)
 #'dd <- read.parameters(cities = c(3200300)) %>% mutate(limiar_epidemico = 100)
 #'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
@@ -348,10 +348,10 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       casos$inc_prov <- casos$cas_prov/casos$pop*100000 # novo
       
       # Reading tweets 
-      if(cid10 == "A90"){
-            print("Reading tweets...")
-            dT = getTweet(cities, lastday = finalday, cid10 = "A90")
-      }
+      #if(cid10 == "A90"){
+      #      print("Reading tweets...")
+      #      dT = getTweet(cities, lastday = finalday, cid10 = "A90")
+      #}
       
       
       # para cada cidade ...
@@ -438,113 +438,6 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
 }
 
 
-
-#pipe_infodengue_intra ---------------------------------------------------------------------
-#'@title 4 level alert Green-Yellow-Orange-Red for partitions within municipalities.
-#'@description Yellow is raised when environmental conditions required for
-#'positive mosquito population growth are detected, green otherwise.Orange 
-#'indicates evidence of sustained transmission, red indicates evidence of 
-#'an epidemic scenario.  
-#'@export
-#'@param city geocode (one city at a time). Currently only works for Rio.
-#'@param locs subset of localities. Currently not used.  
-#'@param datarelatorio last epidemiological week (format = 201401) 
-#'@param iniSE first epidemiological week
-#'@param cid10 default is A90 (dengue). Chik = A920.
-#'@param narule how to fill climate missing data (arima is the only option)
-#'@param delaymethod "none" (Default) or "bayesian"
-#'@param dataini "sinpri" or "notif". Default = "sinpri" 
-#'@param datasource name of the sql connection.
-#'@return list with an alert object for each APS.
-#'@examples
-#'alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202113, 
-#'delaymethod="none", cid10 = "A90", dataini = "sinpri")
-#'ale.chik <- pipe_infodengue_intra(city = 3304557, datarelatorio = 202108, 
-#'iniSE = 201001, cid10 = "A920", dataini = "sinpri", delaymethod = "bayesian")
-
-pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90", 
-                                  iniSE = 201001, delaymethod = "none", 
-                                  narule="arima", finalday = Sys.Date(),
-                                  dataini = "sinpri", datasource=con){
-      
-      assert_that(narule == "arima", msg = "alerta_intra: arima is the only na fill method available")
-      assert_that(cid10 %in% c("A90","A920","A92.8"), msg = "alerta_intra: check cid10" )
-      assert_that(length(city) == 1, msg = "alerta_intra: works for one city at a time.")
-      
-      if(missing(datarelatorio)) {
-            datarelatorio <- data2SE(finalday, format = "%Y-%m-%d") 
-      } else { # if datarelatorio & finalday are given, priority is datarelatorio
-            finalday <- SE2date(datarelatorio)$ini+6
-      }
-      
-      # getting parameters and criteria
-      crit.x <- read.parameters(city, cid10 = cid10)
-      crit.x.vector <- structure(as.character(crit.x), names = as.character(names(crit.x))) # dataframe -> vector
-      crit <- setCriteria(rule = "Af", values = crit.x.vector)
-      
-      # reading data
-      message("lendo dados ...")
-      
-      cas = getCasesinRio(APSid = 0:9, cid10 = cid10,dataini = dataini,lastday = finalday)  ## need to change to include other cities
-      cli = getWU(stations = c('SBRJ',"SBJR","SBGL"), vars = "temp_min",finalday = finalday) # too
-      message("cli")
-      if(cid10 == "A90") {
-            tw <- getTweet(cities = city, cid10="A90",lastday = finalday)[,c("SE","tweet")]
-      }else {
-            tw <- data.frame(SE = seqSE(from = min(cas$SE), to = max(cas$SE))$SE,
-                             tweet = NA)
-      }
-      message("tw")
-      # nowcasting and Rt parameters 
-      if(cid10=="A90") meangt = 3 # 3 weeks
-      if(cid10=="A920") meangt = 2 # 2 weeks
-      
-      # output object # too
-      APS <- c("APS 1", "APS 2.1", "APS 2.2", "APS 3.1", "APS 3.2", "APS 3.3"
-               , "APS 4", "APS 5.1", "APS 5.2", "APS 5.3")
-      res <- vector("list", length(APS))
-      names(res) <- APS
-      
-      # Function to calculate alert per aps
-      message("calculando...")
-      calc.alertaintra <- function(aps){
-            print(aps)
-            cli.aps <- cli %>%
-                  filter(estacao == 
-                               case_when(
-                                     aps %in% 0:2 ~ "SBRJ",
-                                     aps %in% 3:5 ~ "SBGL",
-                                     TRUE ~  "SBJR"
-                               )
-                  )
-            
-            d.aps <- cas %>%
-                  filter(localidadeid == aps) %>%
-                  filter(SE >= iniSE) %>%
-                  arrange(SE) %>%
-                  adjustIncidence(method = delaymethod, nowSE = datarelatorio, nyears = 1, pdig = p) %>%
-                  Rt(count = "tcasesmed",gtdist="normal", meangt= meangt, sdgt = 1) %>%
-                  mutate(inc = tcasesmed/populacao*100000) %>%
-                  full_join(cli.aps, by = "SE") %>% 
-                  full_join(tw, by = "SE")
-            
-            y <- fouralert(obj = d.aps[d.aps$SE <= datarelatorio,],crit = crit)
-            print(paste("nivel do alerta de ",d.aps$localidade[1],":", 
-                        tail(y$indices$level,1)))
-            y
-      }      
-      naps <- 0:9
-      res <- lapply(naps, calc.alertaintra) %>% setNames(APS) # antes o nome era character, agora e o geocodigo
-      #       nick <- gsub(" ", "", nome, fixed = TRUE)
-      #       #names(alerta) <- nick
-      
-      
-      #if (writedb == TRUE) write_alerta(alerta, write = "db")  
-      class(res) <- "alerta_intra"
-      res
-}
-
-
 #tabela_historico --------------------------------------------------------------------
 #'@title Convert the alert object into a data.frame and calculate indicators 
 #'@description Function to organize the alert results for easy reading and inserting 
@@ -562,7 +455,7 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90",
 #'cidades <- getCidades(uf = "Mato Grosso", datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1:3], cid10 = "A90", 
 #'finalday= "2018-01-10")
-#'restab <- tabela_historico(res, iniSE = 201701,type = "all") 
+#'restab <- tabela_historico_comp(res, iniSE = 202301, type = "all") 
 #'tail(restab)
 #'# One city:
 #'res <- pipe_infodengue(cities = 3304557, cid10 = "A90", 
@@ -570,7 +463,7 @@ pipe_infodengue_intra <- function(city, locs, datarelatorio, cid10 = "A90",
 #'restab <- tabela_historico(res) 
 #'tail(restab)
 
-tabela_historico <- function(obj, iniSE, lastSE, type = "notified", versao = Sys.Date()){
+tabela_historico <- function(obj, iniSE, lastSE, type = "all", versao = Sys.Date()){
       
       # --------- create single data.frame ------------------#
       # if object created by pipe_infodengue():
@@ -590,13 +483,9 @@ tabela_historico <- function(obj, iniSE, lastSE, type = "notified", versao = Sys
       d$id <- sapply(1:nrow(data), gera_id) 
       
       
-      # ------------removing umid_min ----------------------#
-      # just because it is not implemented yet in the dataset
-      # if("umid_min" %in% names(d)) d <- subset(d, select = -umid_min)
-      
       # ---------- filtering dates -------------------------#
-      if(missing(iniSE)) iniSE <- 0
-      if(missing(lastSE)) lastSE <- 300000
+      if(missing(iniSE)) iniSE <- 0  # sem filtro
+      if(missing(lastSE)) lastSE <- 300000 # sem filtro
       
       d <- d %>%
             filter(SE >= iniSE & SE <= lastSE) %>% 
@@ -605,8 +494,13 @@ tabela_historico <- function(obj, iniSE, lastSE, type = "notified", versao = Sys
                    casos_est = tcasesmed,
                    casos_est_min = tcasesICmin,
                    casos_est_max = tcasesICmax,
+                   casprov = cas_prov,
                    nivel = level,
                    temp_min = temp_min,
+                   temp_med = temp_med,
+                   temp_max = temp_max,
+                   umid_min = umid_min,
+                   umid_med = umid_med,
                    umid_max = umid_max) %>%
             mutate(p_rt1 = ifelse(is.na(p1),0,p1),
                    p_inc100k =casos_est/pop*1e5,
@@ -634,31 +528,20 @@ tabela_historico <- function(obj, iniSE, lastSE, type = "notified", versao = Sys
             )
       # --------- checking all required variables ------------#
       varnames <-c("data_iniSE", "SE", "CID10","casos", "casos_est", 
-                   "casos_est_min", "casos_est_max", "municipio_geocodigo", 
+                   "casos_est_min", "casos_est_max", "municipio_geocodigo", "casprov",
                    "p_rt1", "p_inc100k", "Localidade_id", "nivel", "id", "versao_modelo", 
                    "municipio_nome", "tweet", "Rt", "pop", "temp_min","temp_med",
                    "temp_max","umid_min","umid_med","umid_max", "receptivo", 
                    "transmissao", "nivel_inc") 
       
-      if(type != "notified" & all(c("cas_prov","cas_lab","inc_prov") %in% names(d1))) {
-            varnames <-c("data_iniSE", "SE", "CID10","casos", "cas_prov", "cas_lab",
-                         "casos_est", "casos_est_min", "casos_est_max", "municipio_geocodigo", 
-                         "p_rt1", "p_inc100k", "inc", "Localidade_id", "nivel", "id", "versao_modelo", 
-                         "municipio_nome", "tweet", "Rt", "pop", "temp_min","temp_med",
-                         "temp_max","umid_min","umid_med","umid_max", "receptivo", 
-                         "transmissao", "nivel_inc")
-      } else {
-             message("probable cases not returned, returning all cases")
-      }
-       
       if(all(varnames %in% names(d1))) {
-         dfinal <- d1[,varnames]
-         return(dfinal)
-         } else {
-         message(paste("historico_alerta is not returning the required variables", 
-                       varnames[!varnames %in% names(d1)]))
+            dfinal <- d1[,varnames]
+            return(dfinal)
+      } else {
+            message(paste("historico_alerta is not returning the required variables", 
+                          varnames[!varnames %in% names(d1)]))
             return(NULL)
-         }
+      }
 }
 
 
@@ -751,11 +634,14 @@ tabela_historico_intra <- function(obj, iniSE, lastSE, versao = Sys.Date()){
 #'# Parameters for the model 
 #'cidades <- getCidades(regional = "Norte",uf = "Rio de Janeiro",datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
-#'finalday= "2016-07-12",nowcasting="none")
+#'datarelatorio = 202407, iniSE = 202301, nowcasting="none")
 #'restab <- tabela_historico(res)
+#'res2 <- pipe_infodengue(cities = cidades$municipio_geocodigo[1], cid10 = "A90", 
+#'datarelatorio = 202406, iniSE = 202301, nowcasting="none")
+#'restab2 <- tabela_historico(res2)
 #'# NOT RUN 
 #'t1 <- Sys.time()
-#'write_alerta(restab[1:10,])
+#'write_alerta(restab[1:10,], writetofile = TRUE)
 #'t2 <- Sys.time() - t1
 
 write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.sql"){
@@ -771,7 +657,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    assert_that(length(cid10) == 1, msg = "write_alerta: d must contain only one cid10")
    
    dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
-                 "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
+                 "casos","casprov","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
                  "nivel","id","versao_modelo","municipio_nome","Rt", "pop", "tweet",
                  "receptivo","transmissao","nivel_inc","temp_min","temp_med","temp_max",
                  "umid_min","umid_med","umid_max")
@@ -796,7 +682,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    
    # ------ sql command
    varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
-                       "casos","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
+                       "casos","casprov","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
                        "nivel","id","versao_modelo","municipio_nome", "tweet", "\"Rt\"", "pop",
                        "tempmin","tempmed","tempmax","umidmin","umidmed","umidmax",
                        "receptivo", "transmissao","nivel_inc")
@@ -810,7 +696,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
       linha = paste0(vetor$SE,",'",
                      as.character(vetor$data_iniSE), "',", 
                      str_c(vetor[1,c("casos_est","casos_est_min","casos_est_max",
-                                     "casos","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","),",'",
+                                     "casos","casprov","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","),",'",
                      as.character(vetor$versao_modelo),"','",
                      as.character(vetor$municipio_nome),"',",
                      str_c(vetor[1,c("tweet","Rt","pop","temp_min","temp_med","temp_max","umid_min","umid_med","umid_max")], collapse = ","), ",",

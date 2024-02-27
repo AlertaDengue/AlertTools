@@ -257,7 +257,7 @@ getPop <- function(cities, iniY = 2010, endY) {
 #'To recover the original function behavior, use the default type.
 #'@examples
 #'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-#'d <- getCases(cities = 4209102, dataini = "sinpri") # dengue
+#'d <- getCases(cities = 4209102, dataini = "sinpri", type = "all") # dengue
 #'d <- getCases(cities = 3300936, completetail = 0) # dengue
 #'d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
@@ -365,19 +365,18 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2018-01-0
             }
          
       # identificando os casos de acordo com a definicao
-      dd$tipo <- NA
-      dd$tipo[dd$classi_fin == 5] <- "discarded"
-      dd$tipo[dd$classi_fin != 5] <- "probable"
-      dd$tipo[dd$classi_fin != 5 & dd$criterio == 1] <- "lab_confirmed"
-      
+      #dd$tipo <- NA
+      #dd$tipo[dd$classi_fin == 5] <- "discarded"
+      #dd$tipo[dd$classi_fin != 5] <- "probable"
+
       # contando os casos de acordo com a definicao   
-      casos <- dd %>% 
+     
+     casos <- dd %>% 
             group_by(municipio_geocodigo, SE) %>%
             summarise(
-                  casos = length(tipo),
-                  cas_prov = sum(tipo == "probable"),
-                  cas_lab = sum(tipo == "lab_confirmed"))
-      
+                  casos = length(classi_fin),
+                  cas_prov = sum(classi_fin != 5, na.rm = TRUE),
+                  cas_lab = sum(classi_fin != 5 & criterio == 1 , na.rm = TRUE))
       
       # criando serie 
       lastSE <- data2SE(lastday, format = "%Y-%m-%d")  
@@ -404,9 +403,10 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2018-01-0
             warning("getCases function failed to import pop data for one or more cities", cities)
       
       # choosing what to return
-      if(type == "notified") return(subset(st, select = -c(cas_prov, cas_lab)))
-      if(type == "probable") return(subset(st, select = -c(casos, cas_lab)))
-      if(type == "lab_confirmed") return(subset(st, select = -c(casos, cas_prov)))
+      #if(type == "notified") return(subset(st, select = -c(cas_prov, cas_lab)))
+      #if(type == "probable") return(subset(st, select = -c(casos, cas_lab)))
+      #if(type == "lab_confirmed") return(subset(st, select = -c(casos, cas_prov)))
+      #if(type == "all") return(st)
       st  
 }
 

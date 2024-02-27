@@ -59,7 +59,7 @@ nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
 tail(tabela_historico(res))
 res <- pipe_infodengue(cities = 4209102 , cid10 = "A90",
 nowcasting="bayesian", dataini= "sinpri", completetail = 0,
-datarelatorio = 202345)
+datarelatorio = 202408)
 # User's parameters (not working)
 dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)
 res <- pipe_infodengue(cities = dd, cid10 = "A90", 
