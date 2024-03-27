@@ -709,7 +709,6 @@ getWUstation <- function(cities, datasource = con){
 #'secondary_station
 #'@param UF name of the state.Ex. "Rio de Janeiro"
 #'@param senha for the connection to the project database
-#'@return 
 #'@examples
 #'NOT RUN
 #'wudata = data.frame(municipio_geocodigo = 3107802, primary_station = "SBIP",

@@ -63,7 +63,7 @@ nowcast.INLA <- function(dados.ag, model.day,...){
     {inla(formula = model.day, 
                  family = "nbinomial", 
                  data = dados.ag,
-                 num.threads = 4,
+                 num.threads = 4,verbose = TRUE,
                  control.predictor = list(link = 1, compute = T),
                  control.compute = list( config = T),
                  ...
@@ -92,45 +92,45 @@ nowcast.INLA <- function(dados.ag, model.day,...){
 
 
 # Plot nowcasting
-plot.nowcast <- function(dadosRio.ag, pred.summy, nowcast = T){
-  
-  dadosRio.ag.day.plot <- dadosRio.ag %>% group_by(Date) %>%
-    dplyr::summarise( Casos = sum(Casos, na.rm = T)) %>% 
-    left_join(pred.summy, by = "Date") %>% 
-    mutate(
-      Casos = ifelse(Date > Fim, NA, Casos),
-      Forecast = ifelse(is.na(Mean), NA, 0) + ifelse(Date > Fim, 1, 0)
-    )
-  
-  # Time series
-  p0.day <- dadosRio.ag.day.plot %>% 
-    ggplot(aes(x = Date, y = Casos, 
-               color = "Casos notificados", 
-               linetype = "Casos notificados")) + 
-    geom_line(size = 1, na.rm = T) 
-  
-  if(nowcast){
-    p0.day <- p0.day +   
-      geom_ribbon( aes( ymin=LI, ymax=LS), fill = 'gray', 
-                   color = 'gray', alpha = 0.5, 
-                   show.legend = F) + 
-      geom_line(aes(x = Date, y = Median, 
-                    colour = "Nowcasting", 
-                    linetype = "Nowcasting"), 
-                size = 1, na.rm = T) +
-      scale_colour_manual(name = "", 
-                          values = c("black", "black"), 
-                          guide = guide_legend(reverse=F)) +
-      scale_linetype_manual(name = "", 
-                            values = c("solid", "dotted"), 
-                            guide = guide_legend(reverse=F))
-  }
-  
-  p0.day <- p0.day + 
-    #ylab("Casos hospitalização de SRAG") + 
-    #xlab("Tempo") +
-    theme_bw( base_size = 14) +
-    theme( legend.position = c(0.2, 0.8), legend.title = element_blank()) 
-  
-  p0.day
-}
+# plot.nowcast <- function(dadosRio.ag, pred.summy, nowcast = T){
+#   
+#   dadosRio.ag.day.plot <- dadosRio.ag %>% group_by(Date) %>%
+#     dplyr::summarise( Casos = sum(Casos, na.rm = T)) %>% 
+#     left_join(pred.summy, by = "Date") %>% 
+#     mutate(
+#       Casos = ifelse(Date > Fim, NA, Casos),
+#       Forecast = ifelse(is.na(Mean), NA, 0) + ifelse(Date > Fim, 1, 0)
+#     )
+#   
+#   # Time series
+#   p0.day <- dadosRio.ag.day.plot %>% 
+#     ggplot(aes(x = Date, y = Casos, 
+#                color = "Casos notificados", 
+#                linetype = "Casos notificados")) + 
+#     geom_line(size = 1, na.rm = T) 
+#   
+#   if(nowcast){
+#     p0.day <- p0.day +   
+#       geom_ribbon( aes( ymin=LI, ymax=LS), fill = 'gray', 
+#                    color = 'gray', alpha = 0.5, 
+#                    show.legend = F) + 
+#       geom_line(aes(x = Date, y = Median, 
+#                     colour = "Nowcasting", 
+#                     linetype = "Nowcasting"), 
+#                 size = 1, na.rm = T) +
+#       scale_colour_manual(name = "", 
+#                           values = c("black", "black"), 
+#                           guide = guide_legend(reverse=F)) +
+#       scale_linetype_manual(name = "", 
+#                             values = c("solid", "dotted"), 
+#                             guide = guide_legend(reverse=F))
+#   }
+#   
+#   p0.day <- p0.day + 
+#     #ylab("Casos hospitalização de SRAG") + 
+#     #xlab("Tempo") +
+#     theme_bw( base_size = 14) +
+#     theme( legend.position = c(0.2, 0.8), legend.title = element_blank()) 
+#   
+#   p0.day
+# }

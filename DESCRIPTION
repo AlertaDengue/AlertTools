@@ -15,7 +15,6 @@ Imports:
     foreign,
     RPostgreSQL,
     zoo,
-    maptools,
     knitr,
     forecast,
     tidyverse,
@@ -23,7 +22,7 @@ Imports:
     assertthat,
     brpop
 VignetteBuilder: knitr
-RoxygenNote: 7.1.2
+RoxygenNote: 7.3.1
 LazyData: true
 Depends: 
     R (>= 2.10)

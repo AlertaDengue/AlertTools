@@ -44,7 +44,7 @@ This function estimate the time series of reported cases by adding
 the cases that will be reported in the future.
 }
 \examples{
-d <- getCases(cities = 4314902, dataini = "sinpri")
-resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202111, datasource = con)
+d <- getCases(cities = 1200427, dataini = "sinpri")
+resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202412, datasource = con)
 tail(resfit2)
 }

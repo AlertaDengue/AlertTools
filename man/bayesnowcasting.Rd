@@ -28,7 +28,6 @@ This function estimate the Bayesian nowcast (new version)
 }
 \examples{
 dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
-lastday = as.Date("2023-12-30"), datasource=con)  # Not run without connection
-resfitcIsT<-bayesnowcasting(dados, nowSE = 202403)
-resfitcIcT<-bayesnowcasting(dados, nowSE = 201945, tweet = TRUE)
+lastday = as.Date("2024-03-23"), datasource=con)  # Not run without connection
+resfitcIsT<-bayesnowcasting(dados, nowSE = 202412)
 }

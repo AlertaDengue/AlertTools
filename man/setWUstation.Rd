@@ -14,9 +14,6 @@ secondary_station}
 
 \item{senha}{for the connection to the project database}
 }
-\value{
-
-}
 \description{
 Set primary and secondary meteorological stations associated 
 with one or more cities of the same state

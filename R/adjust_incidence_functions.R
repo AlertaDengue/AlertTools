@@ -24,8 +24,8 @@
 #'@return data.frame with median and 95percent 
 #'confidence interval for the predicted cases-to-be-notified
 #'@examples
-#'d <- getCases(cities = 4314902, dataini = "sinpri")
-#'resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202111, datasource = con)
+#'d <- getCases(cities = 1200427, dataini = "sinpri")
+#'resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202412, datasource = con)
 #'tail(resfit2)
 
 adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
@@ -115,9 +115,8 @@ adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 
 #'predicted cases-to-be-notified)
 #'@examples
 #'dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
-#'lastday = as.Date("2023-12-30"), datasource=con)  # Not run without connection
-#'resfitcIsT<-bayesnowcasting(dados, nowSE = 202403)
-#'resfitcIcT<-bayesnowcasting(dados, nowSE = 201945, tweet = TRUE)
+#'lastday = as.Date("2024-03-23"), datasource=con)  # Not run without connection
+#'resfitcIsT<-bayesnowcasting(dados, nowSE = 202412)
 
 bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = FALSE, tweet = F){
   
@@ -326,7 +325,7 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50, interacao = FALSE,
   }
   
   output.dengue <- nowcast.INLA(
-    model.day = model.dengue,
+    model.day = model.dengue, 
     dados.ag = dados.ag %>%
       mutate(TimeDelay = paste(Time, Delay))
   )

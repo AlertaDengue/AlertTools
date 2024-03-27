@@ -237,7 +237,6 @@ getPop <- function(cities, iniY = 2010, endY) {
       x[,c("geocode", "year", "pop")]
 }
 
-
 # GetCases --------------------------------------------------------------
 #'@description Create weekly time series from case data from server. The source is the SINAN. 
 #'@title Get Case Data and aggregate per week and area
@@ -604,6 +603,74 @@ getTweet <- function(cities, lastday = Sys.Date(), cid10 = "A90", datasource=con
       
       return(as.data.frame(st))      
       
+}
+
+# GetCaseslist --------------------------------------------------------------
+#'@description Get case data from server.  
+#'@title Get Case Data
+#'@export
+#'@param cities cities' geocode.
+#'@param lastday last day. Default is the last available. Format: "yyyy-mm-dd"
+#'@param dataini "notific" if data aggregated by notification date or "sinpri" if data aggregated
+#' if aggregated by date of first symptoms
+#'@param firstday is the first date of the time series to be produced.  Format: "yyyy-mm-dd"
+#'@param cid10 cid 10 code. Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8", 
+#'@param type case definition. Default = "notified". Other options: "probable", 
+#'"lab_confirmed", "all". All means returning the three counts. 
+#'@param datasource PostgreSQLConnection to project database. 
+#'@return data.frame with the data aggregated per week according to disease onset date.
+#'Notice that the names of the columns and the number of columns will change according to type. 
+#'To recover the original function behavior, use the default type.
+#'@examples
+#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
+#'d <- getCaseslist(cities = c(4209102, 3304557),firstday = as.Date("2024-01-01")) # dengue
+#'d <- getCaseslist(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
+#'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
+#'d <- getCaseslist(cities = 3304557, firstday = as.Date("2023-01-01"),dataini) 
+#'tail(d)
+
+getCaseslist <- function(cities, lastday = Sys.Date(), firstday = as.Date("2022-01-01"), cid10 = "A90", 
+                     datasource=con) {
+      
+      require(lubridate)
+      assert_that(class(cities) %in% c("integer","numeric"), 
+                  msg = "cities should be a vector of numeric geocodes") 
+      
+      assert_that(dataini %in% c("sinpri", "notific"), msg="getCases: dataini should 
+                                                           be sinpri or notific. Check it!")
+      cities <- sapply(cities, function(x) sevendigitgeocode(x))
+      
+      # dealing with synonimous cid 
+      if (cid10 == "A90") {cid <- cid10} else{ # dengue, dengue hemorragica
+            if (cid10 %in% c("A92", "A920","A92.0")) { # chik
+                  cid <-c("A92", "A920","A92.0")
+                  cid10 <- "A92.0"}  else{
+                        if (cid10 %in% c("A92.8","A928")){  # zika
+                              cid <- c("A92.8","A928")
+                              cid10 <- "A92.8"                      
+                        }                  
+                  }
+      }
+      if (!(cid10 %in% c("A90","A92.0","A92.8")))stop(paste("Eu nao conheco esse cid10",cid10))
+      
+      # reading notification data form the database 
+      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+      sqlcid = paste("'", str_c(cid, collapse = "','"),"'", sep="") # dealing with multiple cids for the same disease  
+      
+      
+      comando <- paste("SELECT * from \"Municipio\".\"Notificacao\" WHERE dt_digita <= '",lastday, 
+                             "' AND dt_digita >= '",firstday, "' AND municipio_geocodigo IN (", sqlcity, 
+                             ") AND cid10_codigo IN(", sqlcid,")", sep="")
+            
+            dd <- dbGetQuery(datasource,comando)
+            
+            if(nrow(dd)==0)stop("getCaseslist found no data")
+            
+            # pegando nome da cidade e populacao 
+            sql2 <- paste("SELECT nome,populacao,geocodigo from \"Dengue_global\".\"Municipio\" WHERE geocodigo IN(", sqlcity,")") 
+            varglobais <- dbGetQuery(datasource,sql2)
+      
+      return(dd)  
 }
 
 
