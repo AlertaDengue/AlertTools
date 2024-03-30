@@ -63,7 +63,7 @@ nowcast.INLA <- function(dados.ag, model.day,...){
     {inla(formula = model.day, 
                  family = "nbinomial", 
                  data = dados.ag,
-                 num.threads = 4,verbose = TRUE,
+                 num.threads = 4,verbose = FALSE,
                  control.predictor = list(link = 1, compute = T),
                  control.compute = list( config = T),
                  ...

@@ -6,6 +6,7 @@
 \usage{
 adjustIncidence(
   obj,
+  datas,
   method = "none",
   pdig = plnorm((1:20) * 7, 2.5016, 1.1013),
   Dmax = 10,
@@ -19,6 +20,9 @@ adjustIncidence(
 \item{obj}{data.frame with crude weekly cases (not adjusted). This data.frame 
 comes from the getCases function (if withdivision = FALSE), of getCases followed
 by casesinlocality (if dataframe is available per bairro)}
+
+\item{datas}{data.frame with notification data. Requires: municipio_geocodigo,
+dt_sin_pro, dt_digita, dt_notific.}
 
 \item{method}{"bayesian" or "none". The later just repeats case values}
 
@@ -45,6 +49,8 @@ the cases that will be reported in the future.
 }
 \examples{
 d <- getCases(cities = 1200427, dataini = "sinpri")
-resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202412, datasource = con)
-tail(resfit2)
+resfit<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202412, datasource = con)
+tail(resfit)
+dados <-
+resfit<-adjustIncidence(obj=d, datas ,method = "bayesian", nowSE = 202412, datasource = con)
 }

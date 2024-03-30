@@ -347,6 +347,8 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       casos$inc <- casos$casos/casos$pop*100000
       casos$inc_prov <- casos$cas_prov/casos$pop*100000 # novo
       
+      if(nowcasting == "bayesian") # 
+            load("caselist.RData")
       # Reading tweets 
       #if(cid10 == "A90"){
       #      print("Reading tweets...")
@@ -393,7 +395,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             if(nowcasting != "none"){  # handling errors in bayesian nowcast
                try(cas.x <- casos %>% 
                       filter(cidade == x) %>%
-                      adjustIncidence(method = nowcasting,  
+                      adjustIncidence(method = nowcasting, datas = caselist, 
                                       nowSE = datarelatorio, 
                                       nyears = 1)) 
             }

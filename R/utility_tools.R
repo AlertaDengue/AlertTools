@@ -441,7 +441,7 @@ getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE, datasourc
 #'@return vector with names of the cities.
 #'@examples
 #'getCidades(regional = "Metropolitana I", uf="Rio de Janeiro")
-#'getCidades(uf="Maranhão")
+#'getCidades(uf="Acre")
 #'getCidades(uf="Maranhão", macroregional = "Norte")
 
 getCidades <- function(regional, macroregional, uf, datasource=con){

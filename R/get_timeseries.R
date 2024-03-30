@@ -251,6 +251,7 @@ getPop <- function(cities, iniY = 2010, endY) {
 #'@param type case definition. Default = "notified". Other options: "probable", 
 #'"lab_confirmed", "all". All means returning the three counts. 
 #'@param datasource PostgreSQLConnection to project database. 
+#'@param returndata TRUE if returns individual data as well. 
 #'@return data.frame with the data aggregated per week according to disease onset date.
 #'Notice that the names of the columns and the number of columns will change according to type. 
 #'To recover the original function behavior, use the default type.
@@ -406,6 +407,9 @@ getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2018-01-0
       #if(type == "probable") return(subset(st, select = -c(casos, cas_lab)))
       #if(type == "lab_confirmed") return(subset(st, select = -c(casos, cas_prov)))
       #if(type == "all") return(st)
+      caselist <- dd
+      save(caselist, file ="caselist.RData")
+      message("individual data saved in caselist.RData.")
       st  
 }
 

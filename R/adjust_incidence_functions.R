@@ -12,6 +12,8 @@
 #'@param obj data.frame with crude weekly cases (not adjusted). This data.frame 
 #'comes from the getCases function (if withdivision = FALSE), of getCases followed
 #' by casesinlocality (if dataframe is available per bairro)  
+#' @param datas data.frame with notification data. Requires: municipio_geocodigo,
+#' dt_sin_pro, dt_digita, dt_notific. 
 #'@param method "bayesian" or "none". The later just repeats case values
 #'@param pdig for the "fixedprob" method. It is a vector of probability of been 
 #'typed in the database up to 1, 2, 3, n, weeks after symptoms onset. DEPRECATED.
@@ -24,11 +26,23 @@
 #'@return data.frame with median and 95percent 
 #'confidence interval for the predicted cases-to-be-notified
 #'@examples
-#'d <- getCases(cities = 1200427, dataini = "sinpri")
-#'resfit2<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202412, datasource = con)
-#'tail(resfit2)
+#'muns <- getCidades(uf = "Acre", regional = "Baixo Acre e Purus")
+#'t1 <- Sys.time()
+#'d <- getCases(cities = muns$municipio_geocodigo, dataini = "sinpri")
+#'dd <- d[d$cidade == 1200401,]
+#'t1 <- Sys.time()
+#'resfit<-adjustIncidence(obj=dd, method = "bayesian", nowSE = 202412, datasource = con)
+#'t2 <- Sys.time()
+#'message(paste("total time was", t2-t1))
 
-adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
+#'# Using argument 'datas' is good to save time with dataset access
+#'t1 <- Sys.time()
+#'load("caselist.RData")  # output of getCases
+#'resfit<-adjustIncidence(obj=dd, datas = caselist, method = "bayesian", 
+#'nowSE = 202412, datasource = con)
+#'t2 <- Sys.time()
+
+adjustIncidence<-function(obj, datas, method = "none", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
                           Dmax=10, nyears = 2, datasource = con, nowSE, safelimit = 5){
   city <- unique(obj$cidade)  
   cid <- obj$CID10[1]
@@ -62,9 +76,13 @@ adjustIncidence<-function(obj, method = "none", pdig = plnorm((1:20)*7, 2.5016, 
  if (method == "bayesian"){
        message(paste("computing nowcasting for city ",city," date ",nowSE, "..."))
        nowday <- SE2date(nowSE)$ini + 6
-       dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, 
-                             lastday = nowday, datasource = datasource)
-        
+       if(missing(datas)){
+             dados <- getdelaydata(cities=city, nyears = nyears, cid10 = cid, 
+                                   lastday = nowday, datasource = datasource)     
+       }else{
+             dados <- datas %>% filter(municipio_geocodigo == city)
+             assert_that(dim(dados)[1] > 0, msg="adjustIncidence: city not in dataset") 
+       }
        resfit<-bayesnowcasting(dados, Dmax = Dmax, nowSE = nowSE)
        
        # checking estimates
