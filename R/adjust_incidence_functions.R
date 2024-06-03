@@ -29,9 +29,11 @@
 #'muns <- getCidades(uf = "Acre", regional = "Baixo Acre e Purus")
 #'t1 <- Sys.time()
 #'d <- getCases(cities = muns$municipio_geocodigo, dataini = "sinpri")
+#'d <- getCases(cities = 3302700, dataini = "sinpri")
 #'dd <- d[d$cidade == 1200401,]
 #'t1 <- Sys.time()
-#'resfit<-adjustIncidence(obj=dd, method = "bayesian", nowSE = 202412, datasource = con)
+#'resfit0<-adjustIncidence(obj=dd, method = "bayesian", nowSE = 202414, 
+#'interation = TRUE, datasource = con)
 #'t2 <- Sys.time()
 #'message(paste("total time was", t2-t1))
 
@@ -39,11 +41,11 @@
 #'t1 <- Sys.time()
 #'load("caselist.RData")  # output of getCases
 #'resfit<-adjustIncidence(obj=dd, datas = caselist, method = "bayesian", 
-#'nowSE = 202412, datasource = con)
+#'nowSE = 202414,datasource = con)
 #'t2 <- Sys.time()
 
 adjustIncidence<-function(obj, datas, method = "none", pdig = plnorm((1:20)*7, 2.5016, 1.1013), 
-                          Dmax=10, nyears = 2, datasource = con, nowSE, safelimit = 5){
+                          Dmax=10, nyears = 2, datasource = con, nowSE, safelimit = 5,...){
   city <- unique(obj$cidade)  
   cid <- obj$CID10[1]
   # checking if only one city in obj
