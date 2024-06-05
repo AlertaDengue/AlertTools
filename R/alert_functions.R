@@ -250,8 +250,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@param finalday if provided, uses only disease data reported up to that day
 #'@param iniSE first date of the disease data. Default = 201501. Minimum = 201001. 
 #'@param datarelatorio epidemiological week
-#'@param nowcasting  "fixedprob" for static model, "bayesian" for the dynamic model.
-#'"none" for not doing nowcast (default) 
+#'@param "bayesian" for the dynamic model, "none" for not doing nowcast (default) 
 #'@param completetail if sinan data is older than final_day, fill in the tail with NA (default) or 0.  
 #'@param dataini "notif" (default) or "sinpri" 
 #'@param writedb TRUE if it should write into the database, default is FALSE.
@@ -261,16 +260,11 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@examples
 #'cidades <- getCidades(uf = "Amapá",datasource = con)
 #'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[13:15] , cid10 = "A90",
-#'nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
+#'nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202419)
 #'tail(tabela_historico(res))
 #'res <- pipe_infodengue(cities = 4209102 , cid10 = "A90",
-                       #'nowcasting="bayesian", dataini= "sinpri", completetail = 0,
+                       #'nowcasting="none", dataini= "sinpri", completetail = 0,
                        #' datarelatorio = 202408)
-#'# User's parameters (not working)
-#'dd <- read.parameters(cities = c(3200300)) %>% mutate(limiar_epidemico = 100)
-#'res <- pipe_infodengue(cities = dd, cid10 = "A90", 
-#'finalday= "2018-08-12",nowcasting="none")
-#'restab <- tabela_historico(res)
 
 pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), 
                             iniSE = 201001, nowcasting="none", narule=NULL,
@@ -284,28 +278,9 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             finalday <- SE2date(datarelatorio)$ini+6
       }
       
-      # check dates
-      #last_sinan_date <- lastDBdate(tab = "sinan", cid10 = cid10, cities = cities)
-      #print(paste("last sinan date for",cid10 ,"is", last_sinan_date$se))
-      
-      #assert_that(!is.na(last_sinan_date$se), msg = paste("no sinan data for cid10", cid10)) 
-      
-      #if(last_sinan_date$se < datarelatorio) {
-      #      
-      #      if (userinput){
-      #            message(paste("last date in database is",last_sinan_date$se,
-      #                          ". Should I continue with SE =", datarelatorio,
-      #                          "? tecle Y if YES, or change to new date"))
-      #            x <- scan("stdin", character(), n = 1)
-      #             if(x!="Y") { 
-      #                   datarelatorio <- as.numeric(x)   
-      #                   } else {completetail <- 0} # complete the tail with zeros
-      #      } 
-      #}
-      
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
       if (class(cities) %in% c("integer","numeric")) {
-            pars_table <- read.parameters(cities = cities, cid10 = cid10)
+            pars_table <- read.parameters(cities = cities, cid10 = cid10) # poderia ser guardado localmente
             message("reading parameters from database")
       } else { # if city contains data already
             if(all(c("municipio_geocodigo","limiar_preseason",
@@ -326,21 +301,13 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       print(paste("sera'feita analise de",nlugares,"cidade(s):"))
       print(cidades)      
       
-      
-      estacoes_cidades <- getWUstation(cidades)
-      estacoes <- na.omit(unique(c(estacoes_cidades$estacao_wu_sec, estacoes_cidades$codigo_estacao_wu)))
-      print("usando dados de clima das estacoes:")
-      print(estacoes)
-      
       # Reading the meteorological data
       #print('Obtendo os dados de clima...')
-      #varscli <- na.omit(unique(c(pars_table$varcli, pars_table$varcli2)))
       varscli <- c("umid_max", "temp_min", "umid_min","umid_med","temp_med","temp_max")
-      cliwu <- getWU(stations = estacoes, vars = varscli, finalday = finalday)
-      
+      cli <- getClima(cities, vars = varscli, iniSE = iniSE, finalday = finalday)
+      message("getCli done")
       # Reading Cases
       print("Obtendo dados de notificacao ...")
-      print(cities)
       casos <- getCases(cities, lastday = finalday, cid10 = cid10, type = "all", # novo
                         dataini = dataini, completetail = completetail) 
       message("getCases done")
@@ -349,88 +316,17 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       
       if(nowcasting == "bayesian") # 
             load("caselist.RData")
-      # Reading tweets 
-      #if(cid10 == "A90"){
-      #      print("Reading tweets...")
-      #      dT = getTweet(cities, lastday = finalday, cid10 = "A90")
-      #}
       
+      # juntando
+      casoscli <- casos %>%
+            left_join(cli, by = join_by(cidade == geocodigo, SE))
       
+      casoscli$tweet <- NA  # legacy
       # para cada cidade ...
       
-      ## FUN  calc.alerta (internal)
-      calc.alerta <- function(x){  #x = cities[i]
-         message(x)
-            # params
-            parcli.x <- estacoes_cidades[estacoes_cidades$municipio_geocodigo == x, c("codigo_estacao_wu", "estacao_wu_sec")]      
-            varcli.x <- na.omit(c(pars_table$varcli[pars_table$municipio_geocodigo == x],
-                                  pars_table$varcli2[pars_table$municipio_geocodigo == x]))
-            if("NA" %in% varcli.x) varcli.x <- varcli.x[varcli.x!="NA"]
-            # escolhe a melhor serie meteorologica para a cidade, usando apenas a primeira var 
-            cli.x <- bestWU(series = list(cliwu[cliwu$estacao == parcli.x[[1]],],
-                                          cliwu[cliwu$estacao == parcli.x[[2]],]), var = varcli.x[1])
-            
-            # se nenhuma estacao tiver dados (cli.x = NULL), 
-            propNA <- sum(is.na(cli.x[,varcli.x[1]]))/nrow(cli.x[1])
-            
-            lastdatewu <- ifelse(propNA < 1, cli.x$SE[max(which(is.na(cli.x[,varcli.x[1]])==FALSE))],
-                                 NA)
-            print(paste("Rodando alerta para ", x, "usando estacao", cli.x$estacao[1],
-                        "(ultima leitura:", lastdatewu,")"))
-            
-            # climate data interpolation using arima (if there is any data) 
-            if(!is.null(narule) & !is.na(lastdatewu)){
-                  cli.x[,varcli.x[1]] <- nafill(cli.x[,varcli.x[1]], rule = narule) 
-                  if(length(varcli.x) == 2) cli.x[,varcli.x[2]] <- nafill(cli.x[,varcli.x[2]], rule = narule) 
-            } 
-            
-            # casos + nowcasting + Rt + incidencia 
-            
-            cas.x <- casos %>% 
-                  filter(cidade == x) %>%
-                  adjustIncidence(method = "none",  
-                                  nowSE = datarelatorio, 
-                                  nyears = 1) 
-             
-            if(nowcasting != "none"){  # handling errors in bayesian nowcast
-               try(cas.x <- casos %>% 
-                      filter(cidade == x) %>%
-                      adjustIncidence(method = nowcasting, datas = caselist, 
-                                      nowSE = datarelatorio, 
-                                      nyears = 1)) 
-            }
-                        
-            cas.x <- cas.x %>%
-               Rt(count = "tcasesmed",gtdist="normal", meangt=3, sdgt = 1) %>%
-               mutate(inc = tcasesmed/pop*100000)  %>%
-               arrange(SE)
-            
-            # Joining all data
-            ale <- cas.x %>% 
-                  left_join(cli.x, by = c("SE"))
-            
-            if(exists("dT")) {
-                  dt.x <- dT[dT$Municipio_geocodigo == x, c("SE", "tweet")]
-                  if(nrow(dt.x) > 0){
-                        ale <- merge(ale, dt.x, by = "SE",all.x = T)      
-                  } else ale$tweet <- 0
-            } else{
-                  ale$tweet <- 0
-            }
-            
-            assert_that(nrow(ale)>0, msg = "check alertapipeline. error makes nrow(ale) = 0")
-            
-            # build rules
-            crit.x <- pars_table[pars_table$municipio_geocodigo==x,] # parameters
-            crit.x.vector <- structure(as.character(crit.x), names = as.character(names(crit.x))) # dataframe -> vector
-            criteriaU <- setCriteria(rule = crit.x$codmodelo, values = crit.x.vector) # valued criteria
-            
-            # Apply alert rules
-            y <- fouralert(ale, crit = criteriaU)  # apply alert 
-            y     
-      }      
-      
-      res <- lapply(cidades, calc.alerta) %>% setNames(cidades) # antes o nome era character, agora e o geocodigo
+      res <- lapply(cidades, calc.alerta, 
+                    pars = list(casoscli, datarelatorio,nowcasting, pars_table)) %>% 
+            setNames(cidades) # antes o nome era character, agora e o geocodigo
       #       nick <- gsub(" ", "", nome, fixed = TRUE)
       #       #names(alerta) <- nick
       
@@ -438,6 +334,58 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       
       res
 }
+
+
+# calc.alerta -------------------------------------------
+#'@title Calculates the attention levels for one area. 
+#'@description Function to compute the alert levels for one spatial unit, defined by level. 
+#'Internal function used by the dengue_pipeline.
+#'@param x filter variable indicating geocode at municipal, state or other level.
+#'@param level default is municipio. Other options are: regional, macrorregiao 
+#'and uf (not implemented yet)
+#'@return data.frame with the data with alert level. 
+
+calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
+      
+      d <- pars[[1]] 
+      datarelatorio <- pars[[2]]
+      nowcasting <- pars[[3]]
+      pars_table <- pars[[4]]
+      
+      # casos + nowcasting + Rt + incidencia 
+      
+      if(level == "municipio"){
+            cas.x <- d %>% 
+                  filter(cidade == x) %>%
+                  adjustIncidence(method = "none",  
+                                  nowSE = datarelatorio, 
+                                  nyears = 1) 
+            
+            if(nowcasting == "bayesian"){  # handling errors in bayesian nowcast
+                  try(cas.x <- d %>% 
+                            filter(cidade == x) %>%
+                            adjustIncidence(method = nowcasting, datas = caselist, 
+                                            nowSE = datarelatorio, 
+                                            nyears = 1)) 
+            }
+                  
+            cas.x <- cas.x %>%
+                  Rt(count = "tcasesmed",gtdist="normal", meangt=3, sdgt = 1) %>%
+                        mutate(inc = tcasesmed/pop*100000)  %>%
+                        arrange(SE)
+            
+      
+      assert_that(nrow(cas.x)>0, msg = "check alertapipeline. error makes nrow = 0")
+      # build rules
+      crit.x <- pars_table[pars_table$municipio_geocodigo==x,] # parameters
+      crit.x.vector <- structure(as.character(crit.x), names = as.character(names(crit.x))) # dataframe -> vector
+      criteriaU <- setCriteria(rule = crit.x$codmodelo, values = crit.x.vector) # valued criteria
+      
+      # Apply alert rules
+      y <- fouralert(cas.x, crit = criteriaU)  # apply alert 
+      }
+      y     
+}      
 
 
 #tabela_historico --------------------------------------------------------------------
