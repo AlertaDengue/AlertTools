@@ -23,6 +23,6 @@ consult database to get list of cities for regional, macroregional or uf.
 }
 \examples{
 getCidades(regional = "Metropolitana I", uf="Rio de Janeiro")
-getCidades(uf="Maranhão")
+getCidades(uf="Acre")
 getCidades(uf="Maranhão", macroregional = "Norte")
 }

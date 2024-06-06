@@ -258,9 +258,12 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@return data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE.
 #'@examples
-#'cidades <- getCidades(uf = "Amapá",datasource = con)
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo[13:15] , cid10 = "A90",
+#'cidades <- getCidades(uf = "Rio de Janeiro",datasource = con)
+#'t1 <- Sys.time()
+#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90",
 #'nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202419)
+#'t2 <- Sys.time()
+#'message(paste("total time was", t2-t1))
 #'tail(tabela_historico(res))
 #'res <- pipe_infodengue(cities = 4209102 , cid10 = "A90",
                        #'nowcasting="none", dataini= "sinpri", completetail = 0,
@@ -324,11 +327,9 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       casoscli$tweet <- NA  # legacy
       # para cada cidade ...
       
-      res <- lapply(cidades, calc.alerta, 
+      res <- mclapply(cidades, calc.alerta, 
                     pars = list(casoscli, datarelatorio,nowcasting, pars_table)) %>% 
-            setNames(cidades) # antes o nome era character, agora e o geocodigo
-      #       nick <- gsub(" ", "", nome, fixed = TRUE)
-      #       #names(alerta) <- nick
+            setNames(cidades) # o nome e'o geocodigo
       
       if (writedb == TRUE) write_alerta(alerta)
       

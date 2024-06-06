@@ -31,9 +31,6 @@ and all parameters, these will replace the database's parameters.}
 
 \item{iniSE}{first date of the disease data. Default = 201501. Minimum = 201001.}
 
-\item{nowcasting}{"fixedprob" for static model, "bayesian" for the dynamic model.
-"none" for not doing nowcast (default)}
-
 \item{narule}{how to treat missing climate data. Do nothing (default), "zero" fills 
 with zeros, "linear" for linear interpolation, "arima" for inter and extrapolation.}
 
@@ -44,6 +41,8 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 \item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
 
 \item{dataini}{"notif" (default) or "sinpri"}
+
+\item{"bayesian"}{for the dynamic model, "none" for not doing nowcast (default)}
 }
 \value{
 data.frame with the week condition and the number of weeks within the 
@@ -53,16 +52,14 @@ last lag weeks with conditions = TRUE.
 wrap of functions used by Infodengue.
 }
 \examples{
-cidades <- getCidades(uf = "Amapá",datasource = con)
-res <- pipe_infodengue(cities = cidades$municipio_geocodigo[13:15] , cid10 = "A90",
-nowcasting="none", dataini= "sinpri", completetail = 0, datarelatorio = 202124)
+cidades <- getCidades(uf = "Rio de Janeiro",datasource = con)
+t1 <- Sys.time()
+res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90",
+nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202419)
+t2 <- Sys.time()
+message(paste("total time was", t2-t1))
 tail(tabela_historico(res))
 res <- pipe_infodengue(cities = 4209102 , cid10 = "A90",
-nowcasting="bayesian", dataini= "sinpri", completetail = 0,
+nowcasting="none", dataini= "sinpri", completetail = 0,
 datarelatorio = 202408)
-# User's parameters (not working)
-dd <- read.parameters(cities = c(3200300)) \%>\% mutate(limiar_epidemico = 100)
-res <- pipe_infodengue(cities = dd, cid10 = "A90", 
-finalday= "2018-08-12",nowcasting="none")
-restab <- tabela_historico(res)
 }

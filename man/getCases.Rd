@@ -33,6 +33,8 @@ if aggregated by date of first symptoms}
 "lab_confirmed", "all". All means returning the three counts.}
 
 \item{datasource}{PostgreSQLConnection to project database.}
+
+\item{returndata}{TRUE if returns individual data as well.}
 }
 \value{
 data.frame with the data aggregated per week according to disease onset date.

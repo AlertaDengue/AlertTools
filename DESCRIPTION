@@ -20,7 +20,8 @@ Imports:
     tidyverse,
     lubridate,
     assertthat,
-    brpop
+    brpop,
+    parallel
 VignetteBuilder: knitr
 RoxygenNote: 7.3.1
 LazyData: true
