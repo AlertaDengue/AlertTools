@@ -260,8 +260,9 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@examples
 #'cidades <- getCidades(uf = "Rio de Janeiro",datasource = con)
 #'t1 <- Sys.time()
-#'res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90",
+#'res <- pipe_infodengue(cities = 3304557, cid10 = "A90",
 #'nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202419)
+#'tail(tabela_historico(res))
 #'t2 <- Sys.time()
 #'message(paste("total time was", t2-t1))
 #'tail(tabela_historico(res))
@@ -271,8 +272,8 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 
 pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), 
                             iniSE = 201001, nowcasting="none", narule=NULL,
-                            writedb = FALSE, datasource = con, userinput =FALSE,
-                            completetail = NA, dataini = "notific"){
+                            writedb = FALSE, datasource = con, completetail = NA,
+                            dataini = "notific"){
       
       
       if(missing(datarelatorio)) {
@@ -298,7 +299,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             )
       }
       
-      # number of cities 
+      # number of cities and other divisions 
       nlugares <- nrow(pars_table)
       cidades <- pars_table$municipio_geocodigo
       print(paste("sera'feita analise de",nlugares,"cidade(s):"))
@@ -316,6 +317,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       message("getCases done")
       casos$inc <- casos$casos/casos$pop*100000
       casos$inc_prov <- casos$cas_prov/casos$pop*100000 # novo
+      caselist <- NA
       
       if(nowcasting == "bayesian") # 
             load("caselist.RData")
@@ -325,10 +327,12 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
             left_join(cli, by = join_by(cidade == geocodigo, SE))
       
       casoscli$tweet <- NA  # legacy
+      
       # para cada cidade ...
       
       res <- mclapply(cidades, calc.alerta, 
-                    pars = list(casoscli, datarelatorio,nowcasting, pars_table)) %>% 
+                    pars = list(casoscli, datarelatorio,nowcasting, 
+                                pars_table, caselist), mc.cores = detectCores()) %>% 
             setNames(cidades) # o nome e'o geocodigo
       
       if (writedb == TRUE) write_alerta(alerta)
@@ -352,6 +356,7 @@ calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
       datarelatorio <- pars[[2]]
       nowcasting <- pars[[3]]
       pars_table <- pars[[4]]
+      caselist <- pars[[5]]
       
       # casos + nowcasting + Rt + incidencia 
       
