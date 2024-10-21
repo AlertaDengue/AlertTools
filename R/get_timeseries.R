@@ -265,8 +265,9 @@ getPop <- function(cities, iniY = 2010, endY) {
 #'firstday = as.Date("2023-01-01"), dataini = "sinpri") 
 #'tail(d)
 
-getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2018-01-01"), cid10 = "A90", 
-                     dataini = "notific", completetail = NA, type = "notified", datasource=con) {
+getCases <- function(cities, lastday = Sys.Date(), firstday = as.Date("2018-01-01"), 
+                     cid10 = "A90", dataini = "notific", completetail = NA, 
+                     type = "notified", datasource=con) {
       
       require(lubridate)
       assert_that(class(cities) %in% c("integer","numeric"), 

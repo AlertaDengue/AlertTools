@@ -1,4 +1,6 @@
 setwd("../..")
+library(assertthat)
+library(tidyverse)
 
 ####================================================
 # Testing functions episem, data2SE, SE2date, seqSE. epiyear
@@ -84,4 +86,6 @@ rr <- getRegionais(3304557, uf = "Rio de Janeiro")
 
 cc <- getCidades(regional = "Metropolitana I", uf="Rio de Janeiro",datasource=con)
 test_that("getCidades: produce required output",{
-      expect_named(cc, c("municipio_geocodigo","nome","nome_regional","nome_macroreg","uf"),ignore.order = TRUE)})
+      expect_named(cc, c("municipio_geocodigo","cidade","regional","macroregional",
+                         "regional_id","macroregional_id", "uf"),
+                   ignore.order = TRUE)})
