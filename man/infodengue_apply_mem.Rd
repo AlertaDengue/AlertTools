@@ -88,7 +88,6 @@ mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 4212650,4217006,4212700,4214706,4213104,4200804)
 mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
 thresC <- infodengue_apply_mem(mun_list, cid10 = "A92.0", database=con)
-
 A nice way to visualize the calculated thresholds
 plot(thres)
 }

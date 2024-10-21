@@ -7,7 +7,7 @@
 getCidades(regional, macroregional, uf, datasource = con)
 }
 \arguments{
-\item{regional}{full name of the regional.}
+\item{regional}{full name of the regional. Use getRegionais() to obtain the correct spelling.}
 
 \item{macroregional}{full name of the macroregional.}
 
@@ -24,5 +24,5 @@ consult database to get list of cities for regional, macroregional or uf.
 \examples{
 getCidades(regional = "Metropolitana I", uf="Rio de Janeiro")
 getCidades(uf="Acre")
-getCidades(uf="Maranhão", macroregional = "Norte")
+getCidades(uf="Maranhão", macroregional = "NORTE")
 }

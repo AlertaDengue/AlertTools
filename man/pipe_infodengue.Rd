@@ -14,7 +14,6 @@ pipe_infodengue(
   narule = NULL,
   writedb = FALSE,
   datasource = con,
-  userinput = FALSE,
   completetail = NA,
   dataini = "notific"
 )
@@ -54,8 +53,9 @@ wrap of functions used by Infodengue.
 \examples{
 cidades <- getCidades(uf = "Rio de Janeiro",datasource = con)
 t1 <- Sys.time()
-res <- pipe_infodengue(cities = cidades$municipio_geocodigo, cid10 = "A90",
+res <- pipe_infodengue(cities = 3304557, cid10 = "A90",
 nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202419)
+tail(tabela_historico(res))
 t2 <- Sys.time()
 message(paste("total time was", t2-t1))
 tail(tabela_historico(res))

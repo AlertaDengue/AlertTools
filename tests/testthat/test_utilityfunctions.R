@@ -77,8 +77,10 @@ rm(out1, out2, out3, out4)
 
 
 ####==================================
-# getCidades ----
+# getRegional e getCidades ----
 ####==================================
+
+rr <- getRegionais(3304557, uf = "Rio de Janeiro")
 
 cc <- getCidades(regional = "Metropolitana I", uf="Rio de Janeiro",datasource=con)
 test_that("getCidades: produce required output",{
