@@ -151,19 +151,20 @@ bestWU <- function(series,var){
 #'@param datasource a valid database connection 
 #'@return data.frame with the weekly data (cidade data temp_min tmed tmax umin umed umax pressaomin pressaomed pressaomax)
 #'@examples
-#'NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-#'res = getClima(cities = c(3304557), vars=c("temp_min","temp_max") , iniSE = 201801)
-#'res = getClima(cities = c(3304557, 3200300), iniSE = 202003)
+#'res = getClima(cities = c(3304557), vars=c("temp_min","temp_max") , iniSE = 202201)
+#'res = getClima(cities = c(3304557, 3200300), iniSE = 202403)
 #'tail(res)
 
-getClima <- function(cities, vars = c("temp_min","temp_max","temp_med","umid_min",
+getClima <- function(cities, vars = c("temp_min","temp_max","temp_med","umid_min","ampT",
                                       "umid_med","umid_max", "precip_tot","precip_max"),
                      finalday = Sys.Date(), iniSE = 201501, lastSE, datasource=con) {
       
       # validate climate variables
       if(any(!(vars %in% vars))) stop("climate variable(s) unknown or mispecified")
+      if("ampT" %in% vars) {varsred = vars[-which(vars == "ampT")]} else
+      {varsred = vars}
       
-      assert_that(all(c("temp_min","temp_max") %in% vars), msg="getClima: vars should 
+      assert_that(all(c("temp_min","temp_max") %in% varsred), msg="getClima: vars should 
                                                            include temp_min, temp_max. Check it!")
       # dates
       #if(missing(lastSE)) lastSE <- epiweek(finalday, format = "Y-m-d")
@@ -171,7 +172,7 @@ getClima <- function(cities, vars = c("temp_min","temp_max","temp_med","umid_min
       
       if(class(datasource) == "PostgreSQLConnection"){
             sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
-            varscomplete = c("geocodigo", "date", vars)
+            varscomplete = c("geocodigo", "date", varsred)
             sqlvars = paste("", str_c(varscomplete, collapse = ","), sep="")
             
             comando <- paste("SELECT ", sqlvars ," from \"weather\".\"copernicus_brasil\" 
@@ -182,12 +183,13 @@ getClima <- function(cities, vars = c("temp_min","temp_max","temp_med","umid_min
       }
       
       # agregando vars climaticas por semana
-      vars <- c(vars, "ampT") # calculating daily thermal amplitude
       d1 <- d %>% 
             mutate(SE = data2SE(date, format = "%Y-%m-%d")) %>% # creating column SE
-            mutate(ampT = temp_max - temp_min) %>% 
             group_by(geocodigo,SE)  %>%
-            summarise_at(vars(vars),list(mean),na.rm=TRUE) 
+            summarise_at(vars(varsred),list(mean),na.rm=TRUE) 
+      
+      if("ampT" %in% vars) d1$ampT = d1$temp_max - d1$temp_min 
+
       
       # check output-----------------------------------------
       assert_that(all(c("geocodigo","SE") %in% names (d1)), msg = "debug getClima required")
