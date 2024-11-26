@@ -13,7 +13,8 @@ adjustIncidence(
   nyears = 2,
   datasource = con,
   nowSE,
-  safelimit = 5
+  safelimit = 5,
+  ...
 )
 }
 \arguments{
@@ -48,9 +49,20 @@ This function estimate the time series of reported cases by adding
 the cases that will be reported in the future.
 }
 \examples{
-d <- getCases(cities = 1200427, dataini = "sinpri")
-resfit<-adjustIncidence(obj=d, method = "bayesian", nowSE = 202412, datasource = con)
-tail(resfit)
-dados <-
-resfit<-adjustIncidence(obj=d, datas ,method = "bayesian", nowSE = 202412, datasource = con)
+muns <- getCidades(uf = "Acre", regional = "Baixo Acre e Purus")
+t1 <- Sys.time()
+d <- getCases(cities = muns$municipio_geocodigo, dataini = "sinpri")
+d <- getCases(cities = 3302700, dataini = "sinpri")
+dd <- d[d$cidade == 1200401,]
+t1 <- Sys.time()
+resfit0<-adjustIncidence(obj=dd, method = "bayesian", nowSE = 202414, 
+interation = TRUE, datasource = con)
+t2 <- Sys.time()
+message(paste("total time was", t2-t1))
+# Using argument 'datas' is good to save time with dataset access
+t1 <- Sys.time()
+load("caselist.RData")  # output of getCases
+resfit<-adjustIncidence(obj=dd, datas = caselist, method = "bayesian", 
+nowSE = 202414,datasource = con)
+t2 <- Sys.time()
 }

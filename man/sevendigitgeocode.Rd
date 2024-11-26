@@ -39,4 +39,5 @@ lastDBdate(tab = "clima_wu", stations = "SBAF", datasource=con)
 lastDBdate(tab = "clima_wu", cities = cidades$municipio_geocodigo, datasource=con)  
 sevendigitgeocode(330455)
 sevendigitgeocode(3304557)
+sevendigitgeocode(261153)
 }

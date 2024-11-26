@@ -33,6 +33,8 @@ if aggregated by date of first symptoms}
 "lab_confirmed", "all". All means returning the three counts.}
 
 \item{datasource}{PostgreSQLConnection to project database.}
+
+\item{returndata}{TRUE if returns individual data as well.}
 }
 \value{
 data.frame with the data aggregated per week according to disease onset date.
@@ -44,7 +46,7 @@ Create weekly time series from case data from server. The source is the SINAN.
 }
 \examples{
 NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-d <- getCases(cities = 4209102, dataini = "sinpri", type = "all") # dengue
+d <- getCases(cities =  3106200, dataini = "sinpri", type = "all") # dengue
 d <- getCases(cities = 3300936, completetail = 0) # dengue
 d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")

@@ -115,7 +115,8 @@ lambdaIIP<-function(v=16,beta0=1.78) v/exp(beta0)
 #'gt <- GenTimeDist(cli$temp_med[1:50])
 #'contour(gt, ylab="time", xlab="generation time (week)")
 
-GenTimeDist <- function(serTemp, cid10 = "A90", GT.max = 10, smooth = "sinusoidal", nc = 1){
+GenTimeDist <- function(serTemp, cid10 = "A90", GT.max = 10,
+                        smooth = "sinusoidal", nc = 1){
       
       #disease-specific parameters --------------------
       if (cid10 == "A90"){ # dengue
