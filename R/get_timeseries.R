@@ -158,44 +158,47 @@ bestWU <- function(series,var){
 getClima <- function(cities, vars = c("temp_min","temp_max","temp_med","umid_min","ampT",
                                       "umid_med","umid_max", "precip_tot","precip_max"),
                      finalday = Sys.Date(), iniSE = 201501, lastSE, datasource=con) {
-      
-      # validate climate variables
-      if(any(!(vars %in% vars))) stop("climate variable(s) unknown or mispecified")
-      if("ampT" %in% vars) {varsred = vars[-which(vars == "ampT")]} else
-      {varsred = vars}
-      
-      assert_that(all(c("temp_min","temp_max") %in% varsred), msg="getClima: vars should 
+  
+  # validate climate variables
+  if(any(!(vars %in% vars))) stop("climate variable(s) unknown or mispecified")
+  if("ampT" %in% vars) {varsred = vars[-which(vars == "ampT")]} else
+  {varsred = vars}
+  
+  assert_that(all(c("temp_min","temp_max") %in% varsred), msg="getClima: vars should 
                                                            include temp_min, temp_max. Check it!")
-      # dates
-      #if(missing(lastSE)) lastSE <- epiweek(finalday, format = "Y-m-d")
-      iniday <- SE2date(iniSE)$ini
-      
-      if(class(datasource) == "PostgreSQLConnection"){
-            sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
-            varscomplete = c("geocodigo", "date", varsred)
-            sqlvars = paste("", str_c(varscomplete, collapse = ","), sep="")
-            
-            comando <- paste("SELECT ", sqlvars ," from \"weather\".\"copernicus_brasil\" 
-                        WHERE geocodigo IN  (", sqlcity, ") AND 
+  # dates
+  #if(missing(lastSE)) lastSE <- epiweek(finalday, format = "Y-m-d")
+  iniday <- SE2date(iniSE)$ini
+  
+  if(class(datasource) == "PostgreSQLConnection"){
+    sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
+    varscomplete = c("geocode", "date", varsred)
+    sqlvars = paste("", str_c(varscomplete, collapse = ","), sep="")
+    
+    comando <- paste("SELECT ", sqlvars ," from \"weather\".\"copernicus_bra\" 
+                        WHERE geocode IN  (", sqlcity, ") AND 
                          date <= '",finalday,"' AND date >= '", iniday, "'",sep="")
-            
-            d <- dbGetQuery(datasource,comando) 
-      }
-      
-      # agregando vars climaticas por semana
-      d1 <- d %>% 
-            mutate(SE = data2SE(date, format = "%Y-%m-%d")) %>% # creating column SE
-            group_by(geocodigo,SE)  %>%
-            summarise_at(vars(varsred),list(mean),na.rm=TRUE) 
-      
-      if("ampT" %in% vars) d1$ampT = d1$temp_max - d1$temp_min 
-
-      
-      # check output-----------------------------------------
-      assert_that(all(c("geocodigo","SE") %in% names (d1)), msg = "debug getClima required")
-      
-      d1
-      
+    
+    d <- dbGetQuery(datasource,comando) 
+  }
+  
+  # agregando vars climaticas por semana
+  d1 <- d %>% 
+    mutate(SE = data2SE(date, format = "%Y-%m-%d")) %>% # creating column SE
+    group_by(geocode,SE)  %>%
+    summarise_at(vars(varsred),list(mean),na.rm=TRUE) %>%
+    rename(geocodigo = geocode)
+  
+  d1$geocodigo <- as.numeric(d1$geocodigo)
+  
+  if("ampT" %in% vars) d1$ampT = d1$temp_max - d1$temp_min 
+  
+  
+  # check output-----------------------------------------
+  assert_that(all(c("geocodigo","SE") %in% names (d1)), msg = "debug getClima required")
+  
+  d1
+  
 }
 
 # getPop --------------------------------------------------------
