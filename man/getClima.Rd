@@ -6,8 +6,8 @@
 \usage{
 getClima(
   cities,
-  vars = c("temp_min", "temp_max", "temp_med", "umid_min", "umid_med", "umid_max",
-    "precip_tot", "precip_max"),
+  vars = c("temp_min", "temp_max", "temp_med", "umid_min", "ampT", "umid_med",
+    "umid_max", "precip_tot", "precip_max"),
   finalday = Sys.Date(),
   iniSE = 201501,
   lastSE,
@@ -36,8 +36,7 @@ Create weekly climate time series from satellite data in server
 taking the mean of the daily values. Data source: ERA5.
 }
 \examples{
-NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
-res = getClima(cities = c(3304557), vars=c("temp_min","temp_max") , iniSE = 201801)
-res = getClima(cities = c(3304557, 3200300), iniSE = 202003)
+res = getClima(cities = c(3304557), vars=c("temp_min","temp_max") , iniSE = 202201)
+res = getClima(cities = c(3304557, 3200300), iniSE = 202403)
 tail(res)
 }
