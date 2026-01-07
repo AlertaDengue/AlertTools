@@ -176,16 +176,16 @@ SE2date <- function(se){
 #'@param x numeric vector with epidemiological weeks , format 201945, or date
 #'@return data.frame with SE and first day.
 #'@examples
-#'daySEday(x=201812)
-#'daySEday(x = c(202041:202104))
-#'daySEday(x = c("2015-12-23", "2015-10-23", "2022-10-16"))
+#'daySEday(x=202612)
+#'daySEday(x = c(202541:202604))
+#'daySEday(x = c("2015-12-23", "2015-10-23", "2026-10-16"))
 
 daySEday <- function(x, format = "%Y-%m-%d"){
       #load("R/sysdata.rda")
       n <- length(x)
             if(class(x[1]) %in% c("numeric","integer")) {
-            assert_that(all(x > 200952 & x < 202500), msg = "day2SE: SE format = 
-                        201612, btw 201001 and 202452")
+            assert_that(all(x > 200952 & x < 202700), msg = "day2SE: SE format = 
+                        201612, btw 201001 and 202652")
                   
             res <- data.frame(SE = x, ini = as.Date("1970-01-01"))
                   
@@ -194,7 +194,7 @@ daySEday <- function(x, format = "%Y-%m-%d"){
             
             }
       if(class(x[1]) == "character") x <- as.Date(x, format = format)
-      assert_that(all(x <= "2024/12/31" & x >= "2010/01/01"))
+      assert_that(all(x <= "2027/01/03" & x >= "2010/01/01"))
       res <- data.frame(SE = NA, ini = x)
       for (i in 1:n) res$SE[i] <- SE[which(SE$Inicio<=x[i] & SE$Termino >= x[i]), "SE"]
       return(res)
