@@ -23,7 +23,7 @@ Imports:
     brpop,
     parallel
 VignetteBuilder: knitr
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 LazyData: true
 Depends: 
     R (>= 3.5)
