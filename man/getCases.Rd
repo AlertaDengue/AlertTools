@@ -50,6 +50,7 @@ d <- getCases(cities =  3106200, dataini = "sinpri", type = "all") # dengue
 d <- getCases(cities = 3300936, completetail = 0) # dengue
 d <- getCases(cities = 3304557, cid10="A92.0") # chikungunya, until last day available
 cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
-d <- getCases(cities = 3304557, firstday = as.Date("2023-01-01"),dataini = "sinpri") 
+d <- getCases(cities = cid$municipio_geocodigo[1:2], 
+firstday = as.Date("2023-01-01"), dataini = "sinpri") 
 tail(d)
 }

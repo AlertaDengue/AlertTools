@@ -156,7 +156,7 @@ lastepiweek <- function(ano){
 #'@param SE string vector with dates to be converted, format 201420
 #'@return data.frame with SE and first day.
 #'@examples
-#'SE2date(se=201812)
+#'SE2date(se=202612)
 #'SE2date(se = c(202001:202209))
 
 SE2date <- function(se){
@@ -214,7 +214,7 @@ daySEday <- function(x, format = "%Y-%m-%d"){
 #'@return data.frame with the epidemiological weeks and corresponding extreme days. 
 #'WARNING: only works from 2010 to 2024.
 #'@examples
-#'seqSE(202042, 202410)
+#'seqSE(202442, 202510)
 
 seqSE <- function(from, to){
       #load("R/sysdata.rda")
@@ -352,15 +352,15 @@ temp.predict <- function(v, plotar = FALSE){
             
             # Para saber os coeficientes da parte ARIMA atraves de criterios de selecao automatica:
             #automatica:
-            c.a<-auto.arima(x,max.p=5,max.q=5,max.P=5,max.Q=5)$arma
+            c.a <- forecast::auto.arima(x, max.p=5, max.q=5, max.P=5, max.Q=5)$arma
             # Modelo considerando a sazonalidade, e a parte ARIMA sugerida anteriormente:
-            modelo.sarima<-arima(na.approx(v),order=c.a[c(1,6,2)],seasonal=list(order=c(c.a[3],1,c.a[4]),period=52))
+            modelo.sarima <- arima(zoo::na.approx(v),order=c.a[c(1,6,2)],seasonal=list(order=c(c.a[3],1,c.a[4]),period=52))
             
             message(paste("temperature predicted", Nna, "steps ahead"  ))
             predito<-predict(modelo.sarima,n.ahead=Nna)$pred
             
             if (plotar == T){
-                  fitado<-fitted(modelo.sarima)
+                  fitado <- forecast::fitted(modelo.sarima)
                   # Plot para ver o desempenho do modelo in/outsample
                   plot(c(fitado,predito),col="orange",type="l",ylab="")
                   lines(x,type="l")
@@ -407,7 +407,7 @@ getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE,
         sqlquery = paste("SELECT geocodigo, nome, regional, id_regional, 
         macroregional, macroregional_id, uf FROM \"Dengue_global\".\"Municipio\"
                          where uf = '", uf, "'", sep="")
-        d = dbGetQuery(datasource, sqlquery)    
+        d = DBI::dbGetQuery(datasource, sqlquery)    
   }
         assert_that(nrow(d) > 0, 
                     msg = (paste("getRegionais: 
@@ -452,7 +452,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
             sqlquery = paste("SELECT geocodigo, nome, regional, id_regional, 
         macroregional, macroregional_id, uf FROM \"Dengue_global\".\"Municipio\"
                          WHERE uf = '", uf, "' AND regional = '", regional ,"'", sep="")
-            d = dbGetQuery(datasource, sqlquery)    
+            d = DBI::dbGetQuery(datasource, sqlquery)    
             
             assert_that(nrow(d) > 0, msg = "getCidades: found no city. Check names.")
             names(d) <- c("municipio_geocodigo", "cidade", "regional", 
@@ -477,7 +477,7 @@ getCidades <- function(regional, macroregional, uf, datasource=con){
       sqlquery = paste("SELECT geocodigo, nome, regional, id_regional, 
         macroregional, macroregional_id, uf FROM \"Dengue_global\".\"Municipio\"
                          where uf = '", uf, "'", sep="")
-      d <- dbGetQuery(datasource, sqlquery) 
+      d <- DBI::dbGetQuery(datasource, sqlquery) 
       assert_that(nrow(d)>0, msg = "getCidades: found no city")
       names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id", 
                     "macroregional","macroregional_id","uf")
@@ -533,7 +533,7 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
                                WHERE municipio_geocodigo = ",city," AND cid10 = $$",
                                 cid10,"$$", sep="")      
       
-      parline = try(dbGetQuery(datasource, sql2))
+      parline = try(DBI::dbGetQuery(datasource, sql2))
       
       assert_that(nrow(parline) < 2, 
                   msg = paste("parameter table has something wrong. more than one line for", 
@@ -551,10 +551,10 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
        message(paste("no previous param found. Inserting new param line for city", params$municipio_geocodigo))
        linha = paste(as.character(params$municipio_geocodigo), ",\'",params$cid10, "\'",sep="")
        sql = paste("insert into \"Dengue_global\".parameters (municipio_geocodigo, cid10) values(", linha ,")")
-       dbGetQuery(datasource, sql)    
+       DBI::dbGetQuery(datasource, sql)    
        
        # check if was correctly created
-       parline_now = try(dbGetQuery(datasource, sql2))
+       parline_now = try(DBI::dbGetQuery(datasource, sql2))
        
        assert_that(nrow(parline_now) == 1, 
                    msg = paste("parameter table has something wrong. number of lines for ", 
@@ -571,7 +571,7 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
             update_sql = paste("UPDATE \"Dengue_global\".parameters SET ", linha , 
                                " WHERE municipio_geocodigo = ", params$municipio_geocodigo,
                                " AND cid10 = \'", cid10, "\'", sep="")      
-            try(dbGetQuery(datasource, update_sql))
+            try(DBI::dbGetQuery(datasource, update_sql))
       }
              
       
@@ -614,7 +614,7 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
                         "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
       }
       
-      try(dd <- dbGetQuery(datasource,comando))
+      try(dd <- DBI::dbGetQuery(datasource,comando))
             
       assert_that(all(cities %in% dd$municipio_geocodigo),msg = ("check if cities and cid10 are in the parameter table"))      
       
@@ -647,7 +647,7 @@ getWUstation <- function(cities, datasource = con){
                      ")" , sep="")
   }
   
-  city_table <- dbGetQuery(datasource,comando)
+  city_table <- DBI::dbGetQuery(datasource,comando)
   return(city_table)
 }
 
@@ -699,7 +699,7 @@ setWUstation <- function(st, UF, datasource = con){
             linha = paste("codigo_estacao_wu = ", el1, ",", "estacao_wu_sec = ", el2, sep = "")
             update_sql = paste("UPDATE \"Dengue_global\".parameters SET ", linha , " WHERE 
                                municipio_geocodigo = ", st$municipio_geocodigo[i], sep="")  
-            cityline = try(dbGetQuery(datasource, update_sql))
+            cityline = try(DBI::dbGetQuery(datasource, update_sql))
       }
       
       return()
