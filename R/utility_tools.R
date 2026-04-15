@@ -603,6 +603,13 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
         cid10 <- "A90"
       }
 
+      
+      # regra específica: Espírito Santo (só tem parâmetros de dengue)
+      if(any(grepl("^32", cities)) && cid10 != "A90") {
+        warning("Parameters for Espírito Santo are only available for dengue (A90). Using A90.")
+        cid10 <- "A90"
+      }
+      
       # reading parameters from database
       
       sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
