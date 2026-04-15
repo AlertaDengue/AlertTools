@@ -598,14 +598,24 @@ write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = 
 read.parameters<-function(cities, cid10 = "A90", datasource=con){
       
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
-      if(cid10 != "A90")print("tab de parametros so tem dengue. Usando-os.")
-      cid10 = "A90"
+      if(!cid10 %in% c("A90", "A92.0")) {
+        warning("Parameter table currently supports only A90 (dengue) and A92.0 (chikungunya). Using dengue parameters (A90).")
+        cid10 <- "A90"
+      }
+
+      
+      # regra específica: Espírito Santo (só tem parâmetros de dengue)
+      if(any(grepl("^32", cities)) && cid10 != "A90") {
+        warning("Parameters for Espírito Santo are only available for dengue (A90). Using A90.")
+        cid10 <- "A90"
+      }
+      
       # reading parameters from database
       
       sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
       
       if(class(datasource) == "PostgreSQLConnection"){
-      comando = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
+        comando = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
                         "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
       }
       
