@@ -119,6 +119,7 @@ setCriteria <- function(rule=NULL, values=NULL,
 }
 
 
+
 #fouralert ---------------------------------------------------------------------
 #'@title Define conditions to issue a four level alert Green-Yellow-Orange-Red.
 #'@description Yellow is raised when environmental conditions required for
@@ -486,7 +487,7 @@ tabela_historico <- function(obj, iniSE, lastSE, type = "all", versao = Sys.Date
       varnames <-c("data_iniSE", "SE", "CID10","casos", "casos_est", 
                    "casos_est_min", "casos_est_max", "municipio_geocodigo", "casprov",
                    "p_rt1", "p_inc100k", "Localidade_id", "nivel", "id", "versao_modelo", 
-                   "municipio_nome", "tweet", "Rt", "pop", "temp_min","temp_med",
+                   "municipio_nome", "Rt", "pop", "temp_min","temp_med",
                    "temp_max","umid_min","umid_med","umid_max", "receptivo", 
                    "transmissao", "nivel_inc") 
       
@@ -614,7 +615,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    
    dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
                  "casos","casprov","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
-                 "nivel","id","versao_modelo","municipio_nome","Rt", "pop", "tweet",
+                 "nivel","id","versao_modelo","municipio_nome","Rt", "pop",
                  "receptivo","transmissao","nivel_inc","temp_min","temp_med","temp_max",
                  "umid_min","umid_med","umid_max")
    
@@ -639,7 +640,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    # ------ sql command
    varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max",
                        "casos","casprov","municipio_geocodigo","p_rt1","p_inc100k","\"Localidade_id\"",
-                       "nivel","id","versao_modelo","municipio_nome", "tweet", "\"Rt\"", "pop",
+                       "nivel","id","versao_modelo","municipio_nome", "\"Rt\"", "pop",
                        "tempmin","tempmed","tempmax","umidmin","umidmed","umidmax",
                        "receptivo", "transmissao","nivel_inc")
    
@@ -655,7 +656,7 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
                                      "casos","casprov","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id","nivel","id")], collapse=","),",'",
                      as.character(vetor$versao_modelo),"','",
                      as.character(vetor$municipio_nome),"',",
-                     str_c(vetor[1,c("tweet","Rt","pop","temp_min","temp_med","temp_max","umid_min","umid_med","umid_max")], collapse = ","), ",",
+                     str_c(vetor[1,c("Rt","pop","temp_min","temp_med","temp_max","umid_min","umid_med","umid_max")], collapse = ","), ",",
                      str_c(vetor[1,c("receptivo","transmissao","nivel_inc")], collapse = ",")
       )
       
@@ -697,5 +698,3 @@ write_alerta<-function(d, writetofile = FALSE, datasource = con, arq = "output.s
    } 
    
 }
-
-
