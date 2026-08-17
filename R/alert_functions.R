@@ -117,9 +117,6 @@ setCriteria <- function(rule=NULL, values=NULL,
       
       criteria
 }
-
-
-
 #fouralert ---------------------------------------------------------------------
 #'@title Define conditions to issue a four level alert Green-Yellow-Orange-Red.
 #'@description Yellow is raised when environmental conditions required for
@@ -326,8 +323,6 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       # juntando
       casoscli <- casos %>%
             left_join(cli, by = join_by(cidade == geocodigo, SE))
-      
-      casoscli$tweet <- NA  # legacy
       
       # para cada cidade ...
       
