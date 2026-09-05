@@ -11,17 +11,19 @@ getPop(cities, iniY = 2010, endY)
 
 \item{iniY}{first year. Default is 2010}
 
-\item{lastY}{last year. Default is the last available}
+\item{endY}{last year. Default is the last available}
 }
 \value{
 tibble with columns geocode, year, pop
 }
 \description{
-Get population time series, using the brpop package. 
+Get population time series, using the brpop package.
 Currently has estimates from 2000 to 2021
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 cities <- getCidades(uf = "Paraná")$municipio_geocodigo
 pop <- getPop(cities, iniY = 2018, endY = 2019)
 tail(pop)
+\dontshow{\}) # examplesIf}
 }

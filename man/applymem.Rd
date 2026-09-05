@@ -11,53 +11,23 @@ applymem(df.data, l.seasons, typicalcurve = FALSE, ...)
 and incidence seasons in each column each row gives the incidence in each season,
  for each municipio_geocodigo, for each week.}
 
-\item{l.seasons}{vector with incidence columns to be used. Additional arguments 
+\item{l.seasons}{vector with incidence columns to be used. Additional arguments
 accepted by memmodel function}
 
-\item{i.n.max}{Number of pre-epidemic values used to calculate the threshold.}
+\item{typicalcurve}{Whether to retain the typical epidemic curve.}
 
-\item{i.type.curve}{Type of confidence interval to calculate the modelled curve.}
-
-\item{i.level.threshold}{Level of confidence interval to calculate the threshold.}
-
-\item{i.level.curve}{Level of confidence interval to calculate the modelled curve.}
-
-\item{i.data}{Data frame of input data.}
-
-\item{i.seasons}{Maximum number of seasons to use.}
-
-\item{i.type.threshold}{Type of confidence interval to calculate the threshold.}
-
-\item{i.tails.threshold}{Tails for the confidence interval to calculate the threshold.}
-
-\item{i.type.intensity}{Type of confidence interval to calculate the intensity thresholds.}
-
-\item{i.level.intensity}{Levels of confidence interval to calculate the intensity thresholds.}
-
-\item{i.tails.intensity}{Tails for the confidence interval to calculate the threshold.}
-
-\item{i.type.other}{Type of confidence interval to calculate length, start and percentages.}
-
-\item{i.level.other}{Level of confidence interval to calculate length, start and percentages.}
-
-\item{i.method}{Method to calculate the optimal timing of the epidemic.}
-
-\item{i.param}{Parameter to calculate the optimal timing of the epidemic.}
-
-\item{i.type.boot}{Type of bootstrap technique.}
-
-\item{i.iter.boot}{Number of bootstrap iterations.}
+\item{...}{Additional arguments passed to `mem::memmodel()`.}
 }
 \value{
 epithresholds: list with full epimem report for each municipio_geocodigo,
 keyed by AP's name. dfthresholds: data frame with thresholds for each AP.
 }
 \description{
-Function to apply epimem algorithm on df.data and generate full 
+Function to apply epimem algorithm on df.data and generate full
 reports as well as a data frame with summary of relevant thresholds (pre, pos, mid, high, veryhigh)
 }
 \details{
-internal function, used by info.dengue.apply.mem.   Defatul arguments 
+internal function, used by info.dengue.apply.mem.   Defatul arguments
 passed to memmodel function:
 }
 \author{

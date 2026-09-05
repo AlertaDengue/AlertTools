@@ -8,6 +8,8 @@ temp.predict(v, plotar = FALSE)
 }
 \arguments{
 \item{v}{vector with temperature data.}
+
+\item{plotar}{Whether to plot observed and predicted values.}
 }
 \value{
 vector with replaced NA.
@@ -16,6 +18,8 @@ vector with replaced NA.
 function for extrapolating temperature using arima
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 head(cliSBCB)
 temp.predict(v=cli[,3], plotar = T)
+\dontshow{\}) # examplesIf}
 }

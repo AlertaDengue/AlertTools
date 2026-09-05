@@ -4,7 +4,7 @@
 \alias{read.cases}
 \title{Function to extract case count for covered municipalities}
 \usage{
-read.cases(start_year, end_year, cid10 = "A90", datasource = con, mun_list)
+read.cases(start_year, end_year, cid10 = "A90", datasource, mun_list)
 }
 \arguments{
 \item{start_year}{first year of the time series}
@@ -18,12 +18,14 @@ read.cases(start_year, end_year, cid10 = "A90", datasource = con, mun_list)
 \item{mun_list}{vector with the municipalities' 7 digit geocodes}
 }
 \description{
-Function \code{read.cases} extract notification data from database 
+Function \code{read.cases} extract notification data from database
 and aggregate by epiweek. Used by mem.
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 dd <- read.cases(2019, 2020, mun_list = c(4108304, 3300936))
 dd <- read.cases(2019, 2020, cid10 = "A92.0", mun_list = c(4108304, 3300936))
+\dontshow{\}) # examplesIf}
 }
 \author{
 Marcelo F C Gomes

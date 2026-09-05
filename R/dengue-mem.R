@@ -22,7 +22,7 @@ bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
   :df3: data.frame df2 with 2 new colums from df1$SE and df1$inc based on df1$SE within season
         of base year, which is from winter of baseyear to winter of baseyear+1 (south hemisphere).
   "
-  
+
   if (missing(df1) | missing(df2) | missing(baseyear)){
     #logerror('missing argument on function call', logger='dengue-mem.bindseason')
     return(NULL)
@@ -36,100 +36,88 @@ bindseason <- function(df1=data.frame(), df2=data.frame(), baseyear=integer()){
   newse <- paste0('SE',suff)
   newinc <- suff
   df3 <- plyr::rename(df3, c('SE'=newse, 'inc'=newinc))
-  
+
   #loginfo('Function executed and exited with status 0', logger='dengue-mem.bindseason')
   return(df3)
 }
 
 
 # applymem ------------------------------------
-#'@description  Function to apply epimem algorithm on df.data and generate full 
-#'reports as well as a data frame with summary of relevant thresholds (pre, pos, mid, high, veryhigh) 
+#'@description  Function to apply epimem algorithm on df.data and generate full
+#'reports as well as a data frame with summary of relevant thresholds (pre, pos, mid, high, veryhigh)
 #'@title Get epidemic thresholds  for a list of cities
 #'@param df.data data frame with municipio_geocodigo in a column named municipio_geocodigo,
 #' and incidence seasons in each column each row gives the incidence in each season,
 #'  for each municipio_geocodigo, for each week.
-#'@param l.seasons vector with incidence columns to be used. Additional arguments 
+#'@param l.seasons vector with incidence columns to be used. Additional arguments
 #'accepted by memmodel function
-#' @param i.n.max Number of pre-epidemic values used to calculate the threshold.
-#' @param i.type.curve Type of confidence interval to calculate the modelled curve.
-#' @param i.level.threshold Level of confidence interval to calculate the threshold.
-#' @param i.level.curve Level of confidence interval to calculate the modelled curve.
-#' @param i.data Data frame of input data.
-#' @param i.seasons Maximum number of seasons to use.
-#' @param i.type.threshold Type of confidence interval to calculate the threshold.
-#' @param i.tails.threshold Tails for the confidence interval to calculate the threshold.
-#' @param i.type.intensity Type of confidence interval to calculate the intensity thresholds.
-#' @param i.level.intensity Levels of confidence interval to calculate the intensity thresholds.
-#' @param i.tails.intensity Tails for the confidence interval to calculate the threshold.
-#' @param i.type.other Type of confidence interval to calculate length, start and percentages.
-#' @param i.level.other Level of confidence interval to calculate length, start and percentages.
-#' @param i.method Method to calculate the optimal timing of the epidemic.
-#' @param i.param Parameter to calculate the optimal timing of the epidemic.
-#' @param i.type.boot Type of bootstrap technique.
-#' @param i.iter.boot Number of bootstrap iterations.
+#'@param typicalcurve Whether to retain the typical epidemic curve.
+#'@param ... Additional arguments passed to `mem::memmodel()`.
 #'@author Marcelo F Gomes
-#'@details internal function, used by info.dengue.apply.mem.   Defatul arguments 
+#'@details internal function, used by info.dengue.apply.mem.   Defatul arguments
 #'passed to memmodel function:
 #'@return epithresholds: list with full epimem report for each municipio_geocodigo,
 #' keyed by AP's name. dfthresholds: data frame with thresholds for each AP.
 
 applymem <- function(df.data, l.seasons, typicalcurve = FALSE, ...){
+  if (!requireNamespace("mem", quietly = TRUE)) {
+    stop("applymem requires the optional package 'mem'.", call. = FALSE)
+  }
   if (missing(df.data)){
     #logerror('missing argument on function call', logger='dengue-mem.applymem')
     message('missing argument on function call: applymem')
         return(NULL)
   }
-  
+
   # List of municipio_geocodigos
   municipio_geocodigoids <- unique(df.data$municipio_geocodigo)
-  
+
   # Prepare output objects
   epithresholds <- list()
   df.typ.real.curve <-data.frame() # Typical seasonal curve
   dfthresholds <- data.frame(municipio_geocodigoids)
   dfthresholds <- plyr::rename(dfthresholds, c('municipio_geocodigoids'='municipio_geocodigo'))
-  
+
   dfthresholds['pre'] <- NULL # Pre-epidemic threshold (at .95 confidence interval by default)
   dfthresholds['pos'] <- NULL # Post-epidemic threshold
   dfthresholds['veryhigh'] <- NULL # Very high activity threshold (corresponding to 0.95 quantile by default)
   dfthresholds['inicio'] <- NULL # Typical begining of epidemic activity
   dfthresholds['duracao'] <- NULL # Typical duration
-  
+
   for (geocodid in municipio_geocodigoids){
     f <- function(geocod, l.seasons, ...){
       # Firstly, use all seasons
       df.geocodid <- df.data[df.data$municipio_geocodigo==geocod, l.seasons]
       non.null.seasons <- df.geocodid[, colSums(df.geocodid)>0]
       l.seasons.geocodid <- names(non.null.seasons)
-      epitmp <- memmodel(i.data=non.null.seasons, ...)
-      
+      epitmp <- mem::memmodel(i.data=non.null.seasons, ...)
+
       # Discard seasons that are below threshold and rerun.
       # This is useful for properly defining activity levels during an epidemic
       discard <- NULL
       prethreshold <- epitmp$pre.post.intervals[1,3]
       postthreshold <- epitmp$pre.post.intervals[2,3]
-      epitmp$typ.real.curve <- epitmp$typ.curve 
+      epitmp$typ.real.curve <- epitmp$typ.curve
       typ.real.curve <- plyr::rename(data.frame(epitmp$typ.real.curve), c('X1'='baixo', 'X2'='mediano' ,'X3'='alto'))
       # Clean typical curve:
       typ.real.curve$mediano[is.na(typ.real.curve$mediano)] <- 0
       typ.real.curve$baixo[typ.real.curve$baixo < 0] <- 0
       typ.real.curve$baixo[is.na(typ.real.curve$baixo)] <- typ.real.curve$mediano[is.na(typ.real.curve$baixo)]
       typ.real.curve$alto[is.na(typ.real.curve$alto)] <- typ.real.curve$mediano[is.na(typ.real.curve$alto)]
-      
+
       episeasons <- sapply(non.null.seasons, max, na.rm=TRUE) > prethreshold
-      epitmp <- memmodel(i.data=non.null.seasons[, episeasons], ...)
-      epitmp$typ.real.curve <- epitmp$typ.curve 
+      epitmp <- mem::memmodel(i.data=non.null.seasons[, episeasons], ...)
+      epitmp$typ.real.curve <- epitmp$typ.curve
       prethreshold <- epitmp$pre.post.intervals[1,3]
       postthreshold <- epitmp$pre.post.intervals[2,3]
-      
+
       # Store full report in epithresholds:
       epithresholds[[geocod]] <- epitmp
-      
+
       # Store typical curves from full set of seasons
       epithresholds[[geocod]]$typ.real.curve <- typ.real.curve
       epithresholds[[geocod]]$typ.real.curve['SE'] <- c(seq(41,52), seq(1,40))
-      
+
       # Store epidemic thresholds
       dfthresholds$pre[dfthresholds$municipio_geocodigo==geocod] <- prethreshold
       dfthresholds$pos[dfthresholds$municipio_geocodigo==geocod] <- postthreshold
@@ -153,13 +141,13 @@ applymem <- function(df.data, l.seasons, typicalcurve = FALSE, ...){
                                                                                   epitmp$ci.length[1,3], ']')
       return(list("epithresholds.tmp"=epithresholds, "dfthresholds.tmp"=dfthresholds))
     }
-    
+
     res <- try(f(geocod=geocodid, l.seasons=l.seasons, ...), TRUE)
     if (!inherits(res, "try-error")){
       epithresholds <- res$epithresholds.tmp
       dfthresholds <- res$dfthresholds
     }
-    
+
   }
   #loginfo('Function executed and exited with status 0!', logger='dengue-mem.applymem')
   return(list("epimemthresholds"=epithresholds, "dfthresholds"=dfthresholds))
@@ -170,53 +158,55 @@ applymem <- function(df.data, l.seasons, typicalcurve = FALSE, ...){
 ## teste de funcao para retornar curva tipica mem (usar em infodengue_apply_mem::memcurve)
 
 fit.mem <- function(df.data, l.seasons, ...){
+      if (!requireNamespace("mem", quietly = TRUE)) {
+            stop("fit.mem requires the optional package 'mem'.", call. = FALSE)
+      }
       if (missing(df.data)){
             #logerror('missing argument on function call', logger='dengue-mem.applymem')
             message('missing argument on function call: applymem')
             return(NULL)
       }
-      
+
       # List of municipio_geocodigos (1 so!)
       geocodid <- unique(df.data$municipio_geocodigo)
-      
+
       # Prepare output objects
       epithresholds <- list()
       df.typ.real.curve <-data.frame() # Typical seasonal curve
       dfthresholds <- data.frame(geocodid)
       dfthresholds <- plyr::rename(dfthresholds, c('geocodid'='municipio_geocodigo'))
-      
+
       dfthresholds['pre'] <- NULL # Pre-epidemic threshold (at .95 confidence interval by default)
       dfthresholds['pos'] <- NULL # Post-epidemic threshold
       dfthresholds['veryhigh'] <- NULL # Very high activity threshold (corresponding to 0.95 quantile by default)
       dfthresholds['inicio'] <- NULL # Typical begining of epidemic activity
       dfthresholds['duracao'] <- NULL # Typical duration
-      
+
       # Firstly, use all seasons
       df.geocodid <- df.data[df.data$municipio_geocodigo==geocodid, l.seasons]
       non.null.seasons <- df.geocodid[, colSums(df.geocodid)>0]
       l.seasons.geocodid <- names(non.null.seasons)
-      epitmp <- memmodel(i.data=non.null.seasons, ...)
-                  
+      epitmp <- mem::memmodel(i.data=non.null.seasons, ...)
+
       # Discard seasons that are below threshold and rerun.
       # This is useful for properly defining activity levels during an epidemic
       discard <- NULL
       prethreshold <- epitmp$pre.post.intervals[1,3]
       postthreshold <- epitmp$pre.post.intervals[2,3]
-      epitmp$typ.real.curve <- epitmp$typ.curve 
+      epitmp$typ.real.curve <- epitmp$typ.curve
       typ.real.curve <- plyr::rename(data.frame(epitmp$typ.real.curve), c('X1'='baixo', 'X2'='mediano' ,'X3'='alto'))
                   # Clean typical curve:
       typ.real.curve$mediano[is.na(typ.real.curve$mediano)] <- 0
       typ.real.curve$baixo[typ.real.curve$baixo < 0] <- 0
       typ.real.curve$baixo[is.na(typ.real.curve$baixo)] <- typ.real.curve$mediano[is.na(typ.real.curve$baixo)]
       typ.real.curve$alto[is.na(typ.real.curve$alto)] <- typ.real.curve$mediano[is.na(typ.real.curve$alto)]
-                  
+
       episeasons <- sapply(non.null.seasons, max, na.rm=TRUE) > prethreshold
-      epitmp <- memmodel(i.data=non.null.seasons[, episeasons], ...)
-      epitmp$typ.real.curve <- epitmp$typ.curve 
-      
-      
+      epitmp <- mem::memmodel(i.data=non.null.seasons[, episeasons], ...)
+      epitmp$typ.real.curve <- epitmp$typ.curve
+
+
       return(epitmp$typ.real.curve)
       }
-            
-        
+
 

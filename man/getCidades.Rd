@@ -4,7 +4,7 @@
 \alias{getCidades}
 \title{get list of cities.}
 \usage{
-getCidades(regional, macroregional, uf, datasource = con)
+getCidades(regional, macroregional, uf, datasource)
 }
 \arguments{
 \item{regional}{full name of the regional. Use getRegionais() to obtain the correct spelling.}
@@ -22,7 +22,9 @@ vector with names of the cities.
 consult database to get list of cities for regional, macroregional or uf.
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 getCidades(regional = "Metropolitana I", uf="Rio de Janeiro")
 getCidades(uf="Acre")
-getCidades(uf="Maranhão", macroregional = "NORTE")
+getCidades(uf="Maranhao", macroregional = "NORTE")
+\dontshow{\}) # examplesIf}
 }

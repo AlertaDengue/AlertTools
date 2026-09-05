@@ -1,0 +1,76 @@
+---
+title: "Pipeline com uma conexão DBI"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Pipeline com uma conexão DBI}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+has_sqlite <- requireNamespace("RSQLite", quietly = TRUE)
+```
+
+A API de banco separa três operações: buscar, calcular e escrever. A conexão
+DBI é sempre explícita. Este documento usa SQLite em memória; não acessa
+produção e não exige credenciais.
+
+## Demonstração autocontida
+
+O script incluído no pacote cria tabelas sintéticas temporárias, usa
+`fetch_alert_inputs()` e `fetch_alert_parameters()` e fecha a conexão após o
+cálculo.
+
+```{r sqlite-example, eval=has_sqlite}
+example_file <- system.file(
+  "examples", "sqlite-pipeline.R",
+  package = "AlertTools"
+)
+if (!nzchar(example_file)) {
+  example_file <- file.path("..", "inst", "examples", "sqlite-pipeline.R")
+}
+sys.source(example_file, envir = environment())
+result
+```
+
+```{r sqlite-missing, eval=!has_sqlite, echo=FALSE, results='asis'}
+cat("Instale `RSQLite` para executar a demonstração autocontida.\n")
+```
+
+## PostgreSQL operacional
+
+Em produção, construa a conexão fora do pacote e obtenha segredos pelo
+mecanismo adotado pela organização. O exemplo abaixo é propositalmente não
+executado e não contém valores sensíveis.
+
+```{r postgres, eval=FALSE}
+conn <- DBI::dbConnect(
+  RPostgres::Postgres(),
+  dbname = Sys.getenv("INFODENGUE_DB"),
+  host = Sys.getenv("INFODENGUE_DB_HOST"),
+  user = Sys.getenv("INFODENGUE_DB_USER"),
+  password = Sys.getenv("INFODENGUE_DB_PASSWORD")
+)
+on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+inputs <- fetch_alert_inputs(
+  conn = conn,
+  geocodes = 3304557,
+  disease = "dengue",
+  start_week = 202501,
+  report_week = 202512
+)
+parameters <- fetch_alert_parameters(conn, 3304557, "dengue")
+result <- run_alert_pipeline(inputs, parameters, nowcast = "none")
+
+write_alert_results(
+  conn,
+  result,
+  version_date = as.Date("2026-09-05"),
+  conflict = "update"
+)
+```
+
+Use uma conexão de teste descartável para integração. Nunca execute a suíte
+contra o banco operacional.

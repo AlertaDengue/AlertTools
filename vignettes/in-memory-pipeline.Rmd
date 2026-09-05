@@ -1,0 +1,67 @@
+---
+title: "Pipeline reproduzível sem banco"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Pipeline reproduzível sem banco}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+Esta vignette executa o núcleo do AlertTools somente com objetos em memória.
+Não há conexão, arquivo temporário, credencial ou estado global.
+
+## Exemplo completo
+
+O pacote distribui um script sintético executável. Ele cria doze semanas de
+casos e clima, constrói `alerttools_inputs` e executa o pipeline sem nowcasting.
+
+```{r run-example}
+example_file <- system.file(
+  "examples", "in-memory-pipeline.R",
+  package = "AlertTools"
+)
+if (!nzchar(example_file)) {
+  example_file <- file.path("..", "inst", "examples", "in-memory-pipeline.R")
+}
+sys.source(example_file, envir = environment())
+```
+
+As entradas possuem um contrato explícito e o resultado contém cálculo,
+alertas, parâmetros, metadados e diagnósticos.
+
+```{r inspect}
+inputs
+result
+summary(result)
+head(as.data.frame(result))
+```
+
+## Substituindo pelos seus dados
+
+`cases` deve ser unicamente identificado por `cidade`, `CID10` e `SE`.
+`climate` usa a chave `geocodigo`, `SE`. Se `cases` não contiver `pop`, forneça
+uma tabela de população separada.
+
+```{r custom-inputs, eval=FALSE}
+inputs <- new_alert_inputs(
+  cases = my_weekly_cases,
+  climate = my_weekly_climate,
+  population = my_population,
+  metadata = list(source = "estudo reproduzível")
+)
+
+result <- run_alert_pipeline(
+  inputs,
+  parameters = my_alert_parameters,
+  report_week = 202512,
+  nowcast = "none",
+  workers = 1
+)
+```
+
+Para nowcasting bayesiano, inclua `case_records`, defina `seed` e instale INLA.
+O modo `none` é determinístico sem configuração adicional.

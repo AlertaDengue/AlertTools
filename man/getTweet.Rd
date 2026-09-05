@@ -4,29 +4,31 @@
 \alias{getTweet}
 \title{Get Tweeter Data}
 \usage{
-getTweet(cities, lastday = Sys.Date(), cid10 = "A90", datasource = con)
+getTweet(cities, lastday = Sys.Date(), cid10 = "A90", datasource)
 }
 \arguments{
 \item{cities}{cities's geocode. Use getCidades()}
 
+\item{lastday}{last day. Default is the last available.}
+
 \item{cid10}{default is A90 (dengue). If not dengue, returns NA}
 
 \item{datasource}{Use the connection to the Postgresql server for using project data.}
-
-\item{finalday}{last day. Default is the last available.}
 }
 \value{
 data.frame with weekly counts of people tweeting on dengue.
 }
 \description{
-Create weekly time series from tweeter data from server. The 
+Create weekly time series from tweeter data from server. The
 source of this data is the Observatorio da Dengue (UFMG).
 }
 \examples{
-NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
+# NOT USE: connection <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
 tw <- getTweet(cities = c(3302205,3200300), lastday = "2014-03-01")
 tw <- getTweet(cities = 3304557, finalday = "2016-03-01")
 cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
-tw <- getTweet(cities = cid$municipio_geocodigo) 
+tw <- getTweet(cities = cid$municipio_geocodigo)
 tail(tw)
+\dontshow{\}) # examplesIf}
 }

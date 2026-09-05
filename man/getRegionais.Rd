@@ -9,7 +9,7 @@ getRegionais(
   uf,
   sortedby = "a",
   macroreg = FALSE,
-  datasource = con,
+  datasource,
   output = "names"
 )
 }
@@ -18,14 +18,14 @@ getRegionais(
 
 \item{uf}{full name of the state.}
 
-\item{sortedby}{the options are: 'a' alphabetically, 'id' regional id number (only valid for regional), 
+\item{sortedby}{the options are: 'a' alphabetically, 'id' regional id number (only valid for regional),
 if available}
 
 \item{macroreg}{TRUE if getRegionais should return macroreg instead of reg. Default: False}
 
 \item{datasource}{name of the database}
 
-\item{output}{if "names" returns only a vector with names of regionais or macros. 
+\item{output}{if "names" returns only a vector with names of regionais or macros.
 If "complete" , returns municipalities and their regs}
 }
 \value{
@@ -35,10 +35,12 @@ vector with names of the regionais.
 consult database to get list of regionais
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 getRegionais(uf="Rio de Janeiro")
 head(getRegionais(uf="Rio de Janeiro",output="complete",macroreg = TRUE))
 head(getRegionais(uf="Rio de Janeiro",output="complete"))
 getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro")
 getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro", macroreg = TRUE)
 getRegionais(uf="Rio de Janeiro", sortedby = 'id')
+\dontshow{\}) # examplesIf}
 }

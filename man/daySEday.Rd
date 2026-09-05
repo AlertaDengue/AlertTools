@@ -8,6 +8,8 @@ daySEday(x, format = "\%Y-\%m-\%d")
 }
 \arguments{
 \item{x}{numeric vector with epidemiological weeks , format 201945, or date}
+
+\item{format}{date format used for character input.}
 }
 \value{
 data.frame with SE and first day.
@@ -16,7 +18,9 @@ data.frame with SE and first day.
 Return the first day of the Epidemiological Week and vice-versa
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 daySEday(x=202612)
-daySEday(x = c(202041:202104))
+daySEday(x = c(202541:202604))
 daySEday(x = c("2015-12-23", "2015-10-23", "2026-10-16"))
+\dontshow{\}) # examplesIf}
 }

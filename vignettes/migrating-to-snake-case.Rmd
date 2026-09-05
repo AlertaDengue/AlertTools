@@ -1,0 +1,84 @@
+---
+title: "Migração para a API snake_case"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Migração para a API snake_case}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+A API legada continua disponível, mas os wrappers depreciados indicam sua
+substituição. Migre primeiro a leitura, depois o cálculo e por fim a escrita.
+
+| API legada | API nova |
+|---|---|
+| `getCases()` | `fetch_cases()` |
+| `getCaseslist()` | `fetch_case_records()` |
+| `getClima()` | `fetch_climate()` |
+| `read.parameters()` | `fetch_alert_parameters()` |
+| `pipe_infodengue()` | `fetch_alert_inputs()` + `run_alert_pipeline()` |
+| `Rt()` | `estimate_rt()` |
+| `adjustIncidence()` | `nowcast_cases()` |
+| `setCriteria()` | `define_alert_rules()` |
+| `fouralert()` | `classify_alerts()` |
+| `tabela_historico()` | `as_alert_history()` |
+| `write_alerta()` | `write_alert_results()` |
+| `write_parameters()` | `upsert_alert_parameters()` |
+
+## Mudanças de vocabulário
+
+- `datasource` torna-se `conn`;
+- `cities` torna-se `geocodes`;
+- `cid10` torna-se `disease` e aceita nomes de domínio;
+- `firstday` e `lastday` tornam-se `start_date` e `end_date`;
+- `iniSE` e `datarelatorio` tornam-se `start_week` e `report_week`;
+- `nowcasting` torna-se `nowcast`.
+
+## Separação do pipeline
+
+```{r migration-example, eval=FALSE}
+# Legado: leitura, cálculo e escrita podiam partir de uma única chamada.
+old_result <- pipe_infodengue(
+  cities = 3304557,
+  cid10 = "A90",
+  datarelatorio = 202512,
+  iniSE = 202501,
+  datasource = conn
+)
+
+# Novo: efeitos externos ficam visíveis no código.
+inputs <- fetch_alert_inputs(
+  conn, 3304557, "dengue",
+  start_week = 202501,
+  report_week = 202512
+)
+parameters <- fetch_alert_parameters(conn, 3304557, "dengue")
+result <- run_alert_pipeline(inputs, parameters, nowcast = "none")
+write_alert_results(conn, result, version_date = as.Date("2026-09-05"))
+```
+
+Consulte também a tabela detalhada em
+`docs/refactoring/api-migration.md`. Interfaces legadas somente serão removidas
+após a janela de suporte e a migração dos consumidores críticos.
+
+## Validar um consumidor
+
+Migre um consumidor por vez e preserve sua versão anterior como rollback. A
+validação precisa comparar schema, cardinalidade, Rt, intervalos, casos
+estimados e níveis de alerta, incluindo viradas de ano e semana 53. Durante os
+testes, torne todos os avisos de depreciação visíveis:
+
+```{r lifecycle-monitoring, eval=FALSE}
+options(lifecycle_verbosity = "warning")
+```
+
+O repositório mantém um inventário de consumidores conhecidos e um gate que
+impede remoções enquanto existirem sistemas críticos pendentes. A sequência
+proposta inicia warnings formais na versão 1.3.0, usa a linha 1.4.x para a
+transição e torna a 2.0.0 apenas elegível — não automaticamente autorizada —
+para remoções. A duração temporal da janela ainda depende de aprovação dos
+mantenedores.

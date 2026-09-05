@@ -1,0 +1,8 @@
+Status: approved
+Warnings-Start: 1.3.0
+Transition-Releases: 1.4.x
+Earliest-Removal: 2.0.0
+Minimum-Support-Months: 6
+Minimum-Support-Minor-Releases: 2
+Approved-By: BaruqueRodrigues (package maintainer)
+Approved-At: 2026-09-05

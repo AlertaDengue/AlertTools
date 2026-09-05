@@ -1,0 +1,8 @@
+linters: list(
+    absolute_path_linter = absolute_path_linter(),
+    trailing_whitespace_linter = trailing_whitespace_linter(),
+    undesirable_function_linter = undesirable_function_linter(
+      fun = c("setwd" = "Do not change the caller's working directory.")
+    )
+  )
+encoding: "UTF-8"
