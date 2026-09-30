@@ -255,6 +255,8 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 #'@param dataini "notif" (default) or "sinpri" 
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param datasource posgreSQL connection to project's database
+#'@param firstday First date of the notification series passed to getCases().
+#' Defaults to 2018-01-01.
 #'@return data.frame with the week condition and the number of weeks within the 
 #'last lag weeks with conditions = TRUE.
 #'@examples
@@ -273,7 +275,7 @@ fouralert <- function(obj, crit, miss="last",dy=4){
 pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.Date(), 
                             iniSE = 201001, nowcasting="none", narule=NULL,
                             writedb = FALSE, datasource = con, completetail = NA,
-                            dataini = "notific"){
+                            dataini = "notific", firstday = as.Date("2018-01-01")){
       
       
       if(missing(datarelatorio)) {
@@ -312,7 +314,8 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = Sys.D
       message("getCli done")
       # Reading Cases
       print("Obtendo dados de notificacao ...")
-      casos <- getCases(cities, lastday = finalday, cid10 = cid10, type = "all", # novo
+      casos <- getCases(cities, lastday = finalday, firstday = firstday,
+                        cid10 = cid10, type = "all", # novo
                         dataini = dataini, completetail = completetail) 
       message("getCases done")
       casos$inc <- casos$casos/casos$pop*100000
