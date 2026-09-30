@@ -15,7 +15,8 @@ pipe_infodengue(
   writedb = FALSE,
   datasource = con,
   completetail = NA,
-  dataini = "notific"
+  dataini = "notific",
+  firstday = as.Date("2018-01-01")
 )
 }
 \arguments{
@@ -40,6 +41,9 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 \item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
 
 \item{dataini}{"notif" (default) or "sinpri"}
+
+\item{firstday}{First date of the notification series passed to getCases().
+Defaults to 2018-01-01.}
 
 \item{"bayesian"}{for the dynamic model, "none" for not doing nowcast (default)}
 }
