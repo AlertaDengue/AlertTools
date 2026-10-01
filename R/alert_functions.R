@@ -258,6 +258,8 @@
 #'@param seed Optional seed for stochastic nowcasting.
 #'@param verbose Whether to emit progress messages.
 #'@param version_date Explicit model-version date used when writing results.
+#'@param firstday First date of the notification series passed to fetch_cases().
+#' Defaults to 2018-01-01; supply an earlier date for historical backfills.
 #'@return data.frame with the week condition and the number of weeks within the
 #'last lag weeks with conditions = TRUE.
 #'@examplesIf FALSE
@@ -277,7 +279,8 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
                             iniSE = 201001, nowcasting="none", narule=NULL,
                             writedb = FALSE, datasource, completetail = NA,
                             dataini = "notific", workers = 1L, seed = NULL,
-                            verbose = FALSE, version_date = finalday){
+                            verbose = FALSE, version_date = finalday,
+                            firstday = as.Date("2018-01-01")){
 
       .deprecate_api("pipe_infodengue()", "run_alert_pipeline()")
       .db_validate_connection(datasource)
@@ -321,7 +324,7 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
       if (isTRUE(verbose)) message("climate data loaded")
       casos <- fetch_cases(
             conn = datasource, geocodes = cidades, disease = cid10,
-            start_date = epiweek_start(iniSE), end_date = finalday,
+            start_date = firstday, end_date = finalday,
             case_date = if (dataini == "notific") "notification" else "symptom_onset",
             complete_tail = completetail, verbose = verbose
       )

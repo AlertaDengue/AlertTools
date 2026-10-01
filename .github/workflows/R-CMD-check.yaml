@@ -82,6 +82,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          extra-packages: any::devtools
           needs: check
 
       - name: Run the complete suite against ephemeral PostgreSQL

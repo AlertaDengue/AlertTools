@@ -55,7 +55,7 @@ test_that("algorithmic calendar is equivalent to the legacy SE table", {
   legacy <- AlertTools:::SE
   valid <- as.integer(format(legacy$Inicio, "%w")) == 0L &
     as.numeric(legacy$Termino - legacy$Inicio) == 6
-  expect_equal(which(!valid), which(legacy$SE == 201815))
+  expect_true(all(valid))
   expect_equal(as.numeric(as_epiweek(legacy$Inicio[valid])), legacy$SE[valid])
   expect_equal(epiweek_start(legacy$SE[valid]), legacy$Inicio[valid])
   expect_equal(epiweek_start(legacy$SE[valid]) + 6L, legacy$Termino[valid])
@@ -81,4 +81,25 @@ test_that("epidemiological week validation rejects impossible values", {
   expect_error(epiweek_start(202101.5), "finite integers")
   expect_true(is.na(as_epiweek(as.Date(NA))))
   expect_true(is.na(epiweek_start(NA_real_)))
+})
+
+
+test_that("SE 201815 and its neighbors have consistent bundled boundaries", {
+  period <- seqSE(201814, 201816)
+  expect_equal(period$SE, c(201814, 201815, 201816))
+  expect_equal(period$Inicio, as.Date(c("2018-04-01", "2018-04-08", "2018-04-15")))
+  expect_equal(period$Termino, as.Date(c("2018-04-07", "2018-04-14", "2018-04-21")))
+  expect_equal(SE2date(201815)$ini, as.Date("2018-04-08"))
+
+  calendar <- get("SE", envir = asNamespace("AlertTools"))
+  calendar <- calendar[order(calendar$SE), ]
+  expect_equal(anyDuplicated(calendar$SE), 0L)
+  expect_true(all(as.integer(calendar$Termino - calendar$Inicio) == 6L))
+  expect_equal(calendar$Inicio[-1], head(calendar$Termino, -1) + 1)
+  expect_equal(vapply(calendar$Inicio, episem, numeric(1)), calendar$SE)
+  expect_equal(vapply(calendar$Termino, episem, numeric(1)), calendar$SE)
+
+  packaged <- new.env(parent = emptyenv())
+  utils::data("SE", package = "AlertTools", envir = packaged)
+  expect_identical(packaged$SE, get("SE", envir = asNamespace("AlertTools")))
 })

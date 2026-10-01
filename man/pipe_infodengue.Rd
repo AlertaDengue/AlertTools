@@ -19,7 +19,8 @@ pipe_infodengue(
   workers = 1L,
   seed = NULL,
   verbose = FALSE,
-  version_date = finalday
+  version_date = finalday,
+  firstday = as.Date("2018-01-01")
 )
 }
 \arguments{
@@ -55,6 +56,9 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 \item{verbose}{Whether to emit progress messages.}
 
 \item{version_date}{Explicit model-version date used when writing results.}
+
+\item{firstday}{First date of the notification series passed to fetch_cases().
+Defaults to 2018-01-01; supply an earlier date for historical backfills.}
 }
 \value{
 data.frame with the week condition and the number of weeks within the

@@ -1,11 +1,3 @@
-library(assertthat)
-library(dplyr)
-library(purrr)
-library(stringr)
-
-source(testthat::test_path("..", "..", "R", "utility_tools.R"))
-source(testthat::test_path("..", "..", "R", "alert_functions.R"))
-
 historical_alert_input <- function(include_tweet = TRUE) {
   data <- data.frame(
     cidade = 3304557,
