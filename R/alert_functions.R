@@ -117,8 +117,6 @@
 
       criteria
 }
-
-
 #fouralert ---------------------------------------------------------------------
 #'@title Define conditions to issue a four level alert Green-Yellow-Orange-Red.
 #'@description Yellow is raised when environmental conditions required for
@@ -343,7 +341,6 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
             write_alert_results(datasource, res, version_date = version_date,
                                 conflict = "update")
       }
-
       res
 }
 
@@ -512,10 +509,9 @@ calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
       varnames <-c("data_iniSE", "SE", "CID10","casos", "casos_est",
                    "casos_est_min", "casos_est_max", "municipio_geocodigo", "casprov",
                    "p_rt1", "p_inc100k", "Localidade_id", "nivel", "id", "versao_modelo",
-                   "municipio_nome", "tweet", "Rt", "pop", "temp_min","temp_med",
+                   "municipio_nome", "Rt", "pop", "temp_min","temp_med",
                    "temp_max","umid_min","umid_med","umid_max", "receptivo",
                    "transmissao", "nivel_inc")
-
       if(all(varnames %in% names(d1))) {
             dfinal <- d1[,varnames]
             return(dfinal)
@@ -655,7 +651,7 @@ tabela_historico_intra <- function(obj, iniSE, lastSE, versao,
 
    dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max",
                  "casos","casprov","municipio_geocodigo","p_rt1","p_inc100k","Localidade_id",
-                 "nivel","id","versao_modelo","municipio_nome","Rt", "pop", "tweet",
+                 "nivel","id","versao_modelo","municipio_nome","Rt", "pop",
                  "receptivo","transmissao","nivel_inc","temp_min","temp_med","temp_max",
                  "umid_min","umid_med","umid_max")
 
@@ -680,7 +676,7 @@ tabela_historico_intra <- function(obj, iniSE, lastSE, versao,
       municipio_geocodigo = d$municipio_geocodigo, p_rt1 = d$p_rt1,
       p_inc100k = d$p_inc100k, Localidade_id = d$Localidade_id,
       nivel = d$nivel, id = d$id, versao_modelo = d$versao_modelo,
-      municipio_nome = d$municipio_nome, tweet = d$tweet, Rt = d$Rt, pop = d$pop,
+      municipio_nome = d$municipio_nome, Rt = d$Rt, pop = d$pop,
       tempmin = d$temp_min, tempmed = d$temp_med, tempmax = d$temp_max,
       umidmin = d$umid_min, umidmed = d$umid_med, umidmax = d$umid_max,
       receptivo = d$receptivo, transmissao = d$transmissao,
