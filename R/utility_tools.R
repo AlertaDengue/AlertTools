@@ -5,126 +5,76 @@
 
 
 # epiYear ---------------------------------------------------------------------
-#'@description Find to which epidemiological year belongs a given epidemiological week. 
+#'@description Find to which epidemiological year belongs a given epidemiological week.
 #'@title Define Epidemiological Year.
 #'@export
 #'@param se numeric vector with epidemiological weeks to be converted
 #'@param cut epidemiological week that separates consecutive epidemiological years. Default = 41
-#'@return vector of epidemiological years. 
-#'@examples
+#'@return vector of epidemiological years.
+#'@examplesIf FALSE
 #'epiYear(se = 201012)
 #'epiYear(se = 201012:201522)
 
 epiYear <- function(se, cut = 41){
-  
+
   d <- tibble(se = se)
   d %>%
-    mutate(year = round(se/100),
+    mutate(year = floor(se/100),
            eweek = se - year*100,
            eyear = case_when(
              eweek < cut ~ year - 1,  # if se < cut, eYear = previous calendar Year
-             TRUE ~ year              # if se >= cut, eYear = current calendar Year  
-           )) 
-} 
+             TRUE ~ year              # if se >= cut, eYear = current calendar Year
+           ))
+}
 
 
 # data2SE ---------------------------------------------------------------------
-#'@description Find to which epidemiological week belongs a given day. Uses episem function 
+#'@description Find to which epidemiological week belongs a given day. Uses episem function
 #'(formula generated data).
 #'@title Define Epidemiological Week.
 #'@export
 #'@param days string vector with dates to be converted
 #'@param format date format
-#'@return numeric vector with the epidemiological weeks. 
-#'@examples
+#'@return numeric vector with the epidemiological weeks.
+#'@examplesIf FALSE
 #'data2SE("01-02-2020",format="%d-%m-%Y")
 #'data2SE("12-02-2008",format="%d-%m-%Y")
 #'data2SE(c("03-04-2013","07-01-2019"),format="%d-%m-%Y")
 
 data2SE <- function(days, format = "%d/%m/%Y"){
-  sem <- rep(NA,length(days))      
-  days<-as.Date(as.character(days),format=format)
-  for (i in 1:length(days)) {
-    sem[i]<-episem(days[i])      
-  }
-  sem
+  as.numeric(as_epiweek(as.Date(as.character(days), format = format)))
 }
 
 # episem ---------------------------------------------------------------------
-#' @description Find to which epidemiological week belongs a given day 
+#' @description Find to which epidemiological week belongs a given day
 #' @author Oswaldo Cruz
 #' @title Define Epidemiological Week.
 #' @export
-#' @param date date to be converted (class Date)
+#' @param x date to be converted (class Date)
+#' @param format date format used when `x` is not already a `Date`.
 #' @param separa symbol between year and week
 #' @param retorna What should be return, if epidemiological year and week ('YW'),
 #' epi. year only ('Y') or epi. week only ('W').
 #'   Default: 'YW'.
-#' @return epidemiological week or year. If separa = '', the output is numeric; 
+#' @return epidemiological week or year. If separa = '', the output is numeric;
 #' otherwise is a character.
-#' @examples
+#' @examplesIf FALSE
 #' episem(x= as.Date("2018-12-31", format="%Y-%m-%d"))
 #' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), separa='-')
 #' episem(x= as.Date("2015-01-01", format="%Y-%m-%d"), retorna='Y')
 
 episem <- function(x, format="%Y-%m-%d", separa='', retorna='YW') {
-      # semana epi 1 de 2000 02/01/2000
-      if (class(x)!= "Date") {
-            x <- as.Date(x, format = format)
-            #warning("Precisa ser do tipo Date - Convertendo de texto")
+      dates <- if (inherits(x, "Date")) x else as.Date(x, format = format)
+      weeks <- as_epiweek(dates)
+      year <- floor(weeks / 100)
+      week <- weeks %% 100
+      assert_that(retorna %in% c("YW", "Y", "W"),
+                  msg = "episem: retorna must be YW, Y or W")
+      out <- if (retorna == "Y") year else if (retorna == "W") week else weeks
+      if (retorna == "YW" && nzchar(separa)) {
+            out <- ifelse(is.na(weeks), NA_character_, sprintf("%04d%s%02d", year, separa, week))
       }
-      if (is.na(x) == T) {
-            message("episem: Date not valid, returning NA")
-            return(NA) 
-      }
-            ##  funcoes auxiliares - poderia usar a lubridate mas achei assim mais simples
-      
-      year  <- function(dt) {as.numeric(format(dt,"%Y"))}  ## retorna ano
-      wday <- function(dt) {as.numeric(format(dt,"%w"))}   ## retorna dia sendo  0 = domingo a 6= sabado
-      passado <- function(dt,diff=1) {as.Date(paste(as.numeric(format(dt,"%Y"))-diff,format(dt,"%m-%d"),sep="-"))} ## ano - x
-      
-      ## Inicio 
-      
-      ano <- year(x) # extrai ano
-      dia1 <- as.Date(paste(ano,'01','01',sep='-'),format = "%Y-%m-%d") # primeiro do ano 
-      
-      diasem <- wday(dia1)  #descobre o dia da semana do dia1 
-      fwd <- ifelse (diasem <=3, dia1 - diasem , dia1 + (7 - diasem) ) #se for menor ou igua a 3 (quarta) 
-      fwd <- as.Date(fwd,origin = '1970-01-01') # reformata em data pois ela perde a formatacao 
-      
-      ## caso a data seja menor que a da 1o semana do ano (fwd)
-      if (x < fwd) {
-            dia1 <- passado(dia1)  # ano -1 
-            diasem <- wday(dia1)  #dia da semana 
-            fwd <- ifelse (diasem <=3, dia1 - diasem , dia1 + (7 - diasem) )
-            fwd <- as.Date(fwd,origin = '1970-01-01')
-      }
-      
-      diafim <- as.Date(paste(ano,'12','31',sep='-')) #Ultimo dia do ano
-      diasem <- wday(diafim)                          #dia semana do ultimo dia
-      
-      ewd <- ifelse (diasem < 3, diafim - diasem - 1, diafim + 6 - diasem) 
-      ewd <- as.Date(ewd,origin = '1970-01-01') # ultima semana epi do ano
-      
-      if (x > ewd) fwd <- ewd + 1 #caso a data (x) seja maior ou igual a ultiam semaan do ano
-      epiweek <- floor(as.numeric(x - fwd) / 7 ) + 1 #numero de semanas e a diff da data e da primeira semana div por 7
-      
-      if(epiweek==0) epiweek <- 1 ## gatilho se for 0 vira semana 1
-      epiyear <- year(fwd + 180) ## ano epidemiologico
-
-      if (retorna=='YW'){
-            out <- sprintf("%4d%s%02d",epiyear,separa,epiweek)  ## formata string com separador
-      } else if (retorna=='Y') {
-            out <- epiyear
-      } else {
-            out <- epiweek
-      }
-      
-      if (separa =="") {
-            return(as.numeric(out))
-      } else {
-            return(out)
-      }
+      if (nzchar(separa)) as.character(out) else as.numeric(out)
 }
 
 #' lastepiweek -----------------------------------
@@ -133,40 +83,26 @@ episem <- function(x, format="%Y-%m-%d", separa='', retorna='YW') {
 #' @author Marcelo F Gomes
 #' @param ano Year
 #' @keywords internal
-#' @examples 
+#' @examplesIf FALSE
 #' lastepiweek(2018)
 
 lastepiweek <- function(ano){
-      
-      # Calcula o valor da ultima semana do ano
-      
-      diafim <- as.Date(paste(ano,'12','31',sep='-')) #Ultimo dia do ano
-      diasem <- as.numeric(format(diafim,"%w"))       #dia semana do ultimo dia
-      
-      ewd <- ifelse (diasem < 3, diafim - diasem - 1, diafim + 6 - diasem) # Obtem a data do ultimo sabado
-      ewd <- as.Date(ewd,origin = '1970-01-01') # ultima semana epi do ano
-      
-      return(episem(ewd,retorna='W'))
+      as.numeric((.epi_year_start(as.integer(ano) + 1L) - .epi_year_start(ano)) / 7)
 }
 
 # SE2date ---------------------------------------------------------------------
 #'@description Return the first day of the Epidemiological Week
 #'@title Return the first day of the Epidemiological Week
 #'@export
-#'@param SE string vector with dates to be converted, format 201420
+#'@param se numeric vector with epidemiological weeks, for example 201420.
 #'@return data.frame with SE and first day.
-#'@examples
+#'@examplesIf FALSE
 #'SE2date(se=202612)
 #'SE2date(se = c(202001:202209))
 
 SE2date <- function(se){
-      if(!class(se[1]) %in% c("numeric","integer")) stop("se should be numeric or integer")
-
-      #load("R/sysdata.rda")
-      #SE$sem <- SE$Ano*100 + SE$SE
-      res <- data.frame(SE = se, ini = as.Date("1970-01-01"))
-      for (i in 1:length(res$SE)) res$ini[i] <- SE$Inicio[SE$SE == res$SE[i]]
-      res
+      if(!is.numeric(se)) stop("se should be numeric or integer")
+      data.frame(SE = se, ini = epiweek_start(se))
 }
 
 # daySEday---------------------------------------------------------------------
@@ -174,34 +110,17 @@ SE2date <- function(se){
 #'@title Return the first day of the Epidemiological Week and vice-versa
 #'@export
 #'@param x numeric vector with epidemiological weeks , format 201945, or date
+#'@param format date format used for character input.
 #'@return data.frame with SE and first day.
-#'@examples
+#'@examplesIf FALSE
 #'daySEday(x=202612)
 #'daySEday(x = c(202541:202604))
 #'daySEday(x = c("2015-12-23", "2015-10-23", "2026-10-16"))
 
 daySEday <- function(x, format = "%Y-%m-%d"){
-      #load("R/sysdata.rda")
-      n <- length(x)
-            if(class(x[1]) %in% c("numeric","integer")) {
-            assert_that(all(x > 200952 & x < 202700), msg = "day2SE: SE format = 
-                        201612, btw 201001 and 202652")
-                  
-            res <- data.frame(SE = x, ini = as.Date("1970-01-01"))
-                  
-            for (i in 1:n) res$ini[i] <- SE$Inicio[SE$SE == res$SE[i]]
-            return(res)
-            
-            }
-      if(class(x[1]) == "character") x <- as.Date(x, format = format)
-      assert_that(all(x <= "2027/01/03" & x >= "2010/01/01"))
-      res <- data.frame(SE = NA, ini = x)
-      for (i in 1:n) res$SE[i] <- SE[which(SE$Inicio<=x[i] & SE$Termino >= x[i]), "SE"]
-      return(res)
-      
-      
-      #SE$sem <- SE$Ano*100 + SE$SE
-      
+      if (is.numeric(x)) return(data.frame(SE = x, ini = epiweek_start(x)))
+      dates <- if (inherits(x, "Date")) x else as.Date(x, format = format)
+      data.frame(SE = as.numeric(as_epiweek(dates)), ini = dates)
 }
 
 
@@ -211,59 +130,27 @@ daySEday <- function(x, format = "%Y-%m-%d"){
 #'@export
 #'@param from first week in format 201401
 #'@param to first week in format 201401
-#'@return data.frame with the epidemiological weeks and corresponding extreme days. 
+#'@return data.frame with the epidemiological weeks and corresponding extreme days.
 #'WARNING: only works from 2010 to 2024.
-#'@examples
+#'@examplesIf FALSE
 #'seqSE(202442, 202510)
 
 seqSE <- function(from, to){
-      #load("R/sysdata.rda")
-      #SE$SE <- SE$Ano*100 + SE$SE
-      N <- dim(SE)[1]
-      
-      if (from < SE$SE[1]){
-            from <- SE$SE[1]
-            #warning(paste("first SE set to", from))
-      }
-      
-      if (to > SE$SE[N]){
-            to <- SE$SE[N]
-            warning(paste("This function only works from 2010 to
-                          ",max(SE$Ano),". Last returned date is", to))
-      }
-      
-      SE[which(SE$SE==from):which(SE$SE==to),]
+      weeks <- epiweek_seq(from, to)
+      starts <- epiweek_start(weeks)
+      data.frame(Ano = floor(weeks / 100), SE = as.numeric(weeks),
+                 Inicio = starts, Termino = starts + 6L)
 }
 
 
-# lastDBdate ---------------------------------------------------------------------
-#'@description  Useful to check if the database is up-to-date. 
-#'@title Returns the most recent date present in the database table. 
-#'@export
-#'@param tab table in the database. Either (sinan, clima_wu, tweet, historico,
-#'historico_mrj). 
-#'@param cities vector of geocodes.
-#'@param cid10 relevant for sinan, tweeter or historico. Codes are: dengue "A90", 
-#'chik "A92.0", zika "A92.8".  
-#'@param stations vector with wu stations. Ex. c("SGBL", "SBRL")
-#'@param datasource 
-#'@return vector with two elements: data.max = most recent date in the collection of cities or stations;
-#'se = corresponding epidemiological week.
-#'@examples
-#'cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
-#'lastDBdate(tab = "tweet", cities = cidades$municipio_geocodigo, cid10 = "A90")
-#'lastDBdate(tab = "sinan", cities = cidades$municipio_geocodigo, cid10 = "A92.8")
-#'lastDBdate(tab = "clima_wu", stations = "SBAF", datasource=con)  
-#'lastDBdate(tab = "clima_wu", cities = cidades$municipio_geocodigo, datasource=con)  
-
-
 # sevendigitgeocode ---------------------------------------------------------------------
-#'@description  calculates the verification digit of brazilian municipalities. Required 
-#'to convert 6 digits to 7 digits geocodes. 
-#'@title convert 6 to 7 digits geocodes. 
+#'@description  calculates the verification digit of brazilian municipalities. Required
+#'to convert 6 digits to 7 digits geocodes.
+#'@title convert 6 to 7 digits geocodes.
 #'@export
-#'@return 7 digits municipality geocode.   
-#'@examples
+#'@param dig Six- or seven-digit municipality geocode.
+#'@return 7 digits municipality geocode.
+#'@examplesIf FALSE
 #'sevendigitgeocode(330455)
 #'sevendigitgeocode(3304557)
 #'sevendigitgeocode(261153)
@@ -272,20 +159,20 @@ sevendigitgeocode <- function(dig){
       ndig = nchar(as.character(dig))
       if (ndig == 7) return(dig)
       if (ndig!=6) stop("this funtion receives 6 digits geocodes only")
-      
-      # there are 9 cities with inconsistent seventh digit. 
+
+      # there are 9 cities with inconsistent seventh digit.
       digspatologicos <- c(220191, 220198, 220225, 261153, 311783, 315213, 430587, 520396, 520393)
       if(dig %in% digspatologicos){
             pos <- which(digspatologicos == dig)
             dig7 <- c(2201919,2201988,2202251,2611533,3117836,3152131,4305871,5203962,5203939)[pos]
       return(dig7)
-      } 
-      # for all the remaining, there is this rule      
+      }
+      # for all the remaining, there is this rule
       peso <- c(1, 2, 1, 2, 1, 2, 0)
       soma <- 0
       digchar <- strsplit(as.character(dig),"")[[1]]
       ndig <- length(digchar)
-      
+
       for (i in 1:6){
             valor <- as.integer(digchar[i]) * peso[i]
             nvalor <- ifelse(valor < 10, valor, trunc(valor/10) + valor%%10)
@@ -294,20 +181,21 @@ sevendigitgeocode <- function(dig){
       dv <- ifelse(soma%%10 == 0, 0, 10 - (soma%%10))
       return(dig*10+dv)
 }
-      
+
 
 # nafill ------------------------------------
-#'@description  collection of imputation procedures 
-#'@title methods to substitute NAs. Use the function na.approx from package zoo. 
+#'@description  collection of imputation procedures
+#'@title methods to substitute NAs. Use the function na.approx from package zoo.
 #'@export
 #'@param v vector with missing elements.
 #'@param rule rule for filling the missing cells. "zero" just fills them with 0; "linear"
 #' interpolate using zoo::na.approx. In this case, the tails are not filled. If "arima", then it interpolates using
-#' linear and extrapolates using arima (calling AlertTools::temp.predict) 
+#' linear and extrapolates using arima (calling AlertTools::temp.predict)
 #'@param maxgap maximum number of consecutive NAs to fill. Longer gaps will be left unchanged. Only works for rule = "zero"
 #' or "linear"
-#'@return vector 
-#'@examples
+#'@param verbose Whether to emit information about missing values.
+#'@return vector
+#'@examplesIf FALSE
 #'# Interpolation:
 #'v <- c(1,2,3,NA,5,6,NA,NA,9,10,NA,NA)
 #'nafill(v, rule = "zero")
@@ -316,7 +204,7 @@ sevendigitgeocode <- function(dig){
 #'cliSBCB <- getWU(station = "SBCB")
 #'summary(cliSBCB)
 #'cliSBCB <- getWU(station = "SBCB") %>%
-#'           mutate(nafill("temp_min", rule = "arima")) 
+#'           mutate(nafill("temp_min", rule = "arima"))
 
 nafill <- function(v, rule, maxgap = 4, verbose = F){
       Nna = sum(is.na(v))
@@ -331,12 +219,13 @@ nafill <- function(v, rule, maxgap = 4, verbose = F){
 }
 
 # temp.predict ------------------------------------
-#'@description  function for extrapolating temperature using arima  
-#'@title Fit arima to fill in missing data at the end of temperature time series. 
+#'@description  function for extrapolating temperature using arima
+#'@title Fit arima to fill in missing data at the end of temperature time series.
 #'@export
 #'@param v vector with temperature data.
+#'@param plotar Whether to plot observed and predicted values.
 #'@return vector with replaced NA.
-#'@examples
+#'@examplesIf FALSE
 #'head(cliSBCB)
 #'temp.predict(v=cli[,3], plotar = T)
 
@@ -345,51 +234,51 @@ temp.predict <- function(v, plotar = FALSE){
       datarange <- range(which(!is.na(v)))
       # tamanho do tail de na:
       Nna = Nv - datarange[2]
-      
+
       x <- zoo::na.approx(v)
-      
+
       if(Nna > 0){
-            
+
             # Para saber os coeficientes da parte ARIMA atraves de criterios de selecao automatica:
             #automatica:
             c.a <- forecast::auto.arima(x, max.p=5, max.q=5, max.P=5, max.Q=5)$arma
             # Modelo considerando a sazonalidade, e a parte ARIMA sugerida anteriormente:
             modelo.sarima <- arima(zoo::na.approx(v),order=c.a[c(1,6,2)],seasonal=list(order=c(c.a[3],1,c.a[4]),period=52))
-            
+
             message(paste("temperature predicted", Nna, "steps ahead"  ))
             predito<-predict(modelo.sarima,n.ahead=Nna)$pred
-            
+
             if (plotar == T){
-                  fitado <- forecast::fitted(modelo.sarima)
+                  fitado <- stats::fitted(modelo.sarima)
                   # Plot para ver o desempenho do modelo in/outsample
                   plot(c(fitado,predito),col="orange",type="l",ylab="")
                   lines(x,type="l")
                   legend("bottomleft",c("Observado","Estimado"),col=c("black","orange"),lty=1)
             }
-            
+
             # juntando dados com predito
             v[(datarange[2]+1):Nv] <-predito
       }
       v[datarange[1]:datarange[2]] <- x
-      
+
       v
 }
 
 
 # getRegionais ------------------------------------
-#'@description  consult database to get list of regionais 
-#'@title get list of regionais. 
+#'@description  consult database to get list of regionais
+#'@title get list of regionais.
 #'@export
 #'@param uf full name of the state.
 #'@param cities cities' geocodes
-#'@param sortedby the options are: 'a' alphabetically, 'id' regional id number (only valid for regional), 
+#'@param sortedby the options are: 'a' alphabetically, 'id' regional id number (only valid for regional),
 #'if available
-#'@param macroreg TRUE if getRegionais should return macroreg instead of reg. Default: False  
-#'@param output if "names" returns only a vector with names of regionais or macros. 
+#'@param macroreg TRUE if getRegionais should return macroreg instead of reg. Default: False
+#'@param output if "names" returns only a vector with names of regionais or macros.
 #'If "complete" , returns municipalities and their regs
 #'@param datasource name of the database
 #'@return vector with names of the regionais.
-#'@examples
+#'@examplesIf FALSE
 #'getRegionais(uf="Rio de Janeiro")
 #'head(getRegionais(uf="Rio de Janeiro",output="complete",macroreg = TRUE))
 #'head(getRegionais(uf="Rio de Janeiro",output="complete"))
@@ -397,240 +286,161 @@ temp.predict <- function(v, plotar = FALSE){
 #'getRegionais(cities = c(3304128,3306107,3300159), uf="Rio de Janeiro", macroreg = TRUE)
 #'getRegionais(uf="Rio de Janeiro", sortedby = 'id')
 
-getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE, 
-                         datasource=con, output = "names"){
-      
-      assert_that(!missing(uf), 
-                  msg = "getRegionais: please specify uf. Ex. uf = \"Ceará\" ")
-  
-  if(class(datasource) == "PostgreSQLConnection"){
-        sqlquery = paste("SELECT geocodigo, nome, regional, id_regional, 
-        macroregional, macroregional_id, uf FROM \"Dengue_global\".\"Municipio\"
-                         where uf = '", uf, "'", sep="")
-        d = DBI::dbGetQuery(datasource, sqlquery)    
-  }
-        assert_that(nrow(d) > 0, 
-                    msg = (paste("getRegionais: 
+getRegionais <- function(cities, uf, sortedby = "a", macroreg = FALSE,
+                         datasource, output = "names"){
+
+      assert_that(!missing(uf),
+                  msg = "getRegionais: please specify uf. Ex. uf = \"Ceara\" ")
+
+      .db_validate_connection(datasource)
+      d <- .repo_municipalities(
+            datasource,
+            cities = if (!missing(cities)) cities else NULL,
+            uf = uf,
+            columns = c("geocodigo", "nome", "regional", "id_regional",
+                        "macroregional", "macroregional_id", "uf")
+      )
+        assert_that(nrow(d) > 0,
+                    msg = (paste("getRegionais:
                                  Database does not have the health areas for ", uf)))
-      
+
       names(d) <- c("municipio_geocodigo","cidade","regional","codigo_regional",
                     "macroregional","codigo_macroregional","uf")
-      
+
       if(!missing(cities)) {
-            d <- d %>% filter(municipio_geocodigo %in% cities)
-            assert_that(nrow(d) == length(cities), 
-            msg = (paste("getRegionais: Database does not have the health 
+            assert_that(nrow(d) == length(cities),
+            msg = (paste("getRegionais: Database does not have the health
                          districts for all listed cities in", uf)))
       }
-      
+
       if(output == "names" & macroreg == TRUE) return(unique(d$macroregional))
       if(output == "names" & macroreg == FALSE) return(unique(d$regional))
-        
+
       return(d)
 }
 
 
 # getCidades ------------------------------------
 #'@description  consult database to get list of cities for regional, macroregional or uf.
-#'@title get list of cities. 
+#'@title get list of cities.
 #'@export
 #'@param uf full name of the state.
-#'@param regional full name of the regional. Use getRegionais() to obtain the correct spelling. 
+#'@param regional full name of the regional. Use getRegionais() to obtain the correct spelling.
 #'@param macroregional full name of the macroregional.
 #'@param datasource name of the database
 #'@return vector with names of the cities.
-#'@examples
+#'@examplesIf FALSE
 #'getCidades(regional = "Metropolitana I", uf="Rio de Janeiro")
 #'getCidades(uf="Acre")
-#'getCidades(uf="Maranhão", macroregional = "NORTE")
+#'getCidades(uf="Maranhao", macroregional = "NORTE")
 
-getCidades <- function(regional, macroregional, uf, datasource=con){
-      
-      if(missing(uf)) stop("getCidades: specify uf's full name. Ex: São Paulo")
-      if(!missing(regional)){  # all cities in the regionais
-            
-            sqlquery = paste("SELECT geocodigo, nome, regional, id_regional, 
-        macroregional, macroregional_id, uf FROM \"Dengue_global\".\"Municipio\"
-                         WHERE uf = '", uf, "' AND regional = '", regional ,"'", sep="")
-            d = DBI::dbGetQuery(datasource, sqlquery)    
-            
-            assert_that(nrow(d) > 0, msg = "getCidades: found no city. Check names.")
-            names(d) <- c("municipio_geocodigo", "cidade", "regional", 
-                          "regional_id", "macroregional","macroregional_id","uf")
-            return(d)    
-      }
-      
-      if(!missing(macroregional)){ # all cities in the macroregional
-            
-            sqlquery = paste("SELECT geocodigo, nome, regional, id_regional, 
-        macroregional, macroregional_id, uf FROM \"Dengue_global\".\"Municipio\"
-                  WHERE uf = '", uf, "' AND macroregional = '", macroregional ,"'", sep="")
-            
-            d <- dbGetQuery(datasource, sqlquery) 
-            assert_that(nrow(d)>0, msg = "getCidades: found no city. Check names.")
-            names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id", 
-                          "macroregional","macroregional_id","uf")
-            return(d)     
-      }
-      
-      # else: retorna para todo o estado
-      sqlquery = paste("SELECT geocodigo, nome, regional, id_regional, 
-        macroregional, macroregional_id, uf FROM \"Dengue_global\".\"Municipio\"
-                         where uf = '", uf, "'", sep="")
-      d <- DBI::dbGetQuery(datasource, sqlquery) 
+getCidades <- function(regional, macroregional, uf, datasource){
+
+      if(missing(uf)) stop("getCidades: specify uf's full name. Ex: Sao Paulo")
+      .db_validate_connection(datasource)
+      d <- .repo_municipalities(
+            datasource,
+            uf = uf,
+            regional = if (!missing(regional)) regional else NULL,
+            macroregional = if (!missing(macroregional)) macroregional else NULL,
+            columns = c("geocodigo", "nome", "regional", "id_regional",
+                        "macroregional", "macroregional_id", "uf")
+      )
       assert_that(nrow(d)>0, msg = "getCidades: found no city")
-      names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id", 
+      names(d) <- c("municipio_geocodigo", "cidade", "regional", "regional_id",
                     "macroregional","macroregional_id","uf")
-      return(d)       
-      
+      return(d)
+
 }
 
 
 # write_parameters ------------------------------------
-#'@description  Write the alert parameters for each city into the database, to be used in the update.alert. 
+#'@description  Write the alert parameters for each city into the database, to be used in the update.alert.
 #'Currently, the parameters are: "limiar_preseason", "limiar_posseason",
-#'"limiar_epidemico,"varcli", "varcli2", "clicrit", "clicrit2" , "cid10", "codmodelo". 
+#'"limiar_epidemico,"varcli", "varcli2", "clicrit", "clicrit2" , "cid10", "codmodelo".
 #' City must be already in the regionais table.
-#'@title City's parameterization. 
-#'@export
-#'@param params vector of the names of the params to be inserted in the table. Limiar is given as incidence. 
-#'It can be a subset of the default. 
-#'@return the new line in the parameters table 
-#'@examples
-#'pars = data.frame(municipio_geocodigo = 3506003,limiar_preseason = 4.50243, limiar_posseason = 3.962566, 
-#'limiar_epidemico = 67.72364, varcli = "temp_min", clicrit = 22, cid10 = "A90", codmodelo = "Af") 
+#'@title City's parameterization.
+#'@noRd
+#'@param params vector of the names of the params to be inserted in the table. Limiar is given as incidence.
+#'It can be a subset of the default.
+#'@param city Seven-digit municipality geocode.
+#'@param cid10 Disease code.
+#'@param overwrite Whether to replace existing parameters.
+#'@param datasource Database connection.
+#'@param conflict Conflict policy: `ignore`, `update`, or `error`. `overwrite = TRUE`
+#'selects `update` for backwards compatibility.
+#'@return the new line in the parameters table
+#'@examplesIf FALSE
+#'pars = data.frame(municipio_geocodigo = 3506003,limiar_preseason = 4.50243, limiar_posseason = 3.962566,
+#'limiar_epidemico = 67.72364, varcli = "temp_min", clicrit = 22, cid10 = "A90", codmodelo = "Af")
 #'res = write_parameters(params$municipio_geocodigo, params$cid10, params = pars)
 
-write_parameters<-function(city, cid10, params, overwrite = FALSE, datasource = con){
-      
-      # checking inputs
-      assert_that(class(params) == "data.frame", 
+.write_parameters_impl <- function(city, cid10, params, overwrite = FALSE, datasource,
+                             conflict = c("ignore", "update", "error")) {
+      assert_that(is.data.frame(params),
                   msg = "write_parameters: params should be a data.frame")
-      
-      assert_that(nrow(params) == 1 , 
+      assert_that(nrow(params) == 1,
                   msg = "write_parameters write one line only")
-      
-      assert_that(cid10 %in% c("A90","A92.0","A92.8"), 
-                  msg = paste("write_parameters: not prepared for cid10 = ",params$cid10))
-      
-      assert_that(all(c("municipio_geocodigo","cid10") %in% names(params)), 
-                  msg = paste("write.parameters: params must contain municipio_geocodigo, cid10"))
-      
-      assert_that(class(datasource) == "PostgreSQLConnection", 
-                  msg = paste("write.parameters: datasource must be a connection to the Infodengue server"))
-      
-      # check if city is already in the system (Regional table) - they all are
-      
-      #sql1 = paste("SELECT * from \"Dengue_global\".regional_saude SET  
-      #                         WHERE municipio_geocodigo = ",city, sep="")      
-      #cityregtable = try(dbGetQuery(datasource, sql1))
-      
-      #assert_that(nrow(cityregtable)>0, 
-      #            msg = paste("geocode", city, "not implemented in Infodengue. Use insertCityinAlerta()") )
-      
-      # Next step, check if there are any parameters for this cid10?      
-      sql2 = paste("SELECT * from \"Dengue_global\".parameters SET  
-                               WHERE municipio_geocodigo = ",city," AND cid10 = $$",
-                                cid10,"$$", sep="")      
-      
-      parline = try(DBI::dbGetQuery(datasource, sql2))
-      
-      assert_that(nrow(parline) < 2, 
-                  msg = paste("parameter table has something wrong. more than one line for", 
-                                               params$cid10, "for city", city, "."))
-      
-      # now let's write the data
-      # if line does not exist, create one with the cid and geocode:
-      if(nrow(parline) == 1 & overwrite == FALSE){
-            message("the following parameters were found. Rerun with overwrite = T to replace them")
-            print(parline)
-            return(parline)
-      }
-      
-      if(nrow(parline) == 0){ #
-       message(paste("no previous param found. Inserting new param line for city", params$municipio_geocodigo))
-       linha = paste(as.character(params$municipio_geocodigo), ",\'",params$cid10, "\'",sep="")
-       sql = paste("insert into \"Dengue_global\".parameters (municipio_geocodigo, cid10) values(", linha ,")")
-       DBI::dbGetQuery(datasource, sql)    
-       
-       # check if was correctly created
-       parline_now = try(DBI::dbGetQuery(datasource, sql2))
-       
-       assert_that(nrow(parline_now) == 1, 
-                   msg = paste("parameter table has something wrong. number of lines for ", 
-                               params$cid10, "for city", city, "is:", nrow(parline_now) ))
-      }
-      
-      vars <- params %>% dplyr::select(-c("municipio_geocodigo", "cid10"))
-      nvars <- length(vars)
-      
-      # updating parameter values
-      
-      for (i in 1:nvars) {
-            linha = paste(names(vars)[i], " = '", vars[[i]], "'", sep = "")
-            update_sql = paste("UPDATE \"Dengue_global\".parameters SET ", linha , 
-                               " WHERE municipio_geocodigo = ", params$municipio_geocodigo,
-                               " AND cid10 = \'", cid10, "\'", sep="")      
-            try(DBI::dbGetQuery(datasource, update_sql))
-      }
-             
-      
+      assert_that(cid10 %in% c("A90", "A92.0", "A92.8"),
+                  msg = paste("write_parameters: not prepared for cid10 =", cid10))
+      assert_that(all(c("municipio_geocodigo", "cid10") %in% names(params)),
+                  msg = "write.parameters: params must contain municipio_geocodigo, cid10")
+      .db_validate_connection(datasource)
+
+      conflict <- match.arg(conflict)
+      if (isTRUE(overwrite)) conflict <- "update"
+      assert_that(as.numeric(params$municipio_geocodigo) == as.numeric(city) &&
+                    as.character(params$cid10) == as.character(cid10),
+                  msg = "write_parameters: keys in params must match city and cid10")
+
+      .repo_write_rows(
+            datasource, "parameters", params,
+            key = c("municipio_geocodigo", "cid10"), conflict = conflict
+      )
+      .repo_parameters(datasource, city, cid10)
 }
 
 # read.parameters ------------------------------------
-#'@description  Read the alert parameters for a set of cities from the database, to be used in the infodengue pipeline. 
-#'Currently, the parameters are: "limiar_preseason" (pre-season incidence threshold calculated using MEM), 
-#'"limiar_posseason" (pos-season incidence threshold), "limiar_epidemico"(epidemic threshold), "varcli" (name of the critical 
+#'@description  Read the alert parameters for a set of cities from the database, to be used in the infodengue pipeline.
+#'Currently, the parameters are: "limiar_preseason" (pre-season incidence threshold calculated using MEM),
+#'"limiar_posseason" (pos-season incidence threshold), "limiar_epidemico"(epidemic threshold), "varcli" (name of the critical
 #'meteorological variable), "clicrit" (critical value of the meteorological variable), "cid10",
-#'"codmodelo" (name of the heuristic decision model, see serCriteria()). These parameters are specified when the city is initiated 
+#'"codmodelo" (name of the heuristic decision model, see serCriteria()). These parameters are specified when the city is initiated
 #'in the pipeline.
 #'@title Get city-level alert parameters for the infodengue pipeline.
-#'@export 
-#'@param cities cities' geocodes. Tip: find them using getCidades(). 
+#'@noRd
+#'@param cities cities' geocodes. Tip: find them using getCidades().
 #'@param cid10 Dengue = "A90" (default), Chik = "A92.0", Zika = "A92.8"
 #'@param datasource SQL connection to the database
 #'@return dataframe with all parameters
-#'@examples
+#'@examplesIf FALSE
 #'read.parameters(cities = 3118601, cid10 = "A90")
 #'cid <- getCidades(regional = "Norte",uf = "Rio de Janeiro")
 #'read.parameters(cities = cid$municipio_geocodigo, cid10 = "A90")
 
-read.parameters<-function(cities, cid10 = "A90", datasource=con){
-      
+.fetch_alert_parameters_impl <- function(cities, cid10 = "A90", datasource){
+
       cities <- sapply(cities, function(x) sevendigitgeocode(x))
       if(!cid10 %in% c("A90", "A92.0")) {
         warning("Parameter table currently supports only A90 (dengue) and A92.0 (chikungunya). Using dengue parameters (A90).")
         cid10 <- "A90"
       }
 
-      
-      # regra específica: Espírito Santo (só tem parâmetros de dengue)
+
+      # specific rule: Espirito Santo only has dengue parameters
       if(any(grepl("^32", cities)) && cid10 != "A90") {
-        warning("Parameters for Espírito Santo are only available for dengue (A90). Using A90.")
+        warning("Parameters for Espirito Santo are only available for dengue (A90). Using A90.")
         cid10 <- "A90"
       }
-      
-      # reading parameters from database
-      
-      sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
-      
-      if(class(datasource) == "PostgreSQLConnection"){
-        comando = paste("SELECT * FROM \"Dengue_global\".parameters WHERE cid10 = '", cid10 , 
-                        "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
-      }
-      
-      if(class(datasource) == "SQLiteConnection"){
-        comando = paste("SELECT * FROM parameters WHERE cid10 = '", cid10 , 
-                        "' AND municipio_geocodigo  IN (", sqlcity,")", sep="")
-      }
-      
-      try(dd <- DBI::dbGetQuery(datasource,comando))
-            
-      assert_that(all(cities %in% dd$municipio_geocodigo),msg = ("check if cities and cid10 are in the parameter table"))      
-      
+
+      .db_validate_connection(datasource)
+      dd <- .repo_parameters(datasource, cities, cid10)
+
+      assert_that(all(cities %in% dd$municipio_geocodigo),msg = ("check if cities and cid10 are in the parameter table"))
+
       return(dd)
 }
-      
+
 # getWUstation ------------------------------------------
 #'@description  Get the meteorological stations associated with one or more cities
 #'@title get meteorological stations
@@ -638,80 +448,60 @@ read.parameters<-function(cities, cid10 = "A90", datasource=con){
 #'@param cities vector with geocodes
 #'@param datasource connection to the project database
 #'@return data.frame
-#'@examples
+#'@examplesIf FALSE
 #'getWUstation(cities = 3304557)
 #'cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
 #'getWUstation(cities = cidades$municipio_geocodigo)
 
-getWUstation <- function(cities, datasource = con){
-  sqlcity = paste("'", str_c(cities, collapse = "','"),"'", sep="")
-  
-  if(class(datasource) == "PostgreSQLConnection"){
-  comando <- paste("SELECT municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
-                       \"Dengue_global\".parameters WHERE municipio_geocodigo IN (", sqlcity, 
-                   ")" , sep="")
-  }
-  if(class(datasource) == "SQLiteConnection"){
-    comando <- paste("SELECT municipio_geocodigo, codigo_estacao_wu, estacao_wu_sec from 
-                       parameters WHERE municipio_geocodigo IN (", sqlcity, 
-                     ")" , sep="")
-  }
-  
-  city_table <- DBI::dbGetQuery(datasource,comando)
-  return(city_table)
+getWUstation <- function(cities, datasource){
+  .db_validate_connection(datasource)
+  .repo_station_links(datasource, cities)
 }
 
 # setWUstation ------------------------------------------
-#'@description  Set primary and secondary meteorological stations associated 
+#'@description  Set primary and secondary meteorological stations associated
 #'with one or more cities of the same state
 #'@title set meteorological stations
 #'@export
-#'@param st data.frame containing municipio_geocodigo, primary_station, 
+#'@param st data.frame containing municipio_geocodigo, primary_station,
 #'secondary_station
 #'@param UF name of the state.Ex. "Rio de Janeiro"
-#'@param senha for the connection to the project database
-#'@examples
-#'NOT RUN
+#'@param datasource connection to the project database
+#'@examplesIf FALSE
+#'# NOT RUN
 #'wudata = data.frame(municipio_geocodigo = 3107802, primary_station = "SBIP",
 #'secondary_station = "SBGV")
 #'setWUstation(wudata, UF = "Minas Gerais")
 #'getWUstation(cities =wudata$municipio_geocodigo)
 
-setWUstation <- function(st, UF, datasource = con){
-      
+setWUstation <- function(st, UF, datasource){
+
       ncities <- nrow(st)
-      
+
       # checking inputs
-      assert_that(class(st) == "data.frame", 
+      assert_that(class(st) == "data.frame",
                   msg = "setWUstation: st should be a data.frame")
-      
+
       assert_that(all(names(st) %in% c("municipio_geocodigo" , "primary_station",
-                                 "secondary_station")), 
-                  msg = "setWUstation: st should contain columns municipio_geocodigo, 
+                                 "secondary_station")),
+                  msg = "setWUstation: st should contain columns municipio_geocodigo,
                         primary_station, secondary_station")
-      
-      assert_that(class(datasource) == "PostgreSQLConnection", 
-                  msg = paste("setWUstation: datasource must be a connection to the Infodengue server"))
-      
+
+      .db_validate_connection(datasource)
+
       # check if city is already in the system (Regional table)
       cities_table <- getCidades(uf = UF, datasource = datasource)
       cities_in <- st$municipio_geocodigo %in% cities_table$municipio_geocodigo
-       
-      assert_that(sum(cities_in)==ncities, 
-                  msg = paste("geocodes", st$municipio_geocodigo[cities_in == FALSE] , 
-                              "not implemented in Infodengue.") )
-      
-      ## writing 
-    
-      for (i in 1:ncities) {
-            el1 = paste("'", as.character(st$primary_station[i]),"'",sep="")
-            el2 = paste("'", as.character(st$secondary_station[i]),"'",sep="")
-            linha = paste("codigo_estacao_wu = ", el1, ",", "estacao_wu_sec = ", el2, sep = "")
-            update_sql = paste("UPDATE \"Dengue_global\".parameters SET ", linha , " WHERE 
-                               municipio_geocodigo = ", st$municipio_geocodigo[i], sep="")  
-            cityline = try(DBI::dbGetQuery(datasource, update_sql))
-      }
-      
-      return()
-}
 
+      assert_that(sum(cities_in)==ncities,
+                  msg = paste("geocodes", st$municipio_geocodigo[cities_in == FALSE] ,
+                              "not implemented in Infodengue.") )
+
+      updates <- data.frame(
+            municipio_geocodigo = st$municipio_geocodigo,
+            codigo_estacao_wu = st$primary_station,
+            estacao_wu_sec = st$secondary_station,
+            stringsAsFactors = FALSE
+      )
+      invisible(.repo_update_station_links(datasource, updates))
+}

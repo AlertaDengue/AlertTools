@@ -1,2 +1,14 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^AlertTools$
+^AlertTools\.Rcheck$
+^AlertTools_[0-9.]+\.tar\.gz$
+^INSTRUCOES_AGENTE_REFATORACAO\.md$
+^plano_refatoracao_alerttools\.(qmd|html)$
+^docs/refactoring$
+^\.github$
+^_pkgdown\.yml$
+^\.lintr$
+^tools$
+^pkgdown-site$
+^data/(bairro2APS|locs|sinan)\.rda$

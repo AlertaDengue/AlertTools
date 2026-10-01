@@ -15,6 +15,8 @@ linear and extrapolates using arima (calling AlertTools::temp.predict)}
 
 \item{maxgap}{maximum number of consecutive NAs to fill. Longer gaps will be left unchanged. Only works for rule = "zero"
 or "linear"}
+
+\item{verbose}{Whether to emit information about missing values.}
 }
 \value{
 vector
@@ -23,6 +25,7 @@ vector
 collection of imputation procedures
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 # Interpolation:
 v <- c(1,2,3,NA,5,6,NA,NA,9,10,NA,NA)
 nafill(v, rule = "zero")
@@ -31,5 +34,6 @@ nafill(v, rule = "linear")
 cliSBCB <- getWU(station = "SBCB")
 summary(cliSBCB)
 cliSBCB <- getWU(station = "SBCB") \%>\%
-          mutate(nafill("temp_min", rule = "arima")) 
+          mutate(nafill("temp_min", rule = "arima"))
+\dontshow{\}) # examplesIf}
 }

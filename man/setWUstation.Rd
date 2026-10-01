@@ -4,24 +4,26 @@
 \alias{setWUstation}
 \title{set meteorological stations}
 \usage{
-setWUstation(st, UF, datasource = con)
+setWUstation(st, UF, datasource)
 }
 \arguments{
-\item{st}{data.frame containing municipio_geocodigo, primary_station, 
+\item{st}{data.frame containing municipio_geocodigo, primary_station,
 secondary_station}
 
 \item{UF}{name of the state.Ex. "Rio de Janeiro"}
 
-\item{senha}{for the connection to the project database}
+\item{datasource}{connection to the project database}
 }
 \description{
-Set primary and secondary meteorological stations associated 
+Set primary and secondary meteorological stations associated
 with one or more cities of the same state
 }
 \examples{
-NOT RUN
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
+# NOT RUN
 wudata = data.frame(municipio_geocodigo = 3107802, primary_station = "SBIP",
 secondary_station = "SBGV")
 setWUstation(wudata, UF = "Minas Gerais")
 getWUstation(cities =wudata$municipio_geocodigo)
+\dontshow{\}) # examplesIf}
 }

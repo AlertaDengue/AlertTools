@@ -1,6 +1,6 @@
 # PROJETO ALERTA DENGUE -------------------------------------
 # Auxiliar functions for nowcasting
-# Leo Bastos 2020 
+# Leo Bastos 2020
 # -----------------------------------------------------------
 
 # Auxiliar function, sampling from a negative binomial likelihood
@@ -17,9 +17,9 @@ gg <- function(x, dados, idx, Fim.sat, Dmax){
     # do domingo da respectiva ultima epiweek
     # com dados faltantes
     filter(Date >= Fim.sat - Dmax*7  ) %>%
-    group_by(Date) %>% 
-    dplyr::summarise( 
-      Casos = sum(Casos) 
+    group_by(Date) %>%
+    dplyr::summarise(
+      Casos = sum(Casos)
     )
   data.aggregated
 }
@@ -27,110 +27,111 @@ gg <- function(x, dados, idx, Fim.sat, Dmax){
 
 # Algorithm to get samples for the predictive distribution for the number of cases
 
-nowcasting <- function(output.day, dadosRio.ag, Dm, Fim){
+nowcasting <- function(output.day, dadosRio.ag, Dm, Fim, seed = NULL, samples = 1000L){
+  if (!requireNamespace("INLA", quietly = TRUE)) {
+    stop("nowcasting requires the optional package 'INLA'.", call. = FALSE)
+  }
   index.missing = which(is.na(dadosRio.ag$Casos))
-  
-  
+
+
   # Step 1: Sampling from the approximate posterior distribution using INLA
-  srag.samples.list <- inla.posterior.sample(n = 1000, output.day)
-  
-  # Step 2: Sampling the missing triangle (in vector form) from the likelihood using INLA estimates
-  vector.samples <- lapply(X = srag.samples.list, 
-                           FUN = ff,
-                           idx = index.missing
-  )
-  
-  # Step 3: Calculate N_t for each triangle sample {N_t : t=Tactual-Dmax+1,...Tactual}
-  tibble.samples <- lapply( X = vector.samples,
-                            FUN = gg,
-                            dados = dadosRio.ag, 
-                            idx = index.missing,
-                            Fim.sat = Fim, 
-                            Dmax = Dm
-  )
-  
-  # Nowcasting
-  srag.pred <- bind_rows(tibble.samples, .id = "sample")
-  
-  srag.pred
+  if (length(samples) != 1L || !is.numeric(samples) || samples < 1 || samples != floor(samples)) {
+    stop("`samples` must be a positive integer.", call. = FALSE)
+  }
+  .with_seed(seed, {
+    srag.samples.list <- INLA::inla.posterior.sample(
+      n = as.integer(samples), output.day
+    )
+
+    # Step 2: sample the missing triangle from the likelihood.
+    vector.samples <- lapply(
+      X = srag.samples.list, FUN = ff, idx = index.missing
+    )
+
+    # Step 3: aggregate each sampled triangle by onset date.
+    tibble.samples <- lapply(
+      X = vector.samples, FUN = gg, dados = dadosRio.ag,
+      idx = index.missing, Fim.sat = Fim, Dmax = Dm
+    )
+
+    bind_rows(tibble.samples, .id = "sample")
+  })
 }
 
 
 # Running INLA for the nowcasting model
-nowcast.INLA <- function(dados.ag, model.day,...){
-  
+nowcast.INLA <- function(dados.ag, model.day, workers = 1L, verbose = FALSE, ...){
+  if (!requireNamespace("INLA", quietly = TRUE)) {
+    stop("nowcast.INLA requires the optional package 'INLA'.", call. = FALSE)
+  }
+
+  workers <- .validate_workers(workers)
   output <- tryCatch(
-    {inla(formula = model.day, 
-                 family = "nbinomial", 
+    {INLA::inla(formula = model.day,
+                 family = "nbinomial",
                  data = dados.ag,
-                 num.threads = 4,verbose = FALSE,
+                 num.threads = workers, verbose = verbose,
                  control.predictor = list(link = 1, compute = T),
                  control.compute = list( config = T),
                  ...
-                 # control.family = list( 
+                 # control.family = list(
                  # hyper = list("theta" = list(
                  #   prior = "loggamma", param = c(1, 0.1)))
                  #   )
   )},
   error=function(cond) {
-    message("nowcast failed")
-    message("Here's the original error message:")
-    message(cond)
-    # Choose a return value in case of error
-    return(NULL)
+    if (isTRUE(verbose)) message("nowcast failed: ", conditionMessage(cond))
+    NULL
   },
   warning=function(cond) {
-    message("nowcast failed")
-    message("Here's the original warning message:")
-    message(cond)
-    # Choose a return value in case of warning
-    return(NULL)
+    if (isTRUE(verbose)) message("nowcast warning: ", conditionMessage(cond))
+    NULL
   })
-  
+
   output
 }
 
 
 # Plot nowcasting
 # plot.nowcast <- function(dadosRio.ag, pred.summy, nowcast = T){
-#   
+#
 #   dadosRio.ag.day.plot <- dadosRio.ag %>% group_by(Date) %>%
-#     dplyr::summarise( Casos = sum(Casos, na.rm = T)) %>% 
-#     left_join(pred.summy, by = "Date") %>% 
+#     dplyr::summarise( Casos = sum(Casos, na.rm = T)) %>%
+#     left_join(pred.summy, by = "Date") %>%
 #     mutate(
 #       Casos = ifelse(Date > Fim, NA, Casos),
 #       Forecast = ifelse(is.na(Mean), NA, 0) + ifelse(Date > Fim, 1, 0)
 #     )
-#   
+#
 #   # Time series
-#   p0.day <- dadosRio.ag.day.plot %>% 
-#     ggplot(aes(x = Date, y = Casos, 
-#                color = "Casos notificados", 
-#                linetype = "Casos notificados")) + 
-#     geom_line(size = 1, na.rm = T) 
-#   
+#   p0.day <- dadosRio.ag.day.plot %>%
+#     ggplot(aes(x = Date, y = Casos,
+#                color = "Casos notificados",
+#                linetype = "Casos notificados")) +
+#     geom_line(size = 1, na.rm = T)
+#
 #   if(nowcast){
-#     p0.day <- p0.day +   
-#       geom_ribbon( aes( ymin=LI, ymax=LS), fill = 'gray', 
-#                    color = 'gray', alpha = 0.5, 
-#                    show.legend = F) + 
-#       geom_line(aes(x = Date, y = Median, 
-#                     colour = "Nowcasting", 
-#                     linetype = "Nowcasting"), 
+#     p0.day <- p0.day +
+#       geom_ribbon( aes( ymin=LI, ymax=LS), fill = 'gray',
+#                    color = 'gray', alpha = 0.5,
+#                    show.legend = F) +
+#       geom_line(aes(x = Date, y = Median,
+#                     colour = "Nowcasting",
+#                     linetype = "Nowcasting"),
 #                 size = 1, na.rm = T) +
-#       scale_colour_manual(name = "", 
-#                           values = c("black", "black"), 
+#       scale_colour_manual(name = "",
+#                           values = c("black", "black"),
 #                           guide = guide_legend(reverse=F)) +
-#       scale_linetype_manual(name = "", 
-#                             values = c("solid", "dotted"), 
+#       scale_linetype_manual(name = "",
+#                             values = c("solid", "dotted"),
 #                             guide = guide_legend(reverse=F))
 #   }
-#   
-#   p0.day <- p0.day + 
-#     #ylab("Casos hospitalização de SRAG") + 
+#
+#   p0.day <- p0.day +
+#     #ylab("Casos hospitalização de SRAG") +
 #     #xlab("Tempo") +
 #     theme_bw( base_size = 14) +
-#     theme( legend.position = c(0.2, 0.8), legend.title = element_blank()) 
-#   
+#     theme( legend.position = c(0.2, 0.8), legend.title = element_blank())
+#
 #   p0.day
 # }

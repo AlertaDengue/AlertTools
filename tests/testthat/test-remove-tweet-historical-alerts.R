@@ -1,11 +1,3 @@
-library(assertthat)
-library(dplyr)
-library(purrr)
-library(stringr)
-
-source(testthat::test_path("..", "..", "R", "utility_tools.R"))
-source(testthat::test_path("..", "..", "R", "alert_functions.R"))
-
 historical_alert_input <- function(include_tweet = TRUE) {
   data <- data.frame(
     cidade = 3304557,
@@ -41,26 +33,22 @@ historical_alert_input <- function(include_tweet = TRUE) {
 }
 
 test_that("tabela_historico excludes legacy tweet input", {
-  alert_environment <- environment(tabela_historico)
-  original_read_parameters <- get("read.parameters", envir = alert_environment)
-  original_SE2date <- get("SE2date", envir = alert_environment)
-  assign("read.parameters", function(...) {
-    data.frame(
-      municipio_geocodigo = 3304557,
-      limiar_preseason = 5,
-      limiar_epidemico = 15
-    )
-  }, envir = alert_environment)
-  on.exit(assign("read.parameters", original_read_parameters,
-                 envir = alert_environment), add = TRUE)
-  assign("SE2date", function(se) {
-    data.frame(SE = se, ini = as.Date("2024-01-01"))
-  }, envir = alert_environment)
-  on.exit(assign("SE2date", original_SE2date, envir = alert_environment),
-          add = TRUE)
-
-  with_tweet <- tabela_historico(historical_alert_input(TRUE))
-  without_tweet <- tabela_historico(historical_alert_input(FALSE))
+  withr::local_options(list(lifecycle_verbosity = "quiet"))
+  parameters <- data.frame(
+    municipio_geocodigo = 3304557,
+    limiar_preseason = 5,
+    limiar_epidemico = 15
+  )
+  with_tweet <- tabela_historico(
+    historical_alert_input(TRUE),
+    versao = as.Date("2024-01-01"),
+    parameters = parameters
+  )
+  without_tweet <- tabela_historico(
+    historical_alert_input(FALSE),
+    versao = as.Date("2024-01-01"),
+    parameters = parameters
+  )
 
   expect_false("tweet" %in% names(with_tweet))
   expect_false("tweet" %in% names(without_tweet))
@@ -100,6 +88,7 @@ historical_alert_row <- function(cid10) {
 }
 
 test_that("write_alerta SQL omits tweet for every disease table", {
+  withr::local_options(list(lifecycle_verbosity = "quiet"))
   expected_tables <- c(
     A90 = "Historico_alerta",
     "A92.0" = "Historico_alerta_chik",

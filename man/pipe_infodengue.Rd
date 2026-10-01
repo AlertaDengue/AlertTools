@@ -8,14 +8,18 @@ pipe_infodengue(
   cities,
   cid10 = "A90",
   datarelatorio,
-  finalday = Sys.Date(),
+  finalday = NULL,
   iniSE = 201001,
   nowcasting = "none",
   narule = NULL,
   writedb = FALSE,
-  datasource = con,
+  datasource,
   completetail = NA,
   dataini = "notific",
+  workers = 1L,
+  seed = NULL,
+  verbose = FALSE,
+  version_date = finalday,
   firstday = as.Date("2018-01-01")
 )
 }
@@ -27,11 +31,14 @@ and all parameters, these will replace the database's parameters.}
 
 \item{datarelatorio}{epidemiological week}
 
-\item{finalday}{if provided, uses only disease data reported up to that day}
+\item{finalday}{Explicit last reporting date. Required when `datarelatorio`
+is not supplied; otherwise it is derived from that epidemiological week.}
 
 \item{iniSE}{first date of the disease data. Default = 201501. Minimum = 201001.}
 
-\item{narule}{how to treat missing climate data. Do nothing (default), "zero" fills 
+\item{nowcasting}{`"bayesian"` for the dynamic model or `"none"` to skip nowcasting.}
+
+\item{narule}{how to treat missing climate data. Do nothing (default), "zero" fills
 with zeros, "linear" for linear interpolation, "arima" for inter and extrapolation.}
 
 \item{writedb}{TRUE if it should write into the database, default is FALSE.}
@@ -42,20 +49,27 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 
 \item{dataini}{"notif" (default) or "sinpri"}
 
-\item{firstday}{First date of the notification series passed to getCases().
-Defaults to 2018-01-01.}
+\item{workers}{Positive number of workers. Defaults to portable serial execution.}
 
-\item{"bayesian"}{for the dynamic model, "none" for not doing nowcast (default)}
+\item{seed}{Optional seed for stochastic nowcasting.}
+
+\item{verbose}{Whether to emit progress messages.}
+
+\item{version_date}{Explicit model-version date used when writing results.}
+
+\item{firstday}{First date of the notification series passed to fetch_cases().
+Defaults to 2018-01-01; supply an earlier date for historical backfills.}
 }
 \value{
-data.frame with the week condition and the number of weeks within the 
+data.frame with the week condition and the number of weeks within the
 last lag weeks with conditions = TRUE.
 }
 \description{
 wrap of functions used by Infodengue.
 }
 \examples{
-cidades <- getCidades(uf = "Rio de Janeiro",datasource = con)
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
+cidades <- getCidades(uf = "Rio de Janeiro",datasource = connection)
 t1 <- Sys.time()
 res <- pipe_infodengue(cities = 3304557, cid10 = "A90",
 nowcasting="bayesian", dataini= "sinpri", completetail = 0, datarelatorio = 202419)
@@ -66,4 +80,5 @@ tail(tabela_historico(res))
 res <- pipe_infodengue(cities = 4209102 , cid10 = "A90",
 nowcasting="none", dataini= "sinpri", completetail = 0,
 datarelatorio = 202408)
+\dontshow{\}) # examplesIf}
 }

@@ -7,25 +7,29 @@
 episem(x, format = "\%Y-\%m-\%d", separa = "", retorna = "YW")
 }
 \arguments{
+\item{x}{date to be converted (class Date)}
+
+\item{format}{date format used when `x` is not already a `Date`.}
+
 \item{separa}{symbol between year and week}
 
 \item{retorna}{What should be return, if epidemiological year and week ('YW'),
 epi. year only ('Y') or epi. week only ('W').
   Default: 'YW'.}
-
-\item{date}{date to be converted (class Date)}
 }
 \value{
-epidemiological week or year. If separa = '', the output is numeric; 
+epidemiological week or year. If separa = '', the output is numeric;
 otherwise is a character.
 }
 \description{
 Find to which epidemiological week belongs a given day
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 episem(x= as.Date("2018-12-31", format="\%Y-\%m-\%d"))
 episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"), separa='-')
 episem(x= as.Date("2015-01-01", format="\%Y-\%m-\%d"), retorna='Y')
+\dontshow{\}) # examplesIf}
 }
 \author{
 Oswaldo Cruz

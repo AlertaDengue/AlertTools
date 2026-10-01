@@ -4,9 +4,21 @@
 \alias{bayesnowcasting}
 \title{Correct incidence data with notification delay (nowcasting).}
 \usage{
-bayesnowcasting(d, Dmax = 10, nowSE, nweeks = 50, interacao = FALSE, tweet = F)
+bayesnowcasting(
+  d,
+  Dmax = 10,
+  nowSE,
+  nweeks = 50,
+  interacao = FALSE,
+  tweet = FALSE,
+  seed = NULL,
+  workers = 1L,
+  verbose = FALSE
+)
 }
 \arguments{
+\item{d}{data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita}
+
 \item{Dmax}{for the "bayesian" method. Maximum number of weeks that is nowcasted}
 
 \item{nowSE}{week of the nowcasting (ex. 202110).}
@@ -17,17 +29,23 @@ bayesnowcasting(d, Dmax = 10, nowSE, nweeks = 50, interacao = FALSE, tweet = F)
 
 \item{tweet}{FALSE (default). TRUE to include tweet in the model}
 
-\item{obj}{data.frame with individual cases, containing columns municipio_geocodigo, dt_notific, dt_sin_pri, dt_digita}
+\item{seed}{Optional seed for posterior and predictive sampling.}
+
+\item{workers}{Positive number of workers used by INLA.}
+
+\item{verbose}{Whether to emit progress messages.}
 }
 \value{
-data.frame with median and 95percent confidence interval for the 
+data.frame with median and 95percent confidence interval for the
 predicted cases-to-be-notified)
 }
 \description{
 This function estimate the Bayesian nowcast (new version)
 }
 \examples{
-dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90", 
-lastday = as.Date("2024-03-23"), datasource=con)  # Not run without connection
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
+dados <- getdelaydata(cities=3304557, nyears=1, cid10="A90",
+lastday = as.Date("2024-03-23"), datasource=connection)  # Not run without connection
 resfitcIsT<-bayesnowcasting(dados, nowSE = 202412)
+\dontshow{\}) # examplesIf}
 }

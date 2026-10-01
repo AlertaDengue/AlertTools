@@ -4,7 +4,14 @@
 \alias{GenTimeDist}
 \title{Calculates temperature dependent generation time distribution}
 \usage{
-GenTimeDist(serTemp, cid10 = "A90", GT.max = 10, smooth = "sinusoidal", nc = 1)
+GenTimeDist(
+  serTemp,
+  cid10 = "A90",
+  GT.max = 10,
+  smooth = "sinusoidal",
+  workers = 1L,
+  nc = workers
+)
 }
 \arguments{
 \item{serTemp}{: Temperature series}
@@ -14,6 +21,10 @@ GenTimeDist(serTemp, cid10 = "A90", GT.max = 10, smooth = "sinusoidal", nc = 1)
 \item{GT.max}{: maximum number of weeks to consider for generation time}
 
 \item{smooth}{"sinusoidal" (default) or "raw"}
+
+\item{workers}{Positive number of parallel workers; defaults to one.}
+
+\item{nc}{Deprecated alias for `workers`.}
 }
 \value{
 matrix with generation time distributions per week, one row per week, one column per SE.
@@ -23,10 +34,12 @@ Function to produce matrix of generation time distribution that depends on tempe
 For details, see the reference Codeco et al (2018).
 }
 \examples{
-cli = getWU(stations = 'SBGL', vars=c("temp_med"), datasource=con) \%>\%
-     mutate(temp_med = nafill(temp_med, rule = "arima")) 
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
+cli = getWU(stations = 'SBGL', vars=c("temp_med"), datasource=connection) \%>\%
+     mutate(temp_med = nafill(temp_med, rule = "arima"))
 gt <- GenTimeDist(cli$temp_med[1:50])
 contour(gt, ylab="time", xlab="generation time (week)")
+\dontshow{\}) # examplesIf}
 }
 \references{
 Codeco et al (2018) https://doi.org/10.1016/j.epidem.2018.05.011
