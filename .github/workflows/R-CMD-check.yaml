@@ -33,6 +33,7 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: true
+          extra-repositories: https://inla.r-inla-download.org/R/stable
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -79,6 +80,7 @@ jobs:
         with:
           r-version: release
           use-public-rspm: true
+          extra-repositories: https://inla.r-inla-download.org/R/stable
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -103,6 +105,7 @@ jobs:
         with:
           r-version: release
           use-public-rspm: true
+          extra-repositories: https://inla.r-inla-download.org/R/stable
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -128,6 +131,7 @@ jobs:
         with:
           r-version: release
           use-public-rspm: true
+          extra-repositories: https://inla.r-inla-download.org/R/stable
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

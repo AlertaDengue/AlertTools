@@ -35,12 +35,18 @@ Commits publicados: `84158ba` e `aaf7ab2`.
 - Registro de migração: íntegro; remoção de APIs legadas continua bloqueada
   pelos sete consumidores críticos/altos ainda pendentes, conforme política.
 - `git diff --check`: aprovado. `origin/master` é ancestral da branch publicada.
-- Nenhuma execução remota de CI foi retornada pela consulta inicial ao commit.
+- A consulta inicial do conector não retornou execuções. A API pública
+  confirmou depois que o CI executou e falhou ao resolver a dependência INLA.
+  O repositório adicional já declarado no DESCRIPTION foi incluído explicitamente
+  em setup-r para os jobs que instalam dependências. A nova execução será
+  acompanhada antes de registrar aprovação remota.
 
 Os arquivos locais `plano_refatoracao_alerttools.html` e
 `plano_refatoracao_alerttools.qmd` foram preservados sem alterações.
 
-## Issue pronta: Enable automated package checks and regression tests on master
+## Issue #25: Enable automated package checks and regression tests on master
+
+https://github.com/AlertaDengue/AlertTools/issues/25
 
 Após #22 e #24, a equipe pediu execução automática de testes no AlertTools.
 O master ainda não contém R-CMD-check. O PR #20 já introduz checks de pacote
@@ -57,7 +63,9 @@ Critérios de aceite:
 - [ ] Expor falhas e logs no GitHub Actions.
 - [ ] Registrar execução remota aprovada antes de entregar ao master.
 
-## Issue pronta: Deliver fixes for the three preexisting test failures reported in PR #24
+## Issue #26: Deliver fixes for the three preexisting test failures reported in PR #24
+
+https://github.com/AlertaDengue/AlertTools/issues/26
 
 O comentário de validação de #24 registra três falhas anteriores à correção:
 `assert_that` ausente em test_alertfunctions.R, `con` ausente em
@@ -80,4 +88,8 @@ A criação de issue pelo conector retornou HTTP 403 (Resource not accessible
 by integration). A autenticação local do gh também está inválida. O Git
 conseguiu publicar a branch, mas a revisão automática bloqueou a reutilização
 da credencial do Git para a API: exige autorização específica do usuário.
-As issues acima ainda não foram criadas. Não houve merge do PR #20 no master.
+Após autorização específica do usuário, as issues #25 e #26 foram criadas
+utilizando a autenticação do Git, sem exibir ou salvar o token. A edição da
+descrição do PR pelo conector também retornou 403; ela ainda contém os números
+da validação anterior. Este relatório registra os números atuais. Não houve
+merge do PR #20 no master.
