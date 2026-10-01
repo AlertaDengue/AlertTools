@@ -95,6 +95,26 @@ test_that("seqSE generates correct sequence", {
       expect_equal(sq$SE, c(202001, 202002, 202003))
 })
 
+test_that("SE 201815 has the correct epidemiological boundaries", {
+      period <- seqSE(201814, 201816)
+
+      expect_equal(period$SE, c(201814, 201815, 201816))
+      expect_equal(period$Inicio, as.Date(c("2018-04-01", "2018-04-08", "2018-04-15")))
+      expect_equal(period$Termino, as.Date(c("2018-04-07", "2018-04-14", "2018-04-21")))
+      expect_equal(SE2date(201815)$ini, as.Date("2018-04-08"))
+})
+
+test_that("bundled SE calendar has continuous seven-day weeks", {
+      calendar <- get("SE", envir = asNamespace("AlertTools"))
+      calendar <- calendar[order(calendar$SE), ]
+
+      expect_equal(anyDuplicated(calendar$SE), 0L)
+      expect_true(all(as.integer(calendar$Termino - calendar$Inicio) == 6L))
+      expect_equal(calendar$Inicio[-1], head(calendar$Termino, -1) + 1)
+      expect_equal(vapply(calendar$Inicio, episem, numeric(1)), calendar$SE)
+      expect_equal(vapply(calendar$Termino, episem, numeric(1)), calendar$SE)
+})
+
 # sevendigitgeocode
 test_that("sevendigitgeocode works for regular and special cases", {
       # Regular cases
