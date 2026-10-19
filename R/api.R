@@ -494,9 +494,13 @@ adjustIncidence <- function(obj, datas = NULL, method = "none",
 }
 
 #' Legacy alert-rule constructor
-#' @param rule,values,delays Legacy arguments.
+#' @param rule,values Legacy arguments.
+#' @param delays Legacy list with turn-on and turn-off delays for yellow, orange,
+#'   and red criteria.
 #' @export
-setCriteria <- function(rule = NULL, values = NULL, delays = 3) {
+setCriteria <- function(rule = NULL, values = NULL,
+                        delays = list(delayy = c(0, 0), delayo = c(0, 0),
+                                      delayr = c(0, 0))) {
   .deprecate_api("setCriteria()", "define_alert_rules()")
   .define_alert_rules_impl(rule, values, delays)
 }
