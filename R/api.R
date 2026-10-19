@@ -512,13 +512,14 @@ fouralert <- function(obj, crit, miss = "last", dy = 4) {
 #' Legacy history converter
 #' @param obj,iniSE,lastSE,type,versao,parameters Legacy arguments.
 #' @export
-tabela_historico <- function(obj, iniSE, lastSE, type = "all", versao,
+tabela_historico <- function(obj, iniSE, lastSE, type = "all", versao = Sys.Date(),
                              parameters = if (inherits(obj, "alerttools_result")) obj$parameters else attr(obj, "parameters")) {
   .deprecate_api("tabela_historico()", "as_alert_history()")
+  if (missing(versao)) versao <- Sys.Date()
   args <- list(obj = obj, type = type, parameters = parameters)
   if (!missing(iniSE)) args$iniSE <- iniSE
   if (!missing(lastSE)) args$lastSE <- lastSE
-  if (!missing(versao)) args$versao <- versao
+  args$versao <- versao
   do.call(.as_alert_history_impl, args)
 }
 

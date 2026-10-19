@@ -9,7 +9,7 @@ tabela_historico(
   iniSE,
   lastSE,
   type = "all",
-  versao,
+  versao = Sys.Date(),
   parameters = if (inherits(obj, "alerttools_result")) obj$parameters else attr(obj,
     "parameters")
 )
