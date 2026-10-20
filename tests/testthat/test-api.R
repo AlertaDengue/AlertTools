@@ -12,6 +12,10 @@ test_that("new_alert_inputs validates, normalizes, and orders public schemas", {
 
   expect_s3_class(inputs, "alerttools_inputs")
   expect_named(inputs, c("cases", "climate", "population", "case_records", "metadata"))
+  expect_true("municipio_geocodigo" %in% names(inputs$cases))
+  expect_false("cidade" %in% names(inputs$cases))
+  expect_true("municipio_geocodigo" %in% names(inputs$climate))
+  expect_false("geocodigo" %in% names(inputs$climate))
   expect_equal(inputs$cases$SE, sort(inputs$cases$SE))
   expect_equal(inputs$climate$SE, sort(inputs$climate$SE))
   expect_true(all(inputs$cases$pop == 10000))
@@ -22,6 +26,8 @@ test_that("new_alert_inputs validates, normalizes, and orders public schemas", {
   duplicate$pop <- 10000
   expect_error(new_alert_inputs(duplicate, climate), "keys.*unique")
   expect_error(new_alert_inputs(cases, climate), "positive population")
+  duplicate_climate <- rbind(climate, climate[1, ])
+  expect_error(new_alert_inputs(cases, duplicate_climate), "climate.*keys.*unique")
 })
 
 test_that("run_alert_pipeline is equivalent to the approved pure pipeline", {
@@ -39,6 +45,33 @@ test_that("run_alert_pipeline is equivalent to the approved pure pipeline", {
   )
   expect_identical(observed, expected)
   expect_error(run_alert_pipeline(list(), parameters), "new_alert_inputs")
+})
+
+test_that("public computational entry validates canonical keys before joining", {
+  cases <- read_fixture("cases.csv")
+  climate <- read_fixture("climate.csv")
+  parameters <- read_fixture("parameters.csv", stringsAsFactors = FALSE)
+  names(cases)[names(cases) == "cidade"] <- "municipio_geocodigo"
+  names(climate)[names(climate) == "geocodigo"] <- "municipio_geocodigo"
+
+  canonical <- alerttools_pipeline(cases, climate, parameters, report_week = 202106)
+  expect_s3_class(canonical, "alerttools_result")
+
+  duplicate_cases <- rbind(cases, cases[1, ])
+  expect_error(
+    alerttools_pipeline(duplicate_cases, climate, parameters, report_week = 202106),
+    "cases.*keys.*unique"
+  )
+  duplicate_climate <- rbind(climate, climate[1, ])
+  expect_error(
+    alerttools_pipeline(cases, duplicate_climate, parameters, report_week = 202106),
+    "climate.*keys.*unique"
+  )
+  duplicate_parameters <- rbind(parameters, parameters[1, ])
+  expect_error(
+    alerttools_pipeline(cases, climate, duplicate_parameters, report_week = 202106),
+    "parameters.*keys.*unique"
+  )
 })
 
 test_that("database API fetches a complete, explicitly bounded input bundle", {

@@ -17,9 +17,13 @@ alerttools_pipeline(
 )
 }
 \arguments{
-\item{cases}{Weekly case data using the `getCases()` domain schema.}
+\item{cases}{Weekly case data keyed by `municipio_geocodigo`, disease, and
+epidemiological week. The legacy `cidade` alias is accepted at the input
+boundary.}
 
-\item{climate}{Weekly municipal climate data with `SE` and `geocodigo`.}
+\item{climate}{Weekly municipal climate data keyed by `SE` and
+`municipio_geocodigo`. The legacy `geocodigo` alias is accepted at the input
+boundary.}
 
 \item{parameters}{Alert parameters, one row per municipality and disease.}
 
