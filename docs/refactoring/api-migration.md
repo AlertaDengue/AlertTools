@@ -1,6 +1,8 @@
 # Migração para a API `snake_case`
 
-Versão de início da depreciação: 1.1.0.
+Versão de início dos avisos formais de depreciação: 1.3.0, conforme
+`transition-policy.dcf`. Na versão 1.2.0, os wrappers continuam disponíveis sem
+antecipar esses avisos.
 
 A API nova separa leitura, cálculo e persistência. Funções experimentais estão
 identificadas na ajuda do pacote e podem receber ajustes compatíveis antes de
@@ -26,18 +28,18 @@ suporte ainda está proposta; nenhuma data de remoção foi aprovada.
 
 | API legada | API nova | Adaptação principal | Situação |
 |---|---|---|---|
-| `getCases()` | `fetch_cases()` | `datasource` → `conn`; `cities` → `geocodes`; `cid10` → `disease`; `firstday`/`lastday` → `start_date`/`end_date`; `dataini` → `case_date` | wrapper depreciado desde 1.1.0 |
-| `getCaseslist()` | `fetch_case_records()` | mesmos argumentos de conexão, local, doença e datas | wrapper depreciado desde 1.1.0 |
-| `getClima()` | `fetch_climate()` | `vars` → `climate_vars`; datas explícitas | wrapper depreciado desde 1.1.0 |
-| `read.parameters()` | `fetch_alert_parameters()` | `datasource` → `conn`; `cities` → `geocodes`; nomes de doenças aceitos | wrapper depreciado desde 1.1.0 |
-| `pipe_infodengue()` | `fetch_alert_inputs()` + `run_alert_pipeline()` | leitura e cálculo passam a ser chamadas separadas; escrita removida do cálculo | wrapper depreciado desde 1.1.0 |
-| `Rt()` | `estimate_rt()` | argumentos longos em `snake_case` | wrapper depreciado desde 1.1.0 |
-| `adjustIncidence()` | `nowcast_cases()` | `datas` → `case_records`; `nowSE` → `report_week` | wrapper depreciado desde 1.1.0 |
-| `setCriteria()` | `define_alert_rules()` | `delays` preservado | wrapper depreciado desde 1.1.0 |
-| `fouralert()` | `classify_alerts()` | `crit` → `rules`; `miss` → `missing`; `dy` → `minimum_history` | wrapper depreciado desde 1.1.0 |
-| `tabela_historico()` | `as_alert_history()` | `versao` → `version_date`; `iniSE`/`lastSE` → `start_week`/`end_week` | wrapper depreciado desde 1.1.0 |
-| `write_alerta()` | `write_alert_results()` | recebe diretamente `alerttools_result`; não exporta arquivo implicitamente | wrapper depreciado desde 1.1.0 |
-| `write_parameters()` | `upsert_alert_parameters()` | aceita lote; `overwrite` é substituído por `conflict` | wrapper depreciado desde 1.1.0 |
+| `getCases()` | `fetch_cases()` | `datasource` → `conn`; `cities` → `geocodes`; `cid10` → `disease`; `firstday`/`lastday` → `start_date`/`end_date`; `dataini` → `case_date` | aviso a partir de 1.3.0 |
+| `getCaseslist()` | `fetch_case_records()` | mesmos argumentos de conexão, local, doença e datas | aviso a partir de 1.3.0 |
+| `getClima()` | `fetch_climate()` | `vars` → `climate_vars`; datas explícitas | aviso a partir de 1.3.0 |
+| `read.parameters()` | `fetch_alert_parameters()` | `datasource` → `conn`; `cities` → `geocodes`; nomes de doenças aceitos | aviso a partir de 1.3.0 |
+| `pipe_infodengue()` | `fetch_alert_inputs()` + `run_alert_pipeline()` | leitura e cálculo passam a ser chamadas separadas; escrita removida do cálculo | aviso a partir de 1.3.0 |
+| `Rt()` | `estimate_rt()` | argumentos longos em `snake_case` | aviso a partir de 1.3.0 |
+| `adjustIncidence()` | `nowcast_cases()` | `datas` → `case_records`; `nowSE` → `report_week` | aviso a partir de 1.3.0 |
+| `setCriteria()` | `define_alert_rules()` | `delays` preservado | aviso a partir de 1.3.0 |
+| `fouralert()` | `classify_alerts()` | `crit` → `rules`; `miss` → `missing`; `dy` → `minimum_history` | aviso a partir de 1.3.0 |
+| `tabela_historico()` | `as_alert_history()` | `versao` → `version_date`; `iniSE`/`lastSE` → `start_week`/`end_week` | aviso a partir de 1.3.0 |
+| `write_alerta()` | `write_alert_results()` | recebe diretamente `alerttools_result`; não exporta arquivo implicitamente | aviso a partir de 1.3.0 |
+| `write_parameters()` | `upsert_alert_parameters()` | aceita lote; `overwrite` é substituído por `conflict` | aviso a partir de 1.3.0 |
 
 As demais funções legadas permanecem estáveis nesta fase porque não são
 necessárias ao fluxo mínimo comprovado. Novos nomes somente serão adicionados
