@@ -82,9 +82,10 @@ Campos: `data`, `alerts`, `parameters`, `metadata` e `diagnostics`. `data` e
 
 ### Histórico persistível
 
-`as_alert_history()` retorna uma linha por `SE`, `municipio_geocodigo` e
-`Localidade_id`, incluindo contagens, incidência, Rt, nível, indicadores
-climáticos e `versao_modelo`.
+`as_alert_history()` retorna uma linha por `SE`, `municipio_geocodigo`, `CID10`
+e `Localidade_id`, incluindo contagens, incidência, Rt, nível, indicadores
+climáticos e `versao_modelo`. A persistência continua sendo feita uma doença por
+chamada, para direcionar cada histórico à tabela epidemiológica correspondente.
 
 ## Diferenças intencionais
 

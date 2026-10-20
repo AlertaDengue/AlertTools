@@ -30,6 +30,75 @@ test_that("pure pipeline runs deterministically from in-memory fixtures", {
   expect_equal(first$diagnostics$missing_climate, 0)
 })
 
+test_that("pipeline keeps diseases separate within the same municipality", {
+  cases <- read_fixture("cases.csv")
+  chik_cases <- cases
+  chik_cases$CID10 <- "A92"
+  chik_cases$casos <- chik_cases$casos + 1
+  chik_cases$cas_prov <- chik_cases$cas_prov + 1
+  cases <- rbind(cases, chik_cases)
+  climate <- read_fixture("climate.csv")
+  parameters <- read_fixture("parameters.csv", stringsAsFactors = FALSE)
+  chik_parameters <- parameters
+  chik_parameters$cid10 <- "A92.0"
+  parameters <- rbind(parameters, chik_parameters)
+
+  result <- alerttools_pipeline(
+    cases, climate, parameters, report_week = 202106, nowcasting = "none"
+  )
+
+  expect_equal(nrow(result$data), 16)
+  expect_equal(result$diagnostics$cities, 1L)
+  expect_equal(result$diagnostics$municipality_disease_groups, 2L)
+  expect_setequal(unique(result$data$CID10), c("A90", "A92.0"))
+  expect_equal(as.integer(table(result$data$CID10)), c(8L, 8L))
+
+  history <- as_alert_history(result, as.Date("2026-09-04"))
+  expect_equal(nrow(history), 16)
+  expect_setequal(unique(history$CID10), c("A90", "A92.0"))
+  expect_equal(anyDuplicated(history[c("municipio_geocodigo", "CID10", "SE")]), 0L)
+  expect_equal(length(unique(history$id)), 16)
+  connection <- sqlite_fixture_connection(environment())
+  expect_error(
+    write_alert_results(connection, result, version_date = as.Date("2026-09-04")),
+    "one disease per call"
+  )
+
+  expect_error(
+    alerttools_pipeline(cases, climate, parameters[-2, ], report_week = 202106),
+    "missing for one or more municipality-disease"
+  )
+  duplicate_parameters <- rbind(parameters, parameters[1, ])
+  expect_error(
+    alerttools_pipeline(cases, climate, duplicate_parameters, report_week = 202106),
+    "parameters.*keys.*unique"
+  )
+
+  records <- read_fixture("notifications.csv", stringsAsFactors = FALSE)
+  records_other_disease <- records
+  records_other_disease$cid10_codigo <- "A92.0"
+  mixed_records <- rbind(records, records_other_disease)
+  normalized_records <- mixed_records
+  normalized_records$cid10_codigo <- vapply(
+    normalized_records$cid10_codigo, AlertTools:::.normalize_disease, character(1)
+  )
+  dengue_records <- AlertTools:::.filter_case_records_for_group(
+    normalized_records, 3304557, "A90", "municipio_geocodigo", "cid10_codigo"
+  )
+  chik_records <- AlertTools:::.filter_case_records_for_group(
+    normalized_records, 3304557, "A92.0", "municipio_geocodigo", "cid10_codigo"
+  )
+  expect_true(all(dengue_records$cid10_codigo == "A90"))
+  expect_true(all(chik_records$cid10_codigo == "A92.0"))
+  expect_error(
+    alerttools_pipeline(cases, climate, parameters, case_records =
+                          mixed_records[c("municipio_geocodigo", "dt_notific",
+                                          "dt_sin_pri", "dt_digita")],
+                        report_week = 202106),
+    "must identify disease when a municipality has multiple diseases"
+  )
+})
+
 test_that("alerttools_result methods expose a stable result contract", {
   withr::local_options(list(lifecycle_verbosity = "quiet"))
   cases <- read_fixture("cases.csv")

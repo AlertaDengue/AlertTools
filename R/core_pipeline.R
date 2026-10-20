@@ -128,6 +128,16 @@
   invisible(list(cases = cases, climate = climate, parameters = parameters))
 }
 
+.filter_case_records_for_group <- function(records, municipality, disease,
+                                           geocode_column, disease_column) {
+  if (is.null(records)) return(NULL)
+  keep <- records[[geocode_column]] == municipality
+  if (!is.null(disease_column)) {
+    keep <- keep & records[[disease_column]] == disease
+  }
+  records[!is.na(keep) & keep, , drop = FALSE]
+}
+
 #' Calculate incidence from in-memory vectors
 #'
 #' @param count Numeric vector of case counts.
@@ -218,6 +228,9 @@ alerttools_pipeline <- function(cases, climate, parameters, case_records = NULL,
   canonical <- .canonicalize_pipeline_geocodes(cases, climate)
   cases <- canonical$cases
   climate <- canonical$climate
+  cases$CID10 <- vapply(cases$CID10, .normalize_disease, character(1))
+  parameters$cid10 <- vapply(as.character(parameters$cid10), .normalize_disease,
+                             character(1))
   .validate_pipeline_inputs(cases, climate, parameters)
   # Keep the established calculation and result schema stable while accepting
   # canonical identifiers at the public API boundary.
@@ -232,31 +245,87 @@ alerttools_pipeline <- function(cases, climate, parameters, case_records = NULL,
   if (nowcasting == "bayesian" && is.null(case_records)) {
     stop("Bayesian nowcasting requires in-memory `case_records`.", call. = FALSE)
   }
+  record_geocode <- NULL
+  record_disease <- NULL
+  if (!is.null(case_records)) {
+    if (!is.data.frame(case_records)) {
+      stop("`case_records` must be a data frame.", call. = FALSE)
+    }
+    record_geocode <- intersect(
+      c("municipio_geocodigo", "cidade", "geocodigo"), names(case_records)
+    )
+    record_disease <- intersect(c("cid10_codigo", "cid10", "CID10"), names(case_records))
+    if (length(record_geocode) != 1L || anyDuplicated(names(case_records))) {
+      stop("`case_records` must have one municipality identifier column.", call. = FALSE)
+    }
+    record_geocode <- record_geocode[[1L]]
+    if (length(record_disease) > 1L) {
+      stop("`case_records` must have at most one disease identifier column.",
+           call. = FALSE)
+    }
+    if (length(record_disease)) {
+      record_disease <- record_disease[[1L]]
+      case_records[[record_disease]] <- vapply(
+        as.character(case_records[[record_disease]]), .normalize_disease, character(1)
+      )
+    } else {
+      record_disease <- NULL
+    }
+  }
 
   input <- dplyr::left_join(cases, climate, by = c("cidade" = "geocodigo", "SE" = "SE"))
   if (!"tweet" %in% names(input)) input$tweet <- NA_real_
   input$inc <- calculate_incidence(input$casos, input$pop)
-  cities <- unique(as.numeric(parameters$municipio_geocodigo))
-  if (!all(cities %in% input$cidade)) {
-    stop("Parameters contain municipalities absent from `cases`.", call. = FALSE)
+  groups <- unique(data.frame(
+    municipio_geocodigo = as.numeric(input$cidade), cid10 = input$CID10,
+    stringsAsFactors = FALSE
+  ))
+  parameter_groups <- data.frame(
+    municipio_geocodigo = as.numeric(parameters$municipio_geocodigo),
+    cid10 = parameters$cid10, stringsAsFactors = FALSE
+  )
+  group_key <- function(x) paste(x$municipio_geocodigo, x$cid10, sep = "\r")
+  if (!all(group_key(groups) %in% group_key(parameter_groups))) {
+    stop("Parameters are missing for one or more municipality-disease combinations.",
+         call. = FALSE)
   }
-  if (!all(parameters$cid10 %in% input$CID10)) {
-    stop("Parameters contain diseases absent from `cases`.", call. = FALSE)
+  if (!all(group_key(parameter_groups) %in% group_key(groups))) {
+    stop("Parameters contain municipality-disease combinations absent from `cases`.",
+         call. = FALSE)
+  }
+  groups <- groups[order(groups$municipio_geocodigo, groups$cid10), , drop = FALSE]
+  rownames(groups) <- NULL
+
+  if (!is.null(case_records) && is.null(record_disease)) {
+    group_counts <- table(groups$municipio_geocodigo)
+    record_cities <- unique(as.character(case_records[[record_geocode]]))
+    if (any(group_counts[names(group_counts) %in% record_cities] > 1L)) {
+      stop("`case_records` must identify disease when a municipality has multiple diseases.",
+           call. = FALSE)
+    }
   }
 
-  compute_city <- function(city) {
-    city_data <- input[input$cidade == city & input$SE <= report_week, , drop = FALSE]
-    city_parameters <- parameters[parameters$municipio_geocodigo == city, , drop = FALSE]
+  compute_group <- function(group_index) {
+    group <- groups[group_index, , drop = FALSE]
+    city <- group$municipio_geocodigo[[1L]]
+    disease <- group$cid10[[1L]]
+    city_data <- input[input$cidade == city & input$CID10 == disease &
+                         input$SE <= report_week, , drop = FALSE]
+    city_parameters <- parameters[
+      parameters$municipio_geocodigo == city & parameters$cid10 == disease,
+      , drop = FALSE
+    ]
     if (nrow(city_parameters) != 1L) {
-      stop("Each municipality must have exactly one parameter row.", call. = FALSE)
+      stop("Each municipality-disease combination must have exactly one parameter row.",
+           call. = FALSE)
     }
-    records <- if (is.null(case_records)) NULL else {
-      case_records[case_records$municipio_geocodigo == city, , drop = FALSE]
-    }
-    city_seed <- if (is.null(seed)) NULL else seed + match(city, cities) - 1L
+    records <- .filter_case_records_for_group(
+      case_records, city, disease, record_geocode, record_disease
+    )
+    group_seed <- if (is.null(seed)) NULL else seed + group_index - 1L
     adjusted <- nowcast_cases(
       city_data, case_records = records, method = nowcasting, report_week = report_week,
-      seed = city_seed, workers = workers, verbose = verbose
+      seed = group_seed, workers = workers, verbose = verbose
     )
     estimated <- estimate_rt(adjusted, count = "tcasesmed", distribution = "normal",
                              mean_generation_time = 3, sd_generation_time = 1)
@@ -268,11 +337,12 @@ alerttools_pipeline <- function(cases, climate, parameters, case_records = NULL,
     list(data = alert$data, alerts = alert$indices, criteria = criteria)
   }
 
-  computed <- .with_seed(seed, .map_workers(cities, compute_city, workers))
+  computed <- .with_seed(seed, .map_workers(seq_len(nrow(groups)), compute_group, workers))
   data <- dplyr::bind_rows(lapply(computed, `[[`, "data"))
   alerts <- dplyr::bind_rows(lapply(computed, `[[`, "alerts"))
   diagnostics <- list(
-    cities = length(cities),
+    cities = length(unique(groups$municipio_geocodigo)),
+    municipality_disease_groups = nrow(groups),
     rows = nrow(data),
     missing_climate = sum(!stats::complete.cases(input[setdiff(names(climate), c("SE", "geocodigo"))]))
   )
