@@ -15,6 +15,7 @@ repository, while computational functions operate on in-memory data frames.
 Useful links:
 \itemize{
   \item \url{https://github.com/AlertaDengue/AlertTools}
+  \item \url{https://alertadengue.github.io/AlertTools/}
   \item Report bugs at \url{https://github.com/AlertaDengue/AlertTools/issues}
 }
 

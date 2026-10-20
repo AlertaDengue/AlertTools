@@ -33,6 +33,9 @@
 - Added the experimental `snake_case` workflow: `new_alert_inputs()`,
   `fetch_alert_inputs()`, `fetch_alert_parameters()`, `run_alert_pipeline()`,
   `as_alert_history()`, and `write_alert_results()`.
+- Standardized new pipeline inputs on `municipio_geocodigo` and validate case,
+  climate, and parameter keys before joins; legacy input aliases are normalized
+  at the API boundary.
 - Added focused readers and computational names including `fetch_cases()`,
   `fetch_case_records()`, `fetch_climate()`, `estimate_rt()`,
   `nowcast_cases()`, `define_alert_rules()`, and `classify_alerts()`.

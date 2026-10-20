@@ -30,10 +30,13 @@ An experimental `alerttools_inputs` object.
 }
 \description{
 `cases` has one row per municipality, disease, and epidemiological week and
-must contain `SE`, `cidade`, `CID10`, `casos`, `cas_prov`, `cas_lab`,
+must contain `SE`, `municipio_geocodigo`, `CID10`, `casos`, `cas_prov`, `cas_lab`,
 `localidade`, and `nome`. It must also contain `pop`, unless `population` is
 supplied. `climate` has one row per municipality and week, keyed by
-`geocodigo` and `SE`. Rows are ordered by municipality and week.
+`municipio_geocodigo` and `SE`. The legacy input aliases `cidade` and
+`geocodigo` are accepted and normalized to `municipio_geocodigo`. Duplicate
+case and climate keys are rejected before computation. Rows are ordered by
+municipality, disease, and week.
 }
 \section{Lifecycle}{
 
