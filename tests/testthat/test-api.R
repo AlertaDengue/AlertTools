@@ -86,9 +86,8 @@ test_that("new persistence API writes results and parameters explicitly", {
 
   withr::local_options(list(lifecycle_verbosity = "warning"))
   history <- as_alert_history(result, as.Date("2026-09-04"))
-  expect_warning(
-    write_alerta(history, datasource = connection, conflict = "update"),
-    "write_alert_results"
+  expect_no_warning(
+    write_alerta(history, datasource = connection, conflict = "update")
   )
 
   changed <- transform(parameter_fixture(), limiar_preseason = 23)
@@ -96,7 +95,7 @@ test_that("new persistence API writes results and parameters explicitly", {
   expect_equal(persisted$limiar_preseason, 23)
 })
 
-test_that("legacy wrappers warn and preserve argument and result adapters", {
+test_that("legacy wrappers preserve adapters without warning before 1.3.0", {
   withr::local_options(list(lifecycle_verbosity = "warning"))
   connection <- sqlite_fixture_connection(environment())
 
@@ -104,32 +103,29 @@ test_that("legacy wrappers warn and preserve argument and result adapters", {
     connection, 3304557, "dengue",
     as.Date("2020-12-20"), as.Date("2021-01-09")
   )
-  expect_warning(
+  expect_no_warning(
     legacy_cases <- getCases(
       cities = 3304557, cid10 = "A90", firstday = as.Date("2020-12-20"),
       lastday = as.Date("2021-01-09"), dataini = "notific", datasource = connection
-    ),
-    "fetch_cases"
+    )
   )
   expect_identical(legacy_cases, modern_cases)
-  expect_warning(
+  expect_no_warning(
     legacy_records <- getCaseslist(
       3304557, firstday = as.Date("2020-12-20"),
       lastday = as.Date("2021-01-09"), datasource = connection
-    ),
-    "fetch_case_records"
+    )
   )
   expect_identical(
     legacy_records,
     fetch_case_records(connection, 3304557, start_date = as.Date("2020-12-20"),
                        end_date = as.Date("2021-01-09"))
   )
-  expect_warning(
+  expect_no_warning(
     legacy_climate <- getClima(
       3304557, vars = c("temp_min", "temp_max"), iniSE = 202052,
       finalday = as.Date("2021-01-02"), datasource = connection
-    ),
-    "fetch_climate"
+    )
   )
   expect_identical(
     legacy_climate,
@@ -138,22 +134,19 @@ test_that("legacy wrappers warn and preserve argument and result adapters", {
   )
 
   modern_parameters <- fetch_alert_parameters(connection, 3304557, "dengue")
-  expect_warning(
-    legacy_parameters <- read.parameters(3304557, cid10 = "A90", datasource = connection),
-    "fetch_alert_parameters"
+  expect_no_warning(
+    legacy_parameters <- read.parameters(3304557, cid10 = "A90", datasource = connection)
   )
   expect_identical(legacy_parameters, modern_parameters)
-  expect_warning(
+  expect_no_warning(
     write_parameters(3304557, "A90", modern_parameters, overwrite = TRUE,
-                     datasource = connection),
-    "upsert_alert_parameters"
+                     datasource = connection)
   )
-  expect_warning(
-    expect_error(
-      pipe_infodengue(3304557, datarelatorio = 202101, datasource = NULL),
-      "valid DBI connection"
+  expect_error(
+    expect_no_warning(
+      pipe_infodengue(3304557, datarelatorio = 202101, datasource = NULL)
     ),
-    "run_alert_pipeline"
+    "valid DBI connection"
   )
 })
 
@@ -208,7 +201,7 @@ test_that("snake_case computational aliases preserve baseline results", {
   expect_identical(rules, setCriteria("Af", criteria_values))
 })
 
-test_that("legacy computational wrappers identify replacements and remain equivalent", {
+test_that("legacy computational wrappers remain equivalent without early warnings", {
   withr::local_options(list(lifecycle_verbosity = "warning"))
   cases <- read_fixture("cases.csv")
   climate <- read_fixture("climate.csv")
@@ -216,22 +209,20 @@ test_that("legacy computational wrappers identify replacements and remain equiva
 
   modern_rt <- estimate_rt(cases, count = "casos", distribution = "normal",
                            mean_generation_time = 3, sd_generation_time = 1)
-  expect_warning(
-    legacy_rt <- Rt(cases, count = "casos", gtdist = "normal", meangt = 3, sdgt = 1),
-    "estimate_rt"
+  expect_no_warning(
+    legacy_rt <- Rt(cases, count = "casos", gtdist = "normal", meangt = 3, sdgt = 1)
   )
   expect_identical(legacy_rt, modern_rt)
 
   modern_nowcast <- nowcast_cases(cases, method = "none", report_week = 202106)
-  expect_warning(
-    legacy_nowcast <- adjustIncidence(cases, method = "none", nowSE = 202106),
-    "nowcast_cases"
+  expect_no_warning(
+    legacy_nowcast <- adjustIncidence(cases, method = "none", nowSE = 202106)
   )
   expect_identical(legacy_nowcast, modern_nowcast)
 
   values <- structure(as.character(parameters[1, ]), names = names(parameters))
   modern_rules <- define_alert_rules("Af", values)
-  expect_warning(legacy_rules <- setCriteria("Af", values), "define_alert_rules")
+  expect_no_warning(legacy_rules <- setCriteria("Af", values))
   expect_identical(legacy_rules, modern_rules)
 
   result <- run_alert_pipeline(
@@ -240,15 +231,13 @@ test_that("legacy computational wrappers identify replacements and remain equiva
   )
   modern_alert <- classify_alerts(result$data, modern_rules,
                                    missing = "last", minimum_history = 4)
-  expect_warning(
-    legacy_alert <- fouralert(result$data, modern_rules, miss = "last", dy = 4),
-    "classify_alerts"
+  expect_no_warning(
+    legacy_alert <- fouralert(result$data, modern_rules, miss = "last", dy = 4)
   )
   expect_identical(legacy_alert, modern_alert)
   modern_history <- as_alert_history(result, as.Date("2026-09-04"))
-  expect_warning(
-    legacy_history <- tabela_historico(result, versao = as.Date("2026-09-04")),
-    "as_alert_history"
+  expect_no_warning(
+    legacy_history <- tabela_historico(result, versao = as.Date("2026-09-04"))
   )
   expect_identical(legacy_history, modern_history)
 })
