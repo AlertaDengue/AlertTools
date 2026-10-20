@@ -328,7 +328,8 @@ run_alert_pipeline <- function(inputs, parameters, report_week = NULL,
 #' @param result An `alerttools_result` object.
 #' @param version_date Explicit model-version date.
 #' @param start_week,end_week Optional inclusive week filter.
-#' @return A data frame keyed by `SE`, `municipio_geocodigo`, and `Localidade_id`.
+#' @return A data frame keyed by `SE`, `municipio_geocodigo`, `CID10`, and
+#'   `Localidade_id`.
 #' @export
 as_alert_history <- function(result, version_date, start_week = NULL, end_week = NULL) {
   if (!inherits(result, "alerttools_result")) {
@@ -343,7 +344,8 @@ as_alert_history <- function(result, version_date, start_week = NULL, end_week =
 #' Write alert results explicitly
 #'
 #' @param conn A valid DBI connection.
-#' @param result An `alerttools_result` object or an alert-history data frame.
+#' @param result An `alerttools_result` object or an alert-history data frame
+#'   containing results for one disease.
 #' @param version_date Explicit model-version date, required when `result` is an
 #'   `alerttools_result`.
 #' @param conflict Conflict policy: `"update"`, `"error"`, or `"ignore"`.
@@ -365,6 +367,10 @@ write_alert_results <- function(conn, result, version_date = NULL,
   } else {
     if (!is.data.frame(result)) stop("`result` must be an alerttools_result or data frame.", call. = FALSE)
     result
+  }
+  if ("CID10" %in% names(history) && length(unique(history$CID10)) > 1L) {
+    stop("`write_alert_results()` persists one disease per call; subset the result by `CID10`.",
+         call. = FALSE)
   }
   .write_alert_results_impl(history, datasource = conn, conflict = conflict,
                             verbose = verbose)

@@ -17,7 +17,8 @@ write_alert_results(
 \arguments{
 \item{conn}{A valid DBI connection.}
 
-\item{result}{An `alerttools_result` object or an alert-history data frame.}
+\item{result}{An `alerttools_result` object or an alert-history data frame
+containing results for one disease.}
 
 \item{version_date}{Explicit model-version date, required when `result` is an
 `alerttools_result`.}

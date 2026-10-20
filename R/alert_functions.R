@@ -478,8 +478,13 @@ calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
 
       # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
       location_id <- if ("Localidade_id" %in% names(data)) data$Localidade_id else data$localidade
-      gera_id <- function(x) paste(data$cidade[x], location_id[x], data$SE[x],
-                                   as.character(julian(versao)), sep="")
+      multiple_diseases <- "CID10" %in% names(data) && length(unique(data$CID10)) > 1L
+      gera_id <- function(x) {
+            id <- paste(data$cidade[x], location_id[x], data$SE[x],
+                        as.character(julian(versao)), sep = "")
+            if (multiple_diseases) id <- paste0(id, data$CID10[x])
+            id
+      }
       d$id <- sapply(1:nrow(data), gera_id)
 
 
@@ -523,9 +528,34 @@ calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
                   receptivo = cytrue,  # weeks with receptive conditions
                   transmissao = cotrue)   # weeks with sustained transm
 
-      d1 <- d %>%
-            left_join(pars[c("municipio_geocodigo", "limiar_preseason",
-                             "limiar_epidemico")], by = "municipio_geocodigo") %>%
+      if ("cid10" %in% names(pars)) {
+            parameter_columns <- c("municipio_geocodigo", "cid10", "limiar_preseason",
+                                   "limiar_epidemico")
+            if (anyDuplicated(pars[c("municipio_geocodigo", "cid10")])) {
+                  stop("tabela_historico: municipality-disease parameter keys must be unique",
+                       call. = FALSE)
+            }
+            d1 <- d %>%
+                  left_join(pars[parameter_columns],
+                            by = c("municipio_geocodigo", "CID10" = "cid10"))
+      } else {
+            if (length(unique(d$CID10)) > 1L || anyDuplicated(pars["municipio_geocodigo"])) {
+                  stop("tabela_historico requires disease-keyed parameters for multiple diseases",
+                       call. = FALSE)
+            }
+            d1 <- d %>%
+                  left_join(pars[c("municipio_geocodigo", "limiar_preseason",
+                                   "limiar_epidemico")], by = "municipio_geocodigo")
+      }
+      if (nrow(d1) != nrow(d)) {
+            stop("tabela_historico parameter join changed the result row count",
+                 call. = FALSE)
+      }
+      if (anyNA(d1$limiar_preseason) || anyNA(d1$limiar_epidemico)) {
+            stop("tabela_historico requires parameters for every municipality and disease",
+                 call. = FALSE)
+      }
+      d1 <- d1 %>%
             mutate(  # compating estimated incidence with thresholds
                   nivel_inc = case_when(
                         p_inc100k < limiar_preseason ~ 0,

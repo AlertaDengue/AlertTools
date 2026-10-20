@@ -14,7 +14,8 @@ as_alert_history(result, version_date, start_week = NULL, end_week = NULL)
 \item{start_week, end_week}{Optional inclusive week filter.}
 }
 \value{
-A data frame keyed by `SE`, `municipio_geocodigo`, and `Localidade_id`.
+A data frame keyed by `SE`, `municipio_geocodigo`, `CID10`, and
+  `Localidade_id`.
 }
 \description{
 Convert an alert result to the persistence schema
