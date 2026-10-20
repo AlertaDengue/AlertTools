@@ -253,15 +253,15 @@
 #'@param completetail if sinan data is older than final_day, fill in the tail with NA (default) or 0.
 #'@param dataini "notif" (default) or "sinpri"
 #'@param writedb TRUE if it should write into the database, default is FALSE.
-#'@param datasource posgreSQL connection to project's database
+#'@param datasource Database connection; defaults to the legacy global `con`.
 #'@param workers Positive number of workers. Defaults to portable serial execution.
 #'@param seed Optional seed for stochastic nowcasting.
 #'@param verbose Whether to emit progress messages.
 #'@param version_date Explicit model-version date used when writing results.
 #'@param firstday First date of the notification series passed to fetch_cases().
 #' Defaults to 2018-01-01; supply an earlier date for historical backfills.
-#'@return data.frame with the week condition and the number of weeks within the
-#'last lag weeks with conditions = TRUE.
+#'@return A named list of municipal `alerta` objects, preserving the legacy
+#'   result structure.
 #'@examplesIf FALSE
 #'cidades <- getCidades(uf = "Rio de Janeiro",datasource = connection)
 #'t1 <- Sys.time()
@@ -277,7 +277,7 @@
 
 pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
                             iniSE = 201001, nowcasting="none", narule=NULL,
-                            writedb = FALSE, datasource, completetail = NA,
+                            writedb = FALSE, datasource = con, completetail = NA,
                             dataini = "notific", workers = 1L, seed = NULL,
                             verbose = FALSE, version_date = finalday,
                             firstday = as.Date("2018-01-01")){
@@ -344,7 +344,32 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
             write_alert_results(datasource, res, version_date = version_date,
                                 conflict = "update")
       }
-      res
+      .as_legacy_alert_objects(res)
+}
+
+.as_legacy_alert_objects <- function(result) {
+      data <- result$data
+      groups <- split(seq_len(nrow(data)), factor(data$cidade,
+                                                   levels = unique(data$cidade)))
+      legacy <- lapply(names(groups), function(city) {
+            rows <- groups[[city]]
+            parameters <- result$parameters[
+                  result$parameters$municipio_geocodigo == as.numeric(city), , drop = FALSE
+            ]
+            values <- structure(as.character(parameters[1, ]), names = names(parameters))
+            criteria <- define_alert_rules(parameters$codmodelo[[1]], values)
+            alert <- list(
+                  data = data[rows, , drop = FALSE],
+                  indices = result$alerts[rows, , drop = FALSE],
+                  crit = criteria,
+                  n = 4L
+            )
+            class(alert) <- "alerta"
+            alert
+      })
+      names(legacy) <- names(groups)
+      attr(legacy, "parameters") <- result$parameters
+      legacy
 }
 
 
@@ -414,7 +439,7 @@ calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
 #'@param lastSE last week of the table. Default is the last date in obj.
 #'@param type "notified", if it should return total counts, disregarding the
 #'final classification. For compatibility reasons.
-#'@param versao Explicit model-version date.
+#'@param versao Model-version date; defaults to the current date for legacy calls.
 #'@param parameters Parameter data frame. Pipeline results carry it as an attribute;
 #'direct alert objects must supply it explicitly.
 #'@return data.frame with the data to be written.

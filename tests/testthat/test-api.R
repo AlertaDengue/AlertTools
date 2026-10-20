@@ -157,6 +157,37 @@ test_that("legacy wrappers warn and preserve argument and result adapters", {
   )
 })
 
+test_that("legacy pipeline and history wrappers preserve their public contracts", {
+  withr::local_options(list(lifecycle_verbosity = "quiet"))
+  expect_identical(formals(pipe_infodengue)$datasource, quote(con))
+  expect_identical(formals(tabela_historico)$versao, quote(Sys.Date()))
+
+  connection <- sqlite_fixture_connection(environment())
+  had_global_con <- exists("con", envir = .GlobalEnv, inherits = FALSE)
+  if (had_global_con) old_global_con <- get("con", envir = .GlobalEnv)
+  assign("con", connection, envir = .GlobalEnv)
+  withr::defer({
+    if (had_global_con) {
+      assign("con", old_global_con, envir = .GlobalEnv)
+    } else if (exists("con", envir = .GlobalEnv, inherits = FALSE)) {
+      rm("con", envir = .GlobalEnv)
+    }
+  })
+  result <- pipe_infodengue(
+    cities = 3304557, cid10 = "A90", datarelatorio = 202106,
+    nowcasting = "none", firstday = as.Date("2020-12-20"), completetail = 0
+  )
+
+  expect_named(result, "3304557")
+  expect_s3_class(result[[1]], "alerta")
+  expect_named(result[[1]], c("data", "indices", "crit", "n"))
+  expect_equal(result[[1]]$data$SE, c(202052, 202053, 202101:202106))
+
+  history <- tabela_historico(result, iniSE = 202052)
+  expect_s3_class(history, "data.frame")
+  expect_equal(nrow(history), 8)
+})
+
 test_that("snake_case computational aliases preserve baseline results", {
   withr::local_options(list(lifecycle_verbosity = "quiet"))
   cases <- read_fixture("cases.csv")

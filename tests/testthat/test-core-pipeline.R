@@ -52,7 +52,7 @@ test_that("alerttools_result methods expose a stable result contract", {
   expect_s3_class(history, "data.frame")
   expect_equal(nrow(history), 8)
   expect_true(all(c("data_iniSE", "municipio_geocodigo", "nivel_inc") %in% names(history)))
-  expect_error(tabela_historico(result), "explicit.*versao")
+  expect_equal(nrow(tabela_historico(result)), 8)
 })
 
 test_that("alerttools_result constructor handles empty and invalid inputs", {
