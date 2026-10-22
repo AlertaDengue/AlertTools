@@ -316,7 +316,10 @@ fetch_alert_parameters <- function(conn, geocodes, disease = "dengue") {
 #' @param report_week Explicit report week. Defaults to the value recorded by
 #'   `fetch_alert_inputs()`.
 #' @param nowcast Either `"none"` or `"bayesian"`.
-#' @param workers Positive worker count; defaults to one.
+#' @param workers Compatibility alias for `municipality_workers`.
+#' @param municipality_workers Positive municipality-disease process count;
+#'   defaults to one and remains serial on Windows.
+#' @param inla_threads Independent INLA fitting thread count, default one.
 #' @param seed Optional deterministic seed.
 #' @param verbose Whether to emit progress messages.
 #' @return An `alerttools_result` object ordered by municipality and week, with
@@ -326,7 +329,12 @@ fetch_alert_parameters <- function(conn, geocodes, disease = "dengue") {
 #' @export
 run_alert_pipeline <- function(inputs, parameters, report_week = NULL,
                                nowcast = c("none", "bayesian"), workers = 1L,
-                               seed = NULL, verbose = FALSE) {
+                               seed = NULL, verbose = FALSE,
+                               municipality_workers = workers, inla_threads = 1L) {
+  municipality_workers <- .resolve_concurrency_alias(
+    workers, municipality_workers, "municipality_workers", !missing(workers),
+    !missing(municipality_workers)
+  )
   if (!inherits(inputs, "alerttools_inputs")) {
     stop("`inputs` must be created by new_alert_inputs() or fetch_alert_inputs().",
          call. = FALSE)
@@ -336,7 +344,8 @@ run_alert_pipeline <- function(inputs, parameters, report_week = NULL,
   alerttools_pipeline(
     cases = inputs$cases, climate = inputs$climate, parameters = parameters,
     case_records = inputs$case_records, report_week = report_week,
-    nowcasting = match.arg(nowcast), workers = workers, seed = seed, verbose = verbose
+    nowcasting = match.arg(nowcast), municipality_workers = municipality_workers,
+    inla_threads = inla_threads, seed = seed, verbose = verbose
   )
 }
 
@@ -445,7 +454,9 @@ estimate_rt <- function(data, count = "casos", distribution = "normal",
 #' @param case_records Optional individual notification records.
 #' @param method Either `"none"` or `"bayesian"`.
 #' @param report_week Explicit report week.
-#' @param workers Positive worker count.
+#' @param workers Compatibility alias for `inla_threads` in this single-series API.
+#' @param inla_threads INLA fitting threads, default one. Seeded posterior sampling
+#'   uses one thread to preserve the engine's reproducibility contract.
 #' @param seed Optional deterministic seed.
 #' @param verbose Whether to emit progress messages.
 #' @param ... Additional nowcasting arguments.
@@ -453,9 +464,13 @@ estimate_rt <- function(data, count = "casos", distribution = "normal",
 #' @export
 nowcast_cases <- function(data, case_records = NULL,
                           method = c("none", "bayesian"), report_week,
-                          workers = 1L, seed = NULL, verbose = FALSE, ...) {
+                          workers = 1L, seed = NULL, verbose = FALSE, ...,
+                          inla_threads = workers) {
+  inla_threads <- .resolve_concurrency_alias(
+    workers, inla_threads, "inla_threads", !missing(workers), !missing(inla_threads)
+  )
   .nowcast_cases_impl(data, datas = case_records, method = match.arg(method),
-                      nowSE = report_week, workers = workers, seed = seed,
+                      nowSE = report_week, workers = inla_threads, seed = seed,
                       verbose = verbose, ...)
 }
 

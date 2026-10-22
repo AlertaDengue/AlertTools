@@ -12,7 +12,8 @@ nowcast_cases(
   workers = 1L,
   seed = NULL,
   verbose = FALSE,
-  ...
+  ...,
+  inla_threads = workers
 )
 }
 \arguments{
@@ -24,13 +25,16 @@ nowcast_cases(
 
 \item{report_week}{Explicit report week.}
 
-\item{workers}{Positive worker count.}
+\item{workers}{Compatibility alias for `inla_threads` in this single-series API.}
 
 \item{seed}{Optional deterministic seed.}
 
 \item{verbose}{Whether to emit progress messages.}
 
 \item{...}{Additional nowcasting arguments.}
+
+\item{inla_threads}{INLA fitting threads, default one. Seeded posterior sampling
+uses one thread to preserve the engine's reproducibility contract.}
 }
 \value{
 The weekly data with adjusted-count columns.
