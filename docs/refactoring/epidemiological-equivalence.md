@@ -7,8 +7,10 @@ AlertTools em `e460b3b8c15ab28e8755f482d576cf7280803b34`, conforme
 `scripts/install_deps.R`. As expressões das funções de cálculo e conversão
 dessa dependência foram extraídas sem alterações em `tests/reference/e460b3b8`.
 O manifesto registra commit, blobs originais, funções selecionadas e hashes dos
-arquivos extraídos. O calendário interno foi preservado. A consulta histórica
-de parâmetros é substituída somente por uma leitura dos parâmetros controlados;
+arquivos extraídos. O calendário interno foi preservado.
+Os hashes dos textos R usam UTF-8/LF canônico para suportar checkouts Windows;
+alterações de conteúdo continuam falhando. O arquivo binário mantém hash bruto.
+A consulta histórica de parâmetros é substituída somente por uma leitura dos parâmetros controlados;
 não se executa SQL antigo nem se acessa um banco operacional.
 
 `tools/prepare-epidemiological-reference.R` regenera exclusivamente a partir do

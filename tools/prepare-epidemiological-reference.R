@@ -1,6 +1,7 @@
 # Explicit regeneration from the consumer's immutable approved dependency.
 # Never called by the comparison or by tests to update expected results.
 reference <- "e460b3b8c15ab28e8755f482d576cf7280803b34"
+source("tests/reference/comparison.R", local = TRUE)
 destination <- "tests/reference/e460b3b8"
 dir.create(destination, recursive = TRUE, showWarnings = FALSE)
 selected <- list(
@@ -40,6 +41,6 @@ manifest[[length(manifest) + 1L]] <- data.frame(
   reference_commit = reference, functions = "SE"
 )
 manifest <- do.call(rbind, manifest)
-manifest$md5 <- unname(tools::md5sum(file.path(destination, manifest$file)))
+manifest$md5 <- reference_snapshot_md5(file.path(destination, manifest$file))
 utils::write.csv(manifest, file.path(destination, "manifest.csv"),
                  row.names = FALSE)
