@@ -27,7 +27,8 @@ gg <- function(x, dados, idx, Fim.sat, Dmax){
 
 # Algorithm to get samples for the predictive distribution for the number of cases
 
-nowcasting <- function(output.day, dadosRio.ag, Dm, Fim, seed = NULL, samples = 1000L){
+nowcasting <- function(output.day, dadosRio.ag, Dm, Fim, seed = NULL, samples = 1000L,
+                        inla_threads = 1L){
   if (!requireNamespace("INLA", quietly = TRUE)) {
     stop("nowcasting requires the optional package 'INLA'.", call. = FALSE)
   }
@@ -38,9 +39,13 @@ nowcasting <- function(output.day, dadosRio.ag, Dm, Fim, seed = NULL, samples = 
   if (length(samples) != 1L || !is.numeric(samples) || samples < 1 || samples != floor(samples)) {
     stop("`samples` must be a positive integer.", call. = FALSE)
   }
+  inla_threads <- .validate_workers(inla_threads, "inla_threads")
   .with_seed(seed, {
     srag.samples.list <- INLA::inla.posterior.sample(
-      n = as.integer(samples), output.day
+      n = as.integer(samples), output.day,
+      seed = if (is.null(seed)) 0L else max(1L, as.integer(seed)),
+      num.threads = if (is.null(seed)) paste0(inla_threads, ":1") else "1:1",
+      parallel.configs = FALSE
     )
 
     # Step 2: sample the missing triangle from the likelihood.
@@ -60,17 +65,20 @@ nowcasting <- function(output.day, dadosRio.ag, Dm, Fim, seed = NULL, samples = 
 
 
 # Running INLA for the nowcasting model
-nowcast.INLA <- function(dados.ag, model.day, workers = 1L, verbose = FALSE, ...){
+nowcast.INLA <- function(dados.ag, model.day, workers = 1L, verbose = FALSE, ...,
+                         inla_threads = workers){
   if (!requireNamespace("INLA", quietly = TRUE)) {
     stop("nowcast.INLA requires the optional package 'INLA'.", call. = FALSE)
   }
 
-  workers <- .validate_workers(workers)
+  inla_threads <- .resolve_concurrency_alias(
+    workers, inla_threads, "inla_threads", !missing(workers), !missing(inla_threads)
+  )
   output <- tryCatch(
     {INLA::inla(formula = model.day,
                  family = "nbinomial",
                  data = dados.ag,
-                 num.threads = workers, verbose = verbose,
+                 num.threads = paste0(inla_threads, ":1"), verbose = verbose,
                  control.predictor = list(link = 1, compute = T),
                  control.compute = list( config = T),
                  ...

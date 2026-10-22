@@ -11,7 +11,9 @@ run_alert_pipeline(
   nowcast = c("none", "bayesian"),
   workers = 1L,
   seed = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  municipality_workers = workers,
+  inla_threads = 1L
 )
 }
 \arguments{
@@ -24,11 +26,16 @@ run_alert_pipeline(
 
 \item{nowcast}{Either `"none"` or `"bayesian"`.}
 
-\item{workers}{Positive worker count; defaults to one.}
+\item{workers}{Compatibility alias for `municipality_workers`.}
 
 \item{seed}{Optional deterministic seed.}
 
 \item{verbose}{Whether to emit progress messages.}
+
+\item{municipality_workers}{Positive municipality-disease process count;
+defaults to one and remains serial on Windows.}
+
+\item{inla_threads}{Independent INLA fitting thread count, default one.}
 }
 \value{
 An `alerttools_result` object ordered by municipality and week, with

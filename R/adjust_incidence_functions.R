@@ -141,7 +141,8 @@
 #'@param interacao TRUE (default) to include in the model the delay-time interaction term
 #'@param tweet FALSE (default). TRUE to include tweet in the model
 #'@param seed Optional seed for posterior and predictive sampling.
-#'@param workers Positive number of workers used by INLA.
+#'@param workers Compatibility alias for `inla_threads`.
+#'@param inla_threads Positive INLA fitting thread count, default one.
 #'@param verbose Whether to emit progress messages.
 #'@return data.frame with median and 95percent confidence interval for the
 #'predicted cases-to-be-notified)
@@ -152,9 +153,11 @@
 
 bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50,
                             interacao = FALSE, tweet = FALSE, seed = NULL,
-                            workers = 1L, verbose = FALSE){
+                            workers = 1L, verbose = FALSE, inla_threads = workers){
 
-  workers <- .validate_workers(workers)
+  inla_threads <- .resolve_concurrency_alias(
+    workers, inla_threads, "inla_threads", !missing(workers), !missing(inla_threads)
+  )
   inform <- function(...) if (isTRUE(verbose)) message(...)
 
   # check input
@@ -365,13 +368,14 @@ bayesnowcasting <- function(d, Dmax = 10, nowSE, nweeks = 50,
     model.day = model.dengue,
     dados.ag = dados.ag %>%
       mutate(TimeDelay = paste(Time, Delay)),
-    workers = workers,
+    inla_threads = inla_threads,
     verbose = verbose
   )
 
   # we could save other features, like prob greater threshold
   pred.dengue <- nowcasting(output.dengue, dados.ag,
-                            Dm = Dmax, Fim = Fim, seed = seed) # max(dados.ag$Date))
+                            Dm = Dmax, Fim = Fim, seed = seed,
+                            inla_threads = inla_threads) # max(dados.ag$Date))
 
 
   pred.dengue.summy <- pred.dengue %>% group_by(Date) %>%
