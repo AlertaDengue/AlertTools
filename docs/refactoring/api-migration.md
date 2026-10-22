@@ -36,7 +36,7 @@ suporte ainda está proposta; nenhuma data de remoção foi aprovada.
 | `Rt()` | `estimate_rt()` | argumentos longos em `snake_case` | aviso a partir de 1.3.0 |
 | `adjustIncidence()` | `nowcast_cases()` | `datas` → `case_records`; `nowSE` → `report_week` | aviso a partir de 1.3.0 |
 | `setCriteria()` | `define_alert_rules()` | `delays` preservado | aviso a partir de 1.3.0 |
-| `fouralert()` | `classify_alerts()` | `crit` → `rules`; `miss` → `missing`; `dy` → `minimum_history` | aviso a partir de 1.3.0 |
+| `fouralert()` | `classify_alerts()` | `crit` → `rules`; `miss` → `missing`; `dy` → `minimum_history` (reservados, sem efeito) | aviso a partir de 1.3.0 |
 | `tabela_historico()` | `as_alert_history()` | `versao` → `version_date`; `iniSE`/`lastSE` → `start_week`/`end_week` | aviso a partir de 1.3.0 |
 | `write_alerta()` | `write_alert_results()` | recebe diretamente `alerttools_result`; não exporta arquivo implicitamente | aviso a partir de 1.3.0 |
 | `write_parameters()` | `upsert_alert_parameters()` | aceita lote; `overwrite` é substituído por `conflict` | aviso a partir de 1.3.0 |
@@ -88,6 +88,21 @@ climáticos e `versao_modelo`. A persistência continua sendo feita uma doença 
 chamada, para direcionar cada histórico à tabela epidemiológica correspondente.
 
 ## Diferenças intencionais
+
+### Limitação de `minimum_history`
+
+Na versão 1.2.0, `classify_alerts(minimum_history = ...)` aceita o argumento
+somente por compatibilidade: ele não altera a classificação, não define uma
+janela de observação e não exige uma quantidade mínima de semanas. O argumento
+legado `fouralert(dy = ...)` também continua aceito sem efeito. A antiga regra
+de rebaixamento ao nível amarelo com base no histórico está desativada.
+
+Nenhuma regra epidemiológica foi ativada para dar significado ao novo nome.
+Antes de estabilizar a API, uma entrega científica própria deverá definir e
+validar esse comportamento ou retirar o argumento da interface experimental.
+Até lá, consumidores não devem usá-lo para controlar seus critérios de alerta.
+
+### Outros contratos
 
 - Toda leitura ou escrita nova exige `conn`; não existe fallback global.
 - Períodos são explícitos e datas são objetos `Date`.

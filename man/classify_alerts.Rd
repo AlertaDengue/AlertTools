@@ -13,7 +13,9 @@ classify_alerts(data, rules, missing = FALSE, minimum_history = 8)
 
 \item{missing}{Whether missing climate values activate the legacy missing-data rule.}
 
-\item{minimum_history}{Minimum history used by the classifier.}
+\item{minimum_history}{Reserved compatibility argument. Currently ignored:
+changing it does not alter classification or enforce a minimum history.
+No history-based epidemiological rule is enabled in version 1.2.0.}
 }
 \value{
 An object of class `alerta`.
