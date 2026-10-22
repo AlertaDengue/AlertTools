@@ -27,4 +27,6 @@ test_that("comparison fails on numerical, missingness and identity changes", {
   report <- compare_epidemiological_frames(data, changed)
   expect_setequal(report$metric[report$status == "mismatch"], c("casos", "Rt", "id"))
   expect_error(compare_epidemiological_frames(data, changed[-1, ]), "cardinality")
+  expect_true(all(compare_epidemiological_frames(data, data[2:1, ])$status == "match"))
+  expect_error(compare_epidemiological_frames(data, data[c(1, 1), ]), "keys.*unique")
 })
