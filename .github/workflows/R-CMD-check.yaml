@@ -87,8 +87,14 @@ jobs:
           extra-packages: any::devtools
           needs: check
 
-      - name: Run the complete suite against ephemeral PostgreSQL
-        run: Rscript -e 'devtools::test(stop_on_failure = TRUE)'
+      - name: Run the package and pinned consumer suite against PostgreSQL
+        run: Rscript tools/run-postgres-integration.R consumer-evidence
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: consumer-compatibility-evidence
+          path: consumer-evidence/
 
   coverage:
     runs-on: ubuntu-latest

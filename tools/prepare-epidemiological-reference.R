@@ -5,7 +5,8 @@ source("tests/reference/comparison.R", local = TRUE)
 destination <- "tests/reference/e460b3b8"
 dir.create(destination, recursive = TRUE, showWarnings = FALSE)
 selected <- list(
-  "R/alert_functions.R" = c("setCriteria", "fouralert", "calc.alerta", "tabela_historico"),
+  "R/alert_functions.R" = c("setCriteria", "fouralert", "calc.alerta", "tabela_historico",
+                             "write_alerta"),
   "R/Rt_functions.R" = c("Rt", "betaconf", "ll"),
   "R/adjust_incidence_functions.R" = c("adjustIncidence", "bayesnowcasting"),
   "R/nowcasting_fun.R" = c("ff", "gg", "nowcasting", "nowcast.INLA"),

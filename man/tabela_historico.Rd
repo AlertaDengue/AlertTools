@@ -10,8 +10,8 @@ tabela_historico(
   lastSE,
   type = "all",
   versao = Sys.Date(),
-  parameters = if (inherits(obj, "alerttools_result")) obj$parameters else attr(obj,
-    "parameters")
+  parameters = if (inherits(obj, "alerttools_result")) obj$parameters else
+    .legacy_alert_parameters(obj)
 )
 }
 \arguments{
