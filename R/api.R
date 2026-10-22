@@ -490,7 +490,9 @@ define_alert_rules <- function(rule, values, delays = 3) {
 #' @param data In-memory epidemiological indicator data.
 #' @param rules Rules returned by `define_alert_rules()`.
 #' @param missing Whether missing climate values activate the legacy missing-data rule.
-#' @param minimum_history Minimum history used by the classifier.
+#' @param minimum_history Reserved compatibility argument. Currently ignored:
+#'   changing it does not alter classification or enforce a minimum history.
+#'   No history-based epidemiological rule is enabled in version 1.2.0.
 #' @return An object of class `alerta`.
 #' @export
 classify_alerts <- function(data, rules, missing = FALSE, minimum_history = 8) {
@@ -544,7 +546,9 @@ setCriteria <- function(rule = NULL, values = NULL,
 }
 
 #' Legacy alert classifier
-#' @param obj,crit,miss,dy Legacy arguments.
+#' @param obj,crit,miss Legacy arguments.
+#' @param dy Reserved legacy argument, currently ignored. Kept for call
+#'   compatibility; no history-based rule is applied.
 #' @export
 fouralert <- function(obj, crit, miss = "last", dy = 4) {
   .deprecate_api("fouralert()", "classify_alerts()")

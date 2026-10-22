@@ -2,6 +2,9 @@
 
 ## Review follow-up
 
+- Clarify that minimum_history and the legacy dy argument are reserved and
+  ignored in 1.2.0. No epidemiological history rule is silently enabled.
+
 - Separate municipality process counts from INLA fitting threads, with serial
   defaults and compatible `workers` aliases. Bound posterior sampling explicitly
   and forward fixed seeds to INLA without changing global thread options.
