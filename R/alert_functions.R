@@ -472,7 +472,8 @@ calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
 #'tail(restab)
 
 .as_alert_history_impl <- function(obj, iniSE, lastSE, type = "all", versao,
-                             parameters = if (inherits(obj, "alerttools_result")) obj$parameters else attr(obj, "parameters")){
+                             parameters = if (inherits(obj, "alerttools_result")) obj$parameters else attr(obj, "parameters"),
+                             legacy_ids = FALSE){
 
       if (missing(versao)) stop("tabela_historico requires an explicit `versao` date.", call. = FALSE)
 
@@ -492,7 +493,9 @@ calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
       d <- cbind(data, indices)
 
       # defining the id (SE+julian(versaomodelo)+geocodigo+localidade)
-      location_id <- if ("Localidade_id" %in% names(data)) data$Localidade_id else data$localidade
+      location_id <- if (legacy_ids || "Localidade_id" %in% names(data)) {
+            data$Localidade_id
+      } else data$localidade
       multiple_diseases <- "CID10" %in% names(data) && length(unique(data$CID10)) > 1L
       gera_id <- function(x) {
             id <- paste(data$cidade[x], location_id[x], data$SE[x],
