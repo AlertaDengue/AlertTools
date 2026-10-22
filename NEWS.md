@@ -1,5 +1,11 @@
 # AlertTools 1.2.0
 
+## Review follow-up
+
+- Preserve the legacy dengue-parameter fallback for Zika while retaining A92.8
+  in pipeline results. The modern lookup requires disease-specific coverage
+  and reports missing municipalities; a read-only operational audit is included.
+
 ## Refactoring baseline
 
 - Added an inventory of the legacy public API and internal consumers.

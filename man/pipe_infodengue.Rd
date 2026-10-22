@@ -43,7 +43,9 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 
 \item{writedb}{TRUE if it should write into the database, default is FALSE.}
 
-\item{datasource}{Database connection; defaults to the legacy global `con`.}
+\item{datasource}{Database connection; defaults to the legacy global `con`.
+Zika retains the legacy dengue-parameter fallback with a warning. Use
+`fetch_alert_parameters()` for strict disease-specific parameter lookup.}
 
 \item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
 
