@@ -20,7 +20,9 @@ pipe_infodengue(
   seed = NULL,
   verbose = FALSE,
   version_date = finalday,
-  firstday = as.Date("2018-01-01")
+  firstday = as.Date("2018-01-01"),
+  municipality_workers = workers,
+  inla_threads = 1L
 )
 }
 \arguments{
@@ -51,7 +53,7 @@ Zika retains the legacy dengue-parameter fallback with a warning. Use
 
 \item{dataini}{"notif" (default) or "sinpri"}
 
-\item{workers}{Positive number of workers. Defaults to portable serial execution.}
+\item{workers}{Compatibility alias for `municipality_workers`.}
 
 \item{seed}{Optional seed for stochastic nowcasting.}
 
@@ -61,6 +63,10 @@ Zika retains the legacy dengue-parameter fallback with a warning. Use
 
 \item{firstday}{First date of the notification series passed to fetch_cases().
 Defaults to 2018-01-01; supply an earlier date for historical backfills.}
+
+\item{municipality_workers}{Positive process count, default one.}
+
+\item{inla_threads}{Independent INLA fitting thread count, default one.}
 }
 \value{
 A named list of municipal `alerta` objects, preserving the legacy

@@ -13,7 +13,8 @@ bayesnowcasting(
   tweet = FALSE,
   seed = NULL,
   workers = 1L,
-  verbose = FALSE
+  verbose = FALSE,
+  inla_threads = workers
 )
 }
 \arguments{
@@ -31,9 +32,11 @@ bayesnowcasting(
 
 \item{seed}{Optional seed for posterior and predictive sampling.}
 
-\item{workers}{Positive number of workers used by INLA.}
+\item{workers}{Compatibility alias for `inla_threads`.}
 
 \item{verbose}{Whether to emit progress messages.}
+
+\item{inla_threads}{Positive INLA fitting thread count, default one.}
 }
 \value{
 data.frame with median and 95percent confidence interval for the

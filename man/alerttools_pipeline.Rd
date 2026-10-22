@@ -13,7 +13,9 @@ alerttools_pipeline(
   nowcasting = c("none", "bayesian"),
   workers = 1L,
   seed = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  municipality_workers = workers,
+  inla_threads = 1L
 )
 }
 \arguments{
@@ -34,11 +36,17 @@ nowcasting.}
 
 \item{nowcasting}{Either `"none"` or `"bayesian"`.}
 
-\item{workers}{Positive number of workers. The default is portable and serial.}
+\item{workers}{Compatibility alias for `municipality_workers`.}
 
 \item{seed}{Optional deterministic seed for stochastic nowcasting.}
 
 \item{verbose}{Whether orchestration should emit progress messages.}
+
+\item{municipality_workers}{Positive number of concurrent municipality-disease
+processes, defaulting to one. Windows executes serially.}
+
+\item{inla_threads}{Positive number of INLA fitting threads per process,
+independently defaulting to one. Seeded posterior sampling stays serial.}
 }
 \value{
 An `alerttools_result` object.

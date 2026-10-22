@@ -1,11 +1,22 @@
 # Pure epidemiological pipeline ----------------------------------------------
 
-.validate_workers <- function(workers) {
+.validate_workers <- function(workers, name = "workers") {
   if (length(workers) != 1L || !is.numeric(workers) || is.na(workers) ||
-      workers < 1 || workers != floor(workers)) {
-    stop("`workers` must be a positive integer.", call. = FALSE)
+      !is.finite(workers) || workers < 1 || workers > .Machine$integer.max ||
+      workers != floor(workers)) {
+    stop("`", name, "` must be a positive integer.", call. = FALSE)
   }
   as.integer(workers)
+}
+
+.resolve_concurrency_alias <- function(workers, value, name, workers_supplied,
+                                        value_supplied) {
+  workers <- .validate_workers(workers)
+  value <- .validate_workers(value, name)
+  if (workers_supplied && value_supplied && workers != value) {
+    stop("Conflicting `workers` and `", name, "` values.", call. = FALSE)
+  }
+  value
 }
 
 .with_seed <- function(seed, code) {
@@ -29,7 +40,7 @@
 .map_workers <- function(x, fun, workers = 1L) {
   workers <- .validate_workers(workers)
   if (workers == 1L || .Platform$OS.type == "windows") return(lapply(x, fun))
-  parallel::mclapply(x, fun, mc.cores = workers, mc.preschedule = TRUE)
+  parallel::mclapply(x, fun, mc.cores = min(workers, length(x)), mc.preschedule = TRUE)
 }
 
 .validate_columns <- function(data, required, name, allow_empty = FALSE) {
@@ -211,7 +222,11 @@ new_alerttools_result <- function(data, alerts, parameters,
 #'   nowcasting.
 #' @param report_week Epidemiological week through which to compute results.
 #' @param nowcasting Either `"none"` or `"bayesian"`.
-#' @param workers Positive number of workers. The default is portable and serial.
+#' @param workers Compatibility alias for `municipality_workers`.
+#' @param municipality_workers Positive number of concurrent municipality-disease
+#'   processes, defaulting to one. Windows executes serially.
+#' @param inla_threads Positive number of INLA fitting threads per process,
+#'   independently defaulting to one. Seeded posterior sampling stays serial.
 #' @param seed Optional deterministic seed for stochastic nowcasting.
 #' @param verbose Whether orchestration should emit progress messages.
 #' @return An `alerttools_result` object.
@@ -219,9 +234,14 @@ new_alerttools_result <- function(data, alerts, parameters,
 alerttools_pipeline <- function(cases, climate, parameters, case_records = NULL,
                                 report_week = max(cases$SE),
                                 nowcasting = c("none", "bayesian"),
-                                workers = 1L, seed = NULL, verbose = FALSE) {
+                                workers = 1L, seed = NULL, verbose = FALSE,
+                                municipality_workers = workers, inla_threads = 1L) {
   nowcasting <- match.arg(nowcasting)
-  workers <- .validate_workers(workers)
+  workers <- .resolve_concurrency_alias(
+    workers, municipality_workers, "municipality_workers", !missing(workers),
+    !missing(municipality_workers)
+  )
+  inla_threads <- .validate_workers(inla_threads, "inla_threads")
   if (!is.logical(verbose) || length(verbose) != 1L || is.na(verbose)) {
     stop("`verbose` must be TRUE or FALSE.", call. = FALSE)
   }
@@ -325,7 +345,7 @@ alerttools_pipeline <- function(cases, climate, parameters, case_records = NULL,
     group_seed <- if (is.null(seed)) NULL else seed + group_index - 1L
     adjusted <- nowcast_cases(
       city_data, case_records = records, method = nowcasting, report_week = report_week,
-      seed = group_seed, workers = workers, verbose = verbose
+      seed = group_seed, inla_threads = inla_threads, verbose = verbose
     )
     estimated <- estimate_rt(adjusted, count = "tcasesmed", distribution = "normal",
                              mean_generation_time = 3, sd_generation_time = 1)
@@ -348,7 +368,10 @@ alerttools_pipeline <- function(cases, climate, parameters, case_records = NULL,
   )
   metadata <- list(
     report_week = as.numeric(report_week), nowcasting = nowcasting,
-    workers = workers, seed = seed, deterministic = nowcasting == "none" || !is.null(seed)
+    workers = workers, municipality_workers = workers, inla_threads = inla_threads,
+    effective_municipality_workers = if (.Platform$OS.type == "windows") 1L else
+      min(workers, nrow(groups)),
+    seed = seed, deterministic = nowcasting == "none" || !is.null(seed)
   )
   new_alerttools_result(data, alerts, parameters, metadata, diagnostics)
 }
