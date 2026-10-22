@@ -1,3 +1,13 @@
+test_that("reference integrity is portable across text line endings", {
+  first <- withr::local_tempfile(fileext = ".R")
+  second <- withr::local_tempfile(fileext = ".R")
+  writeBin(charToRaw("value <- 1\n"), first)
+  writeBin(charToRaw("value <- 1\r\n"), second)
+  expect_identical(reference_snapshot_md5(first), reference_snapshot_md5(second))
+  writeBin(charToRaw("value <- 2\r\n"), second)
+  expect_false(identical(reference_snapshot_md5(first), reference_snapshot_md5(second)))
+})
+
 test_that("approved dependency and candidate preserve epidemiological outputs", {
   withr::local_options(list(lifecycle_verbosity = "quiet"))
   for (scenario in c("dengue", "chikungunya", "zika", "missing-climate")) {

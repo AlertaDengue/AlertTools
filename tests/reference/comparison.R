@@ -1,9 +1,24 @@
 # Shared comparison code for package tests and the standalone evidence command.
+reference_snapshot_md5 <- function(files) {
+  vapply(files, function(file) {
+    if (!grepl("\\.R$", file)) return(unname(tools::md5sum(file)))
+    canonical <- paste0(paste(readLines(file, encoding = "UTF-8", warn = FALSE),
+                               collapse = "\n"), "\n")
+    temporary <- tempfile()
+    on.exit(unlink(temporary), add = TRUE)
+    writeBin(charToRaw(enc2utf8(canonical)), temporary)
+    unname(tools::md5sum(temporary))
+  }, character(1), USE.NAMES = FALSE)
+}
+
 load_epidemiological_reference <- function(root, parameters) {
   directory <- file.path(root, "tests/reference/e460b3b8")
   manifest <- utils::read.csv(file.path(directory, "manifest.csv"))
-  observed <- unname(tools::md5sum(file.path(directory, manifest$file)))
-  if (!identical(observed, manifest$md5)) stop("Reference snapshot integrity failure.")
+  observed <- reference_snapshot_md5(file.path(directory, manifest$file))
+  if (!identical(observed, manifest$md5)) {
+    stop("Reference snapshot integrity failure: ",
+         paste(manifest$file[observed != manifest$md5], collapse = ", "))
+  }
   reference <- new.env(parent = asNamespace("AlertTools"))
   for (file in manifest$file[grepl("\\.R$", manifest$file)]) {
     sys.source(file.path(directory, file), reference)
