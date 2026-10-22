@@ -180,3 +180,71 @@ tabela_historico <- function(obj, iniSE, lastSE, type = "all", versao = Sys.Date
         return(NULL)
     }
 }
+write_alerta <- function(d, writetofile = FALSE, datasource = con, arq = "output.sql") {
+    assert_that(class(d) == "data.frame", msg = "write_alerta: d is not a data.frame. d should\n                  be an output from tabela_historico.")
+    if (writetofile == FALSE)
+        assert_that(class(datasource) == "PostgreSQLConnection", msg = "write_alerta: \n                 works only for writing into Infodengue's server")
+    cid10 = unique(d$CID10)
+    assert_that(length(cid10) == 1, msg = "write_alerta: d must contain only one cid10")
+    dcolumns <- c("SE", "data_iniSE", "casos_est", "casos_est_min", "casos_est_max", "casos", "casprov",
+        "municipio_geocodigo", "p_rt1", "p_inc100k", "Localidade_id", "nivel", "id", "versao_modelo",
+        "municipio_nome", "Rt", "pop", "receptivo", "transmissao", "nivel_inc", "temp_min", "temp_med",
+        "temp_max", "umid_min", "umid_med", "umid_max")
+    if (!("temp_min" %in% names(d)))
+        d$temp_min <- NA
+    if (!("umid_max" %in% names(d)))
+        d$umid_max <- NA
+    assert_that(all(dcolumns %in% names(d)), msg = "write_alerta: check if d contains required\n                                                           columns")
+    if (cid10 == "A90") {
+        tabela <- "Historico_alerta"
+        constr.unico = "alertas_unicos"
+    }
+    if (cid10 == "A92.0") {
+        tabela <- "Historico_alerta_chik"
+        constr.unico = "alertas_unicos_chik"
+    }
+    if (cid10 == "A92.8") {
+        tabela <- "Historico_alerta_zika"
+        constr.unico = "alertas_unicos_zika"
+    }
+    if (!(cid10 %in% c("A90", "A92.0", "A92.8")))
+        stop(paste("não sei onde salvar histórico para o agravo", cid10))
+    dados <- d %>% select(all_of(dcolumns))
+    varnamesforsql <- c("\"SE\"", "\"data_iniSE\"", "casos_est", "casos_est_min", "casos_est_max", "casos",
+        "casprov", "municipio_geocodigo", "p_rt1", "p_inc100k", "\"Localidade_id\"", "nivel", "id", "versao_modelo",
+        "municipio_nome", "\"Rt\"", "pop", "tempmin", "tempmed", "tempmax", "umidmin", "umidmed", "umidmax",
+        "receptivo", "transmissao", "nivel_inc")
+    varnames.sql <- str_c(varnamesforsql, collapse = ",")
+    updates = str_c(paste(varnamesforsql, "=excluded.", varnamesforsql, sep = ""), collapse = ",")
+    escreve_linha <- function(li) {
+        vetor <- dados[li, ]
+        vetor$municipio_nome = gsub(vetor$municipio_nome, pattern = "'", replacement = "''")
+        linha = paste0(vetor$SE, ",'", as.character(vetor$data_iniSE), "',", str_c(vetor[1, c("casos_est",
+            "casos_est_min", "casos_est_max", "casos", "casprov", "municipio_geocodigo", "p_rt1", "p_inc100k",
+            "Localidade_id", "nivel", "id")], collapse = ","), ",'", as.character(vetor$versao_modelo),
+            "','", as.character(vetor$municipio_nome), "',", str_c(vetor[1, c("Rt", "pop", "temp_min",
+                "temp_med", "temp_max", "umid_min", "umid_med", "umid_max")], collapse = ","), ",", str_c(vetor[1,
+                c("receptivo", "transmissao", "nivel_inc")], collapse = ","))
+        linha = gsub("NA", "NULL", linha)
+        linha = gsub("NaN", "NULL", linha)
+        insert_sql = paste("INSERT INTO \"Municipio\".\"", tabela, "\" (", varnames.sql, ") VALUES (",
+            linha, ") \n                                    ON CONFLICT ON CONSTRAINT ", constr.unico,
+            "  \n                                     DO UPDATE SET ", updates, ";", sep = "")
+        if (writetofile == FALSE) {
+            try(dbGetQuery(datasource, insert_sql))
+        }
+        insert_sql
+    }
+    if (writetofile) {
+        f <- file(arq, open = "w", encoding = "utf8")
+        for (i in 1:nrow(d)) writeLines(escreve_linha(i), f)
+        message("writing alerta into file ", arq)
+        close(f)
+    }
+    else {
+        print(paste("writing alerta into table", tabela))
+        try(dbGetQuery(datasource, "BEGIN TRANSACTION;"))
+        1:nrow(d) %>% map(escreve_linha)
+        try(dbGetQuery(datasource, "COMMIT TRANSACTION;"))
+    }
+}
