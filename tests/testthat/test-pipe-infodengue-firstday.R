@@ -5,8 +5,8 @@ test_that("pipe_infodengue preserves firstday defaults and historical overrides"
   calls <- list()
   climate_starts <- list()
   local_mocked_bindings(
-    fetch_alert_parameters = function(conn, geocodes, disease) {
-      data.frame(municipio_geocodigo = geocodes)
+    .fetch_alert_parameters_impl = function(cities, cid10, datasource) {
+      data.frame(municipio_geocodigo = cities, cid10 = cid10)
     },
     fetch_climate = function(conn, geocodes, climate_vars, start_date, end_date) {
       climate_starts[[length(climate_starts) + 1L]] <<- start_date
