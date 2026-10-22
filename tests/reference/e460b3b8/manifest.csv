@@ -1,0 +1,7 @@
+"file","source","git_blob","reference_commit","functions","md5"
+"alert_functions.R","R/alert_functions.R","5d0ca6fb16fbbe84ae9aa53a8f30036774630844","e460b3b8c15ab28e8755f482d576cf7280803b34","setCriteria;fouralert;calc.alerta;tabela_historico","92746d601e2a3f78c16d893210344396"
+"Rt_functions.R","R/Rt_functions.R","6b756daaf92f4f38957b6cff6ab04c16672a54d1","e460b3b8c15ab28e8755f482d576cf7280803b34","Rt;betaconf;ll","9a03840a0c721cb0402146a988235557"
+"adjust_incidence_functions.R","R/adjust_incidence_functions.R","411ab2302796553ab7b844ba0f990e8a6836eba7","e460b3b8c15ab28e8755f482d576cf7280803b34","adjustIncidence;bayesnowcasting","f9a679f169fbe003f9d9e2b7c5e6ee91"
+"nowcasting_fun.R","R/nowcasting_fun.R","ecd2802e8e0397e259ea3f6ba450af2ef2d3d6f0","e460b3b8c15ab28e8755f482d576cf7280803b34","ff;gg;nowcasting;nowcast.INLA","dd3473088f3bbe904b4ca046d71b3252"
+"utility_tools.R","R/utility_tools.R","3fb750a1d95e5eb06a5d0cdc75ff3aad992d350e","e460b3b8c15ab28e8755f482d576cf7280803b34","SE2date;episem;data2SE;sevendigitgeocode","bed8e7399c01d559ef35ee6de1599adb"
+"sysdata.rda","R/sysdata.rda","56f2965b1ee6df91bad1590b69d6b49fa4e5336c","e460b3b8c15ab28e8755f482d576cf7280803b34","SE","5f5cabedbd91ab8acd619362974a974f"
