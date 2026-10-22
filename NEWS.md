@@ -2,6 +2,10 @@
 
 ## Review follow-up
 
+- Exercise the pinned consumer's state/municipality recovery and RData/SQL
+  publication against disposable databases. Retain parameter metadata through
+  municipal concatenation and preserve numeric precision in SQL exports.
+
 - Compare candidate results against the consumer's pinned e460b3b8 calculation
   and history functions with immutable reference snapshots. Preserve the
   historical ID format for legacy alert objects; modern result IDs are unchanged.

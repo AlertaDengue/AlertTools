@@ -11,4 +11,5 @@
 ^\.lintr$
 ^tools$
 ^pkgdown-site$
+^consumer-evidence$
 ^data/(bairro2APS|locs|sinan)\.rda$

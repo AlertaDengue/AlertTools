@@ -380,11 +380,21 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
                   n = 4L
             )
             class(alert) <- "alerta"
+            attr(alert, "parameters") <- parameters
             alert
       })
       names(legacy) <- names(groups)
       attr(legacy, "parameters") <- result$parameters
       legacy
+}
+
+.legacy_alert_parameters <- function(obj) {
+      parameters <- attr(obj, "parameters")
+      if (!is.null(parameters)) return(parameters)
+      if (!is.list(obj) || !length(obj) || inherits(obj, "alerta")) return(NULL)
+      parts <- lapply(obj, function(alert) attr(alert, "parameters"))
+      if (any(vapply(parts, is.null, logical(1)))) return(NULL)
+      unique(dplyr::bind_rows(parts))
 }
 
 
@@ -472,7 +482,7 @@ calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
 #'tail(restab)
 
 .as_alert_history_impl <- function(obj, iniSE, lastSE, type = "all", versao,
-                             parameters = if (inherits(obj, "alerttools_result")) obj$parameters else attr(obj, "parameters"),
+                             parameters = if (inherits(obj, "alerttools_result")) obj$parameters else .legacy_alert_parameters(obj),
                              legacy_ids = FALSE){
 
       if (missing(versao)) stop("tabela_historico requires an explicit `versao` date.", call. = FALSE)
@@ -767,14 +777,13 @@ tabela_historico_intra <- function(obj, iniSE, lastSE, versao,
          driver, DBI::Id(schema = config[[1]], table = config[[2]])
       ))
       column_sql <- as.character(DBI::dbQuoteIdentifier(driver, names(dados)))
-      row_sql <- apply(dados, 1L, function(row) {
-         values <- Map(function(value, template) {
+      row_sql <- vapply(seq_len(nrow(dados)), function(index) {
+         values <- lapply(dados[index, , drop = FALSE], function(value) {
             if (is.na(value)) return(DBI::SQL("NULL"))
-            if (inherits(template, "Date")) value <- as.Date(value)
             DBI::dbQuoteLiteral(driver, value)
-         }, as.list(row), dados[1, , drop = FALSE])
+         })
          paste0("(", paste(as.character(values), collapse = ", "), ")")
-      })
+      }, character(1))
       sql <- paste("INSERT INTO", table_sql,
                    paste0("(", paste(column_sql, collapse = ", "), ") VALUES"),
                    paste(row_sql, collapse = ", "))

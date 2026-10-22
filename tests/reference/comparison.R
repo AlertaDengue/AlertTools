@@ -82,8 +82,20 @@ epidemiological_snapshots <- function(root, scenario, version_date = as.Date("20
 
 compare_epidemiological_frames <- function(reference, candidate, tolerance = 1e-7) {
   if (nrow(reference) != nrow(candidate) ||
+      anyDuplicated(names(reference)) || anyDuplicated(names(candidate)) ||
       !setequal(names(reference), names(candidate))) {
     stop("Epidemiological output schema/cardinality mismatch.")
+  }
+  if ("SE" %in% names(reference)) {
+    municipality <- intersect(c("municipio_geocodigo", "cidade"), names(reference))
+    keys <- c(head(municipality, 1L), intersect("CID10", names(reference)), "SE",
+              intersect(c("Localidade_id", "localidade"), names(reference)))
+    if (anyDuplicated(reference[keys]) || anyDuplicated(candidate[keys]) ||
+        anyNA(reference[keys]) || anyNA(candidate[keys])) {
+      stop("Epidemiological output keys must be unique and complete.")
+    }
+    reference <- reference[do.call(order, reference[keys]), , drop = FALSE]
+    candidate <- candidate[do.call(order, candidate[keys]), , drop = FALSE]
   }
   do.call(rbind, lapply(names(reference), function(column) {
     old <- reference[[column]]
