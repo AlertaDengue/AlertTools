@@ -13,7 +13,9 @@ lastepiweek(ano)
 Calculate number of year's last epidemiological week using Brazilian standard.
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 lastepiweek(2018)
+\dontshow{\}) # examplesIf}
 }
 \author{
 Marcelo F Gomes

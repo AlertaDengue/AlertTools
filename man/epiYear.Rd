@@ -18,6 +18,8 @@ vector of epidemiological years.
 Find to which epidemiological year belongs a given epidemiological week.
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 epiYear(se = 201012)
 epiYear(se = 201012:201522)
+\dontshow{\}) # examplesIf}
 }

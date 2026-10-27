@@ -7,7 +7,7 @@
 SE2date(se)
 }
 \arguments{
-\item{SE}{string vector with dates to be converted, format 201420}
+\item{se}{numeric vector with epidemiological weeks, for example 201420.}
 }
 \value{
 data.frame with SE and first day.
@@ -16,6 +16,8 @@ data.frame with SE and first day.
 Return the first day of the Epidemiological Week
 }
 \examples{
-SE2date(se=201812)
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
+SE2date(se=202612)
 SE2date(se = c(202001:202209))
+\dontshow{\}) # examplesIf}
 }

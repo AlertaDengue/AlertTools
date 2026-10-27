@@ -1,0 +1,118 @@
+url: https://alertadengue.github.io/AlertTools/
+destination: pkgdown-site
+
+template:
+  bootstrap: 5
+
+home:
+  title: AlertTools — epidemiological alert utilities
+  description: >
+    Reproducible data access, epidemiological computation, and alert
+    classification for the InfoDengue alert system.
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    intro:
+      text: Início
+      href: index.html
+    articles:
+      text: Guias
+      menu:
+        - text: Pipeline sem banco
+          href: articles/in-memory-pipeline.html
+        - text: Pipeline com DBI
+          href: articles/database-pipeline.html
+        - text: Migração da API
+          href: articles/migrating-to-snake-case.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/AlertaDengue/AlertTools
+      aria-label: GitHub
+
+reference:
+  - title: Fluxo principal
+    contents:
+      - new_alert_inputs
+      - fetch_alert_inputs
+      - fetch_alert_parameters
+      - run_alert_pipeline
+      - as_alert_history
+      - write_alert_results
+      - alerttools_pipeline
+      - new_alerttools_result
+  - title: Leitura e persistência
+    contents:
+      - fetch_cases
+      - fetch_case_records
+      - fetch_climate
+      - upsert_alert_parameters
+  - title: Núcleo epidemiológico
+    contents:
+      - as_epiweek
+      - epiweek_start
+      - epiweek_seq
+      - calculate_incidence
+      - estimate_rt
+      - nowcast_cases
+      - define_alert_rules
+      - classify_alerts
+  - title: Compatibilidade legada
+    desc: Interfaces preservadas temporariamente durante a migração.
+    contents:
+      - Rt
+      - SE2date
+      - adjustIncidence
+      - fouralert
+      - getCases
+      - getCaseslist
+      - getClima
+      - pipe_infodengue
+      - read.parameters
+      - setCriteria
+      - tabela_historico
+      - write_alerta
+      - write_parameters
+  - title: Demais funções
+    contents:
+      - bayesnowcasting
+      - bestWU
+      - calc.alerta
+      - data2SE
+      - daySEday
+      - epiYear
+      - episem
+      - getCidades
+      - getPop
+      - getRegionais
+      - getTweet
+      - getWU
+      - getWUstation
+      - getdelaydata
+      - GenTimeDist
+      - infodengue_apply_mem
+      - infodengue_apply_mem_agreg
+      - mem_curve
+      - nafill
+      - applyGenTimeDist
+      - applymem
+      - read.cases
+      - SE
+      - seqSE
+      - setWUstation
+      - sevendigitgeocode
+      - tabela_historico_intra
+      - temp.predict
+
+articles:
+  - title: Uso
+    navbar: ~
+    contents:
+      - in-memory-pipeline
+      - database-pipeline
+      - migrating-to-snake-case
+
+development:
+  mode: auto

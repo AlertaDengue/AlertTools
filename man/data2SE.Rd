@@ -15,11 +15,13 @@ data2SE(days, format = "\%d/\%m/\%Y")
 numeric vector with the epidemiological weeks.
 }
 \description{
-Find to which epidemiological week belongs a given day. Uses episem function 
+Find to which epidemiological week belongs a given day. Uses episem function
 (formula generated data).
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 data2SE("01-02-2020",format="\%d-\%m-\%Y")
 data2SE("12-02-2008",format="\%d-\%m-\%Y")
 data2SE(c("03-04-2013","07-01-2019"),format="\%d-\%m-\%Y")
+\dontshow{\}) # examplesIf}
 }

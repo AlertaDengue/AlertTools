@@ -12,12 +12,14 @@ seqSE(from, to)
 \item{to}{first week in format 201401}
 }
 \value{
-data.frame with the epidemiological weeks and corresponding extreme days. 
+data.frame with the epidemiological weeks and corresponding extreme days.
 WARNING: only works from 2010 to 2024.
 }
 \description{
 Creates a sequence of epidemiological weeks and respective initial and final days
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 seqSE(202442, 202510)
+\dontshow{\}) # examplesIf}
 }

@@ -4,7 +4,7 @@
 \alias{getWUstation}
 \title{get meteorological stations}
 \usage{
-getWUstation(cities, datasource = con)
+getWUstation(cities, datasource)
 }
 \arguments{
 \item{cities}{vector with geocodes}
@@ -18,7 +18,9 @@ data.frame
 Get the meteorological stations associated with one or more cities
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 getWUstation(cities = 3304557)
 cidades <- getCidades(regional = "Sete Lagoas", uf = "Minas Gerais")
 getWUstation(cities = cidades$municipio_geocodigo)
+\dontshow{\}) # examplesIf}
 }

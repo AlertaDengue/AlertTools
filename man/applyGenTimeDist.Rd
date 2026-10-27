@@ -4,7 +4,7 @@
 \alias{applyGenTimeDist}
 \title{Calculate matrix of generation time distribution for cities in infodengue}
 \usage{
-applyGenTimeDist(cities, stations, cid10 = "A90", datasource = con, ...)
+applyGenTimeDist(cities, stations, cid10 = "A90", datasource, ...)
 }
 \arguments{
 \item{cities}{: vector of geocodes}
@@ -15,9 +15,7 @@ applyGenTimeDist(cities, stations, cid10 = "A90", datasource = con, ...)
 
 \item{datasource}{: sql connection}
 
-\item{ini}{: initial date (Date or epidemiological week)}
-
-\item{end}{: final date (Date or epidemiological week)}
+\item{...}{Additional arguments passed to downstream helpers.}
 }
 \value{
 list of generation time distributions matrices
@@ -26,7 +24,9 @@ list of generation time distributions matrices
 Calculate the generation time for cities or from meteorological stations
 }
 \examples{
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 cid <- getCidades(uf="Rio de Janeiro")$municipio_geocodigo
 gt <- applyGenTimeDist(stations = c("SBGL","SBJR"), cid10 = "A90")
 system.time(gt <- applyGenTimeDist(cities = cid, cid10 = "A90"))
+\dontshow{\}) # examplesIf}
 }

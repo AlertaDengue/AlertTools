@@ -9,16 +9,18 @@ getWU(
   vars = "temp_min",
   finalday = Sys.Date(),
   iniSE = 201001,
-  datasource = con
+  datasource
 )
 }
 \arguments{
 \item{stations}{station code (4 digits).}
 
-\item{vars}{vector with meteorological variables. Available variables: "temp_min" (default), 
+\item{vars}{vector with meteorological variables. Available variables: "temp_min" (default),
 "temp_max","temp_med","data_dia","umid_min","umid_med","umid_max","pressao_min","pressao_med","pressao_max"}
 
 \item{finalday}{last day. Default is the last available. Format = Y-m-d.}
+
+\item{iniSE}{First epidemiological week to return.}
 
 \item{datasource}{Use "data/WUdata.rda" to use test dataset. Use the connection to the Postgresql server if using project data. See also DenguedbConnect
 to open the database connection.}
@@ -30,8 +32,10 @@ data.frame with the weekly data (cidade estacao data temp_min tmed tmax umin ume
 Create weekly time series from meteorological station data in server taking the mean of the daily values.
 }
 \examples{
-NOT USE: con <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
+# NOT USE: connection <- dbConnect(RSQLite::SQLite(), "../../AlertaDengueAnalise/mydengue.sqlite")
 res = getWU(stations = c('SBRJ','SBGL'), vars="temp_min", iniSE = 201201)
 res = getWU(stations = 'SBRJ', vars=c("temp_min", "temp_med"))
 tail(res)
+\dontshow{\}) # examplesIf}
 }

@@ -4,29 +4,40 @@
 \alias{tabela_historico_intra}
 \title{Convert the alert object into a data.frame and calculate indicators for cities with subdivisions}
 \usage{
-tabela_historico_intra(obj, iniSE, lastSE, versao = Sys.Date())
+tabela_historico_intra(
+  obj,
+  iniSE,
+  lastSE,
+  versao,
+  parameters = attr(obj, "parameters")
+)
 }
 \arguments{
 \item{obj}{object created by the pipeline.}
 
-\item{versao}{Default is current's date}
+\item{iniSE}{first week of the table. Default is the first date in obj.}
 
-\item{ini_se}{first week of the table. Default is the first date in obj.}
+\item{lastSE}{last week of the table. Default is the last date in obj.}
 
-\item{last_se}{last week of the table. Default is the last date in obj. To do.}
+\item{versao}{Explicit model-version date.}
+
+\item{parameters}{Parameter data frame. It is never read implicitly from a database.}
 }
 \value{
 data.frame with the data to be written.
 }
 \description{
-Function to organize the alert results for easy reading and inserting 
+Function to organize the alert results for easy reading and inserting
 in the database. Specific for municipalities with subdivisions.
 }
 \examples{
-NOT RUN without connection
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
+# NOT RUN without connection
 # Rio de Janeiro
-alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202105, 
+alerio <- pipe_infodengue_intra(city = 3304557, datarelatorio=202105,
 delaymethod="bayesian", cid10 = "A90", dataini = "sinpri")
-restab <- tabela_historico_intra(alerio, iniSE = 201801) 
+restab <- tabela_historico_intra(alerio, iniSE = 201801,
+                                versao = as.Date("2026-09-04"))
 tail(restab)
+\dontshow{\}) # examplesIf}
 }

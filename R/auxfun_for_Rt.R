@@ -20,29 +20,29 @@ sum_gamma_dist <- function (y, a, b, K=100){
       b1 <- min(b)
       rho <- sum(a)
       C <- exp(sum(a*log(b1/b)))
-      
+
       delta <- gammav <- c(1,rep(0,K))
-      
+
       gammav <- sapply(1:K, function(x) {gammak(a,b,x)})
       #for (k in 1:K) {
       #  gammav[k] <- gammak(a,b,k)
       #}
-      
+
       delta[1] <- 1
-      
+
       for (k in 0:(K-1)) {
             ss2 <- (1:(k+1))*gammav[1:(k+1)]*delta[1+k+1 - (1:(k+1))]
             delta[(k+1)+1] <- sum(ss2)/(k+1)
       }
-      
-      xx <- log(delta) + 
-            (rho-1 + 1:(K+1))*log(y) -(y/b1) - lgamma(rho+1:(K+1)) - 
+
+      xx <- log(delta) +
+            (rho-1 + 1:(K+1))*log(y) -(y/b1) - lgamma(rho+1:(K+1)) -
             (rho + 1:(K+1))*log(b1)
-      gy <- C*sum(exp(xx)) 
+      gy <- C*sum(exp(xx))
       gy
 }
 
-# Function to compute the probability distribution, 
+# Function to compute the probability distribution,
 # given by \int_0^{y} f(x) dx
 # y: the input value
 # a: shape
@@ -76,13 +76,13 @@ int_sum_gamma <- function(y, a, b, K=200, step=.1, max=50) {
 # p: the probability value
 # a: shape
 # b: scale
-t_sum_gamma_v3 <- function(p, a, b, K=200, step=.1, max=100, res=.1) {  
+t_sum_gamma_v3 <- function(p, a, b, K=200, step=.1, max=100, res=.1) {
       xa <- 0
       xb <- max
       while ((xb-xa)>res) {
             y <- (xa+xb)/2.0
-            px <- int_sum_gamma(y, a, b, max=max)    
-            
+            px <- int_sum_gamma(y, a, b, max=max)
+
             if (px$yres>p) {xb <- y}
             else {xa <- y}
       }
@@ -90,7 +90,7 @@ t_sum_gamma_v3 <- function(p, a, b, K=200, step=.1, max=100, res=.1) {
 }
 
 # It is better to rename the function
-t_sum_gamma <- function(p, a, b, K=200, step=.1, max=100, res=.1) {  
+t_sum_gamma <- function(p, a, b, K=200, step=.1, max=100, res=.1) {
       t_sum_gamma_v3(p, a, b, K, step, max, res)
 }
 
@@ -100,21 +100,21 @@ t_sum_gamma <- function(p, a, b, K=200, step=.1, max=100, res=.1) {
 # p: the probability value
 # a: shape
 # b: scale
-t_sum_gamma_v2 <- function(p, a, b, K=100, step=.1, max=40) {  
+t_sum_gamma_v2 <- function(p, a, b, K=100, step=.1, max=40) {
       inc <- .1
       y <- 0
       px <- 0
       while (px<p) {
             y <- y+inc
-            px <- int_sum_gamma(y, a, b)    
+            px <- int_sum_gamma(y, a, b)
       }
       (y-inc)
 }
 
 # Again not computationally efficient
-t_sum_gamma_max <- function(p, a, b, K=100, step=.1, max=40) {  
+t_sum_gamma_max <- function(p, a, b, K=100, step=.1, max=40) {
       rx <- (0:(max*10))/10.0
-      ggy2 <- sapply(rx, 
+      ggy2 <- sapply(rx,
                      function(x) { int_sum_gamma(x, a, b, K=K, step=step)})
       rt <- which(ggy2>p)
       tequiv <- rx[rt[1]]
@@ -122,7 +122,7 @@ t_sum_gamma_max <- function(p, a, b, K=100, step=.1, max=40) {
 }
 
 
-# Function to compute the probability distribution, 
+# Function to compute the probability distribution,
 # given by \int_0^{y} f(x) dx
 # and using time series of temperature values
 # y: the input value
@@ -132,10 +132,10 @@ t_sum_gamma_max <- function(p, a, b, K=100, step=.1, max=40) {
 # t: time when Temp[t+1] start
 # Temp has to have length = length(t) + 1
 # Temp: 27   21   23
-# t:         4    5  
+# t:         4    5
 # The idea is to have
 # P( X <= t) = P(X > t_i) * P(X > t | X> t_i),
-# where t_i is the instant in which temperature has changed previous to 
+# where t_i is the instant in which temperature has changed previous to
 # time t
 # Then, P(X>t | X > t_i) has a time rescaling
 # P(X>t | X > t_i) = 1 - \int_{t_{i}}^{t} f(\tau + t_{equiv} - t_{i}, \mathbf{\theta}, \mathbf{\beta(Temp_i)})/P(X > t_i)
@@ -152,26 +152,26 @@ int_sum_gamma_T <- function(y, a, b, Temp, t, K=200, step=.1, max=50, withbreak=
             if ((withbreak) && (summ>0.999)) {
                   j <- ceiling(i)
                   pdf[j+1] <- pdf[j+1] + 0.0
-                  res[round(i/step)] <- summ        
+                  res[round(i/step)] <- summ
             }
             else {
                   b[2] <- 1/lambdaEIP(T=Temp[c])
                   if (c<=length(t)) {
                         if (i>t[c]) {
                               c <- c+1
-                              b[2] <- 1/lambdaEIP(T=Temp[c])  
+                              b[2] <- 1/lambdaEIP(T=Temp[c])
                               tsum <- t_sum_gamma_v3(summ, a, b/unitscale, max=max)
                               tdiff <- tsum - i
                         }
-                  }    
+                  }
                   #    xx <- sum_gamma_dist(max(i+tdiff, 0),a,b, K)*(step*unitscale)
                   xx <- sum_gamma_dist(max(i+tdiff, 0),a,b/unitscale, K)*(step)
-                  
+
                   summ <- summ + xx
                   #    j <- ceiling(i/unitscale)
                   j <- ceiling(i)
                   pdf[j+1] <- pdf[j+1] + xx
-                  res[round(i/step)] <- summ  
+                  res[round(i/step)] <- summ
             }
       }
       list(yres=res[y/step], dist=res, i=(1:(max/step))*step, pdf = pdf)

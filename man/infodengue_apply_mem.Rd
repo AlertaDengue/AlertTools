@@ -37,6 +37,8 @@ infodengue_apply_mem(
 'no' return data.table without writing in database.
 'db' writes data.table to InfoDengue's database using \code{write.parameters} from AlerttTools package.}
 
+\item{database}{DBI connection.}
+
 \item{passwd}{database password for writing output to db if write='db'.}
 
 \item{i.n.max}{Number of points by seasons to be used for pre-epidemic and epidemic regions to calculate each threshold.
@@ -51,13 +53,15 @@ This value is passed to i.level.threshold parameter in \code{memmodel}, from MEM
 \item{limiar.epidemico}{Level of confidence interval to calculate high activity during epidemic region. Default: 0.95.
 This value is passed to i.level.intensity parameter in \code{memmodel}, from MEM package.}
 
+\item{i.type.curve, i.type.threshold, i.type.intensity}{MEM configuration values.}
+
 \item{mincases.pre}{minimum number of cases to launch a preseason alert. Default: 5}
+
+\item{mincases.pos}{minimum number of cases to end a seasonal alert. Default: 5}
 
 \item{mincases.epi}{minimum number of cases to launch an epidemic alert. Default: 10}
 
 \item{...}{Optional arguments passed to \code{memmodel}, from MEM package.}
-
-\item{con}{Connection to PostGreSQL database, using \code{dbConnect} from RPostgreSQL package}
 }
 \value{
 Function \code{info.dengue.apply.mem} will return a list with thresholds calculated by mem,
@@ -82,12 +86,14 @@ to either the 90% quantile or 10, whichever is the greatest. The thresholds are 
 as incidence. The alert model uses incidence.
 }
 \examples{
-Generate thresholds for municipalities using the whole history.
-Return object instead of writing to data base:
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
+# Generate thresholds for municipalities using the whole history.
+# Return object instead of writing to data base:
 mun_list <- c(4212650, 4209102,4216503,4214607,4212502,4218905,4212601,4214805,
 4212650,4217006,4212700,4214706,4213104,4200804)
-mun_list <- getCidades(uf = "Maranhão", datasource=con)$municipio_geocodigo
-thresC <- infodengue_apply_mem(mun_list, cid10 = "A92.0", database=con)
-A nice way to visualize the calculated thresholds
+mun_list <- getCidades(uf = "Maranhão", datasource=connection)$municipio_geocodigo
+thresC <- infodengue_apply_mem(mun_list, cid10 = "A92.0", database=connection)
+# A nice way to visualize the calculated thresholds
 plot(thres)
+\dontshow{\}) # examplesIf}
 }

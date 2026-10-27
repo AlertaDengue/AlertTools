@@ -1,29 +1,54 @@
 Package: AlertTools
 Type: Package
-Title: utility functions for the Infodengue Alert System
-Version: 1.1.0
-Date: 2015-10-05
+Title: Utilities for the InfoDengue Alert System
+Version: 1.2.0
 Authors@R: person("Claudia", "Codeco", email="claudia.codeco@gmail.com",
    role = c("aut", "cre"))
 Maintainer: Claudia Codeco <claudia.codeco@gmail.com>
-Description: Set of functions to get data from the Infodengue Alert server,
-    organize into time series, correct the notification data, calculate alert
-    indices. Also includes utility functions to create reports and maps.
-License: CCO
+Description: Tools to retrieve and organize epidemiological and climate data,
+    adjust notification series, estimate epidemiological indicators, and
+    calculate alert levels used by the InfoDengue alert system.
+License: file LICENSE
 Encoding: UTF-8
 Imports:
-    foreign,
-    RPostgreSQL,
-    zoo,
-    knitr,
-    forecast,
-    tidyverse,
-    lubridate,
     assertthat,
+    DBI,
+    dplyr,
+    forecast,
+    lifecycle,
+    lubridate,
+    parallel,
+    plyr,
+    purrr,
+    stats,
+    stringr,
+    tibble,
+    tidyr,
+    utils,
+    zoo
+Suggests:
     brpop,
-    parallel
-VignetteBuilder: knitr
+    covr,
+    data.table,
+    INLA,
+    knitr,
+    lintr,
+    mem,
+    pkgdown,
+    RPostgres,
+    RSQLite,
+    rmarkdown,
+    styler,
+    testthat (>= 3.0.0),
+    withr
+Additional_repositories: https://inla.r-inla-download.org/R/stable
+Config/testthat/edition: 3
+Config/Needs/website: pkgdown
+URL: https://github.com/AlertaDengue/AlertTools,
+    https://alertadengue.github.io/AlertTools/
+BugReports: https://github.com/AlertaDengue/AlertTools/issues
 RoxygenNote: 7.3.3
 LazyData: true
-Depends: 
+Depends:
     R (>= 3.5)
+VignetteBuilder: knitr
