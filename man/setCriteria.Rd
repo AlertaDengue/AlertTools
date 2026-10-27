@@ -4,10 +4,17 @@
 \alias{setCriteria}
 \title{Legacy alert-rule constructor}
 \usage{
-setCriteria(rule = NULL, values = NULL, delays = 3)
+setCriteria(
+  rule = NULL,
+  values = NULL,
+  delays = list(delayy = c(0, 0), delayo = c(0, 0), delayr = c(0, 0))
+)
 }
 \arguments{
-\item{rule, values, delays}{Legacy arguments.}
+\item{rule, values}{Legacy arguments.}
+
+\item{delays}{Legacy list with turn-on and turn-off delays for yellow, orange,
+and red criteria.}
 }
 \description{
 Legacy alert-rule constructor
