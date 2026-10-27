@@ -3,6 +3,7 @@ test_that("pure pipeline runs deterministically from in-memory fixtures", {
   cases <- read_fixture("cases.csv")
   climate <- read_fixture("climate.csv")
   parameters <- read_fixture("parameters.csv", stringsAsFactors = FALSE)
+  expected <- read_fixture("expected-pipeline.csv", stringsAsFactors = FALSE)
   before <- list.files(all.files = TRUE)
 
   first <- alerttools_pipeline(
@@ -20,6 +21,10 @@ test_that("pure pipeline runs deterministically from in-memory fixtures", {
   expect_equal(list.files(all.files = TRUE), before)
   expect_equal(nrow(first$data), nrow(cases))
   expect_equal(nrow(first$alerts), nrow(cases))
+  observed <- first$data[c("SE", "cidade", "CID10", "casos", "tcasesmed",
+                           "inc", "Rt", "lwr", "upr", "p1")]
+  observed$level <- first$alerts$level
+  expect_equal(observed, expected, tolerance = 1e-6)
   expect_equal(first$metadata$workers, 1L)
   expect_true(first$metadata$deterministic)
   expect_equal(first$diagnostics$missing_climate, 0)
