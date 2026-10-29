@@ -1,0 +1,6 @@
+{
+  "source_commit": "e7f4c5fccf7f2566808b49c9f754b8c103fe4528",
+  "scope": "Timing measured before separating validation files and validating recovered legacy parameters. Numerical pipeline code is unchanged; source fingerprints and runtime versions are retained per environment.",
+  "inputs": "Deterministic synthetic generator in tests/reference/inla-validation.R; 120 case rows and 1740 notification records per state copy.",
+  "comparison": "Within fitting-thread budgets: absolute tolerance 1e-7, exact categorical values and missingness. Cross-thread differences are retained separately and not labeled equivalence."
+}
