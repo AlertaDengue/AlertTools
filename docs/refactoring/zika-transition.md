@@ -23,3 +23,18 @@ Os testes cobrem cobertura completa, parcial, ausente e duplicada em banco
 descartável. Nenhum banco operacional foi consultado nesta entrega. O relatório
 de cobertura real e a aprovação de troca da política legada continuam sendo
 condições da migração do consumidor, não conclusões dos testes sintéticos.
+
+## Pré-requisitos da auditoria em homologação
+
+Na inspeção do repositório em 29/10/2026, não foram localizados configuração de
+acesso à homologação nem CSV da população operacional de municípios. Os códigos
+das fixtures não podem substituir esse recorte. As configurações PG* da CI
+apontam para um banco descartável e não constituem acesso à homologação.
+
+Para concluir a auditoria, o responsável pelo ambiente precisa disponibilizar o
+mecanismo de acesso somente leitura e a lista de municípios. O CSV deve conter
+`municipio_geocodigo` com códigos numéricos únicos de sete dígitos. O script
+rejeita entradas incompletas/duplicadas, carrega a candidata quando executado na
+raiz do projeto e recusa sobrescrever um relatório existente. A saída inclui
+metadados de data UTC, versão, hash da entrada e número de municípios; não inclui
+credenciais. Não registrar o consumidor como migrado enquanto essa evidência faltar.
