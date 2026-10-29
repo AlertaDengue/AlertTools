@@ -398,16 +398,6 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
 
 .legacy_alert_parameters <- function(obj) {
       parameters <- attr(obj, "parameters")
-      if (!is.null(parameters)) return(parameters)
-      if (!is.list(obj) || !length(obj) || inherits(obj, "alerta")) return(NULL)
-      parts <- lapply(obj, function(alert) attr(alert, "parameters"))
-      if (any(vapply(parts, is.null, logical(1)))) return(NULL)
-      unique(dplyr::bind_rows(parts))
-}
-
-
-.legacy_alert_parameters <- function(obj) {
-      parameters <- attr(obj, "parameters")
       if (is.null(parameters)) {
             if (!is.list(obj) || !length(obj) || inherits(obj, "alerta")) return(NULL)
             parts <- lapply(obj, function(alert) attr(alert, "parameters"))

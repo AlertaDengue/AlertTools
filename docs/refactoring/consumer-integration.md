@@ -1,5 +1,10 @@
 # Recorte integrado do consumidor
 
+Os cenários bayesianos reais de recuperação acrescentados após o review de
+29/10/2026 são executados pelo runner `tools/run-inla-integration.R`, descrito
+em `concurrency.md`. Eles complementam o recorte DBI/SQL abaixo, que permanece
+no modo `none`; não equivalem à execução integral da imagem operacional.
+
 O teste executa expressões sem alterações de `main/main_BR.R` na revisão
 `27a03f26a9bf366597ef135e7da8d2f620ea9a8e` do AlertaDengueAnalise. O pin do
 AlertTools continua sendo `e460b3b8c15ab28e8755f482d576cf7280803b34`. O manifesto

@@ -59,14 +59,56 @@ insuficientes para definir limites operacionais. Os defaults permanecem 1/1.
 O CSV registra o SHA-256 dos fontes R usados; a carga sintética e o supervisor
 estão versionados com esta entrega.
 
-## Validação real do motor
+## Validação com INLA real após o review de 29/10/2026
 
-O runner `Rscript tools/run-inla-integration.R /tmp/inla-evidence` exige dois
-cenários: equivalência serial/paralela e repetição com INLA real, além da
-rejeição de saída parcial quando um worker é encerrado. Nenhum pode ser ignorado.
-O benchmark `tools/benchmark-inla.py` mede processos externos, municipais e
-threads com orçamento explícito e preserva as diferenças entre orçamentos.
-A imagem `tools/inla-validation.Dockerfile` fixa a base e o runtime oficial
-INLA 25.12.16 para Linux ARM, incluindo a dependência de amostragem `sn`.
-Comparação com a referência histórica e recuperação integrada do consumidor
-são acrescentadas nas etapas seguintes da cadeia. Os defaults continuam 1/1.
+O runner dedicado executa quatro cenários obrigatórios:
+
+```sh
+Rscript tools/run-inla-integration.R /tmp/inla-evidence
+```
+
+Ele falha se INLA estiver ausente, se algum cenário for ignorado ou se a chamada
+bayesiana apenas devolver os casos brutos. Os cenários cobrem repetição,
+concorrência municipal com uma e duas threads de ajuste, referência histórica,
+fallback real do consumidor com falhas injetadas e encerramento de um worker.
+Falha de ajuste preserva seu diagnóstico; a camada paralela rejeita saída parcial.
+O caso de encerramento mata um worker controlado, não força OOM no computador.
+
+As entradas são sintéticas: 60 semanas, atrasos de zero a quatro semanas,
+dois municípios e dengue/chikungunya. O comparador exige tolerância absoluta
+`1e-7`, igualdade de categorias e de ausência de dados. A referência mantém os
+corpos históricos imutáveis e adapta somente as dependências externas para o
+mesmo ambiente e a semente explícita de amostragem. A comparação com a referência
+usa quatro threads de ajuste, como o código antigo. Não valida a instalação
+integral da imagem operacional antiga.
+
+Alterar as threads do ajuste não é pressuposto numericamente idêntico. O
+benchmark conserva baselines por orçamento de threads, compara concorrência e
+repetições contra esses baselines e exporta separadamente diferenças entre
+orçamentos. Mudanças de nível de alerta entre orçamentos falham a execução;
+outras diferenças permanecem visíveis para avaliação científica.
+
+```sh
+python3 tools/benchmark-inla.py /tmp/inla-host --environment host --max-rss-mib 3072
+docker build -f tools/inla-validation.Dockerfile -t alerttools-inla-validation .
+```
+
+A matriz mede uma ou duas cópias externas da carga, um ou dois processos
+municipais e uma ou duas threads de ajuste, com três repetições. As cópias
+representam a disputa de recursos entre estados; não são uma execução nacional.
+Cada rodada registra tempo de parede incluindo startup, tempo de cálculo nos
+workers, versões, entrada, semente e RSS agregado amostrado a cada 100 ms.
+O supervisor encerra os grupos de processos ao exceder tempo/memória ou falhar.
+O RSS pode contar páginas compartilhadas várias vezes. Em contêiner, as métricas
+de cgroup têm escopo da vida inteira do contêiner e são identificadas dessa forma.
+
+A imagem de teste fixa a base por digest e o INLA R/motor em 25.12.16, build
+oficial disponível no repositório testing. Isso identifica um ambiente de teste,
+não uma recomendação de versão para produção. Os builds ARM 26.08.07/26.08.22
+encontrados apresentaram incompatibilidade de biblioteca/instrução na máquina
+local. O instalador do build anterior requer carregar INLA; o launcher ARM
+precisa de um alias do nome `inla.mkl` para o executável oficial `inla`.
+Nenhum cálculo do motor é modificado. O build testa um ajuste real antes de aceitar a imagem.
+
+Os defaults continuam 1/1. Uma medição sintética e uma imagem de teste não
+substituem dimensionamento com a carga operacional e revisão científica.

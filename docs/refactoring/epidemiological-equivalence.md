@@ -1,5 +1,10 @@
 # Comparação epidemiológica controlada
 
+O relatório original abaixo usa o modo `none`. A validação real bayesiana
+acrescentada após o review de 29/10/2026 está descrita em `concurrency.md` e usa
+o runner `tools/run-inla-integration.R`. Seus resultados e ambientes devem ser
+avaliados separadamente; o relatório original não é reclassificado como bayesiano.
+
 ## Referências e método
 
 A revisão `27a03f26a9bf366597ef135e7da8d2f620ea9a8e` do consumidor ainda fixa
