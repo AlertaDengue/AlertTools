@@ -79,3 +79,19 @@ test_that("INLA fitting and posterior sampling respect explicit thread budgets",
   expect_identical(sample_args$num.threads, "1:1")
   expect_false(sample_args$parallel.configs)
 })
+
+test_that("INLA fitting failures preserve the operational diagnosis", {
+  skip_if_not_installed("INLA")
+  local_mocked_bindings(inla = function(...) stop("engine unavailable"), .package = "INLA")
+  expect_error(AlertTools:::nowcast.INLA(data.frame(Casos = 1), Casos ~ 1),
+               "INLA fitting failed: engine unavailable")
+})
+
+test_that("parallel workers propagate failures instead of returning partial output", {
+  skip_on_os("windows")
+  expect_error(AlertTools:::.map_workers(1:2, function(i) {
+    if (i == 2L) stop("municipality fit failed")
+    42
+  }, workers = 2L), "Parallel worker 2 failed: municipality fit failed")
+  expect_identical(AlertTools:::.map_workers(integer(), identity, workers = 2L), list())
+})

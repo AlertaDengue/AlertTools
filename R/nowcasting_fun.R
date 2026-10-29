@@ -88,12 +88,7 @@ nowcast.INLA <- function(dados.ag, model.day, workers = 1L, verbose = FALSE, ...
                  #   )
   )},
   error=function(cond) {
-    if (isTRUE(verbose)) message("nowcast failed: ", conditionMessage(cond))
-    NULL
-  },
-  warning=function(cond) {
-    if (isTRUE(verbose)) message("nowcast warning: ", conditionMessage(cond))
-    NULL
+    stop("INLA fitting failed: ", conditionMessage(cond), call. = FALSE)
   })
 
   output

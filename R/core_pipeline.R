@@ -39,8 +39,22 @@
 
 .map_workers <- function(x, fun, workers = 1L) {
   workers <- .validate_workers(workers)
+  if (!length(x)) return(list())
   if (workers == 1L || .Platform$OS.type == "windows") return(lapply(x, fun))
-  parallel::mclapply(x, fun, mc.cores = min(workers, length(x)), mc.preschedule = TRUE)
+  result <- parallel::mclapply(x, function(item) {
+    tryCatch(list(value = fun(item)),
+               error = function(condition) list(error = conditionMessage(condition)))
+  }, mc.cores = min(workers, length(x)), mc.preschedule = TRUE)
+  for (i in seq_along(result)) {
+    if (is.null(result[[i]])) {
+      stop("Parallel worker ", i, " did not return a result; no partial output is returned.",
+           call. = FALSE)
+    }
+    if (!is.null(result[[i]]$error)) {
+      stop("Parallel worker ", i, " failed: ", result[[i]]$error, call. = FALSE)
+    }
+  }
+  lapply(result, `[[`, "value")
 }
 
 .validate_columns <- function(data, required, name, allow_empty = FALSE) {
