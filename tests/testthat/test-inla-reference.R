@@ -15,4 +15,3 @@ test_that("real INLA agrees with pinned calculations at the historical fitting b
               file.path(directory, "reference-comparison.rds"))
   }
 })
-

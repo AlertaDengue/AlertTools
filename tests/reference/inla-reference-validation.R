@@ -39,4 +39,3 @@ inla_reference_sections <- function(root, fixture, version_date = as.Date("2026-
     dplyr::bind_rows(lapply(output, `[[`, section))
   }), c("data", "alerts", "history"))
 }
-
