@@ -467,8 +467,16 @@ classify_alerts <- function(data, rules, missing = FALSE, minimum_history = 8) {
 
 # Legacy wrappers ------------------------------------------------------------
 
+.alerttools_version <- function() utils::packageVersion("AlertTools")
+
 .deprecate_api <- function(old, replacement) {
-  lifecycle::deprecate_warn("1.1.0", old, replacement, user_env = parent.frame(2L))
+  warning_start <- package_version("1.3.0")
+  current_version <- .alerttools_version()
+  if (current_version >= warning_start) {
+    lifecycle::deprecate_warn("1.3.0", old, replacement,
+                              user_env = parent.frame(2L))
+  }
+  invisible(NULL)
 }
 
 #' Legacy Rt estimator

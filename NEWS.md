@@ -36,8 +36,9 @@
 - Added focused readers and computational names including `fetch_cases()`,
   `fetch_case_records()`, `fetch_climate()`, `estimate_rt()`,
   `nowcast_cases()`, `define_alert_rules()`, and `classify_alerts()`.
-- Legacy counterparts remain available as thin wrappers and emit staged
-  deprecation warnings through `lifecycle`.
+- Legacy counterparts remain available as thin wrappers. Per the approved
+  transition policy, `lifecycle` deprecation warnings begin in version 1.3.0;
+  version 1.2.0 does not warn ahead of that transition.
 - Added `upsert_alert_parameters()` for transactional parameter batches and a
   migration table documenting functions, arguments, schemas, and intentional
   differences.
