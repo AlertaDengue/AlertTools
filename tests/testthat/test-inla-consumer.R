@@ -44,4 +44,3 @@ test_that("real Bayesian consumer fallback isolates failures and preserves artif
   evidence <- Sys.getenv("ALERTTOOLS_INLA_EVIDENCE")
   if (nzchar(evidence)) file.copy(list.files(directory, full.names = TRUE), evidence, overwrite = TRUE)
 })
-
