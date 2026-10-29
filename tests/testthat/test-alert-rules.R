@@ -15,6 +15,17 @@ test_that("setCriteria validates inputs and returns the legacy structure", {
   expect_equal(lengths(criteria), c(crity = 3L, crito = 3L, critr = 3L))
 })
 
+test_that("setCriteria keeps its legacy delay-list default", {
+  expected_delays <- list(
+    delayy = c(0, 0),
+    delayo = c(0, 0),
+    delayr = c(0, 0)
+  )
+
+  expect_identical(eval(formals(setCriteria)$delays), expected_delays)
+  expect_identical(formals(define_alert_rules)$delays, 3)
+})
+
 test_that("alert rules preserve output structure and delayed levels", {
   withr::local_options(list(lifecycle_verbosity = "quiet"))
   cases <- read_fixture("cases.csv")

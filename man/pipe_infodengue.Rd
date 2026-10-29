@@ -13,7 +13,7 @@ pipe_infodengue(
   nowcasting = "none",
   narule = NULL,
   writedb = FALSE,
-  datasource,
+  datasource = con,
   completetail = NA,
   dataini = "notific",
   workers = 1L,
@@ -43,7 +43,7 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 
 \item{writedb}{TRUE if it should write into the database, default is FALSE.}
 
-\item{datasource}{posgreSQL connection to project's database}
+\item{datasource}{Database connection; defaults to the legacy global `con`.}
 
 \item{completetail}{if sinan data is older than final_day, fill in the tail with NA (default) or 0.}
 
@@ -61,8 +61,8 @@ with zeros, "linear" for linear interpolation, "arima" for inter and extrapolati
 Defaults to 2018-01-01; supply an earlier date for historical backfills.}
 }
 \value{
-data.frame with the week condition and the number of weeks within the
-last lag weeks with conditions = TRUE.
+A named list of municipal `alerta` objects, preserving the legacy
+  result structure.
 }
 \description{
 wrap of functions used by Infodengue.

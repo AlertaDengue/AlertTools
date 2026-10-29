@@ -194,7 +194,7 @@ test_that("SQL file export quotes literals instead of interpolating user values"
   expect_match(sql, "INSERT INTO \"Municipio\".\"Historico_alerta\"", fixed = TRUE)
 })
 
-test_that("database functions never fall back to a global con object", {
+test_that("database functions require an explicit connection", {
   withr::local_options(list(lifecycle_verbosity = "quiet"))
   connection <- sqlite_fixture_connection(environment())
   assign("con", connection, envir = .GlobalEnv)
@@ -203,7 +203,7 @@ test_that("database functions never fall back to a global con object", {
   database_functions <- list(getCases, getCaseslist, getClima, getWU, getTweet,
                              getCidades, getRegionais, read.parameters,
                              write_parameters, getWUstation, setWUstation,
-                             read.cases, getdelaydata, pipe_infodengue,
+                             read.cases, getdelaydata,
                              write_alerta, applyGenTimeDist)
   expect_true(all(vapply(database_functions, function(fun) {
     identical(formals(fun)$datasource, quote(expr = ))
