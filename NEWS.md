@@ -2,6 +2,17 @@
 
 ## Review follow-up
 
+- Sort each municipality-disease series chronologically before nowcasting, Rt
+  and alert calculation, and identify missing/excess parameter pairs in errors.
+  Reject mixed-disease results at the legacy conversion boundary.
+
+- Test deprecation on both sides of the 1.3.0 boundary and align the migration
+  guide with the approved support policy.
+
+- Add mandatory real-INLA integration, controlled host/container benchmarking,
+  and explicit propagation of fit failures and terminated municipal workers.
+  Interrupted parallel work cannot be returned as a complete pipeline result.
+
 - Exercise the pinned consumer's state/municipality recovery and RData/SQL
   publication against disposable databases. Retain parameter metadata through
   municipal concatenation and preserve numeric precision in SQL exports.
@@ -29,8 +40,8 @@
 - Began package metadata, dependency, documentation, and CI cleanup.
 - Isolated all SQL behind an internal DBI repository with centralized physical
   table mappings, bound values, quoted identifiers, and stable domain schemas.
-- Removed fallback to a global `con`; database-backed public functions now
-  require an explicit `datasource` connection.
+- Require explicit connections in the modern database API; preserve the legacy
+  pipeline's `datasource = con` default during the approved transition.
 - Replaced row-at-a-time writes with transactional staging-table operations and
   explicit `error`, `update`, and `ignore` conflict policies.
 - Added integration coverage for cases, individual records, climate,
