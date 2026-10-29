@@ -58,3 +58,15 @@ O ganho nesse recorte veio com maior RSS observado. O tamanho e a duração são
 insuficientes para definir limites operacionais. Os defaults permanecem 1/1.
 O CSV registra o SHA-256 dos fontes R usados; a carga sintética e o supervisor
 estão versionados com esta entrega.
+
+## Validação real do motor
+
+O runner `Rscript tools/run-inla-integration.R /tmp/inla-evidence` exige dois
+cenários: equivalência serial/paralela e repetição com INLA real, além da
+rejeição de saída parcial quando um worker é encerrado. Nenhum pode ser ignorado.
+O benchmark `tools/benchmark-inla.py` mede processos externos, municipais e
+threads com orçamento explícito e preserva as diferenças entre orçamentos.
+A imagem `tools/inla-validation.Dockerfile` fixa a base e o runtime oficial
+INLA 25.12.16 para Linux ARM, incluindo a dependência de amostragem `sn`.
+Comparação com a referência histórica e recuperação integrada do consumidor
+são acrescentadas nas etapas seguintes da cadeia. Os defaults continuam 1/1.
