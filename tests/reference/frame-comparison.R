@@ -37,4 +37,3 @@ compare_epidemiological_frames <- function(reference, candidate, tolerance = 1e-
                status = if (all(equal)) "match" else "mismatch")
   }))
 }
-

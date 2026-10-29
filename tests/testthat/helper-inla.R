@@ -7,4 +7,3 @@ inla_test_protocol <- function() {
   if (!requireNamespace("INLA", quietly = TRUE)) stop("INLA is mandatory in this suite")
   source(file.path(.inla_root, "tests/reference/inla-validation.R"), local = parent.frame())
 }
-
