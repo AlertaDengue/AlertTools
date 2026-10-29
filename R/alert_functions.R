@@ -365,11 +365,31 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
                   n = 4L
             )
             class(alert) <- "alerta"
+            attr(alert, "parameters") <- parameters
             alert
       })
       names(legacy) <- names(groups)
       attr(legacy, "parameters") <- result$parameters
       legacy
+}
+
+
+.legacy_alert_parameters <- function(obj) {
+      parameters <- attr(obj, "parameters")
+      if (is.null(parameters)) {
+            if (!is.list(obj) || !length(obj) || inherits(obj, "alerta")) return(NULL)
+            parts <- lapply(obj, function(alert) attr(alert, "parameters"))
+            if (any(vapply(parts, is.null, logical(1)))) return(NULL)
+            parameters <- unique(dplyr::bind_rows(parts))
+      }
+      if (!is.data.frame(parameters) || !"municipio_geocodigo" %in% names(parameters)) {
+            stop("tabela_historico: invalid parameter schema", call. = FALSE)
+      }
+      keys <- intersect(c("municipio_geocodigo", "cid10"), names(parameters))
+      if (anyNA(parameters[keys]) || anyDuplicated(parameters[keys])) {
+            stop("tabela_historico: parameter keys must be unique and complete", call. = FALSE)
+      }
+      parameters
 }
 
 
@@ -457,7 +477,7 @@ calc.alerta <- function(x, pars, level = "municipio",...){  #x = cities[i]
 #'tail(restab)
 
 .as_alert_history_impl <- function(obj, iniSE, lastSE, type = "all", versao,
-                             parameters = if (inherits(obj, "alerttools_result")) obj$parameters else attr(obj, "parameters")){
+                             parameters = if (inherits(obj, "alerttools_result")) obj$parameters else .legacy_alert_parameters(obj)){
 
       if (missing(versao)) stop("tabela_historico requires an explicit `versao` date.", call. = FALSE)
 

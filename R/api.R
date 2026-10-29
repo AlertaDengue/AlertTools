@@ -517,7 +517,7 @@ fouralert <- function(obj, crit, miss = "last", dy = 4) {
 #' @param obj,iniSE,lastSE,type,versao,parameters Legacy arguments.
 #' @export
 tabela_historico <- function(obj, iniSE, lastSE, type = "all", versao = Sys.Date(),
-                             parameters = if (inherits(obj, "alerttools_result")) obj$parameters else attr(obj, "parameters")) {
+                             parameters = if (inherits(obj, "alerttools_result")) obj$parameters else .legacy_alert_parameters(obj)) {
   .deprecate_api("tabela_historico()", "as_alert_history()")
   if (missing(versao)) versao <- Sys.Date()
   args <- list(obj = obj, type = type, parameters = parameters)
