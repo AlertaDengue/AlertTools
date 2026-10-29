@@ -11,7 +11,10 @@ de migração e emite avisos `lifecycle` com a substituição indicada.
 
 Consumidores confirmados, ordem de transição, evidências e rollback são
 mantidos em `consumer-migration.md` e `consumer-registry.csv`. A política de
-suporte ainda está proposta; nenhuma data de remoção foi aprovada.
+suporte está aprovada em `transition-policy.dcf`: avisos a partir de 1.3.0,
+transição durante 1.4.x e remoção não anterior a 2.0.0, respeitando ao menos
+seis meses e duas versões menores de suporte. A data efetiva de remoção ainda
+depende da validação e migração dos consumidores críticos.
 
 ## Fluxo mínimo
 
