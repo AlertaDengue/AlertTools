@@ -8,4 +8,3 @@ review_result <- function(city = 3304557, threshold = 10) {
   parameters$limiar_preseason <- threshold
   alerttools_pipeline(cases, climate, parameters, report_week = 202106)
 }
-

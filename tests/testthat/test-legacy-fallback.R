@@ -24,4 +24,3 @@ test_that("municipal fallback preserves distinct parameters without database rea
   attr(conflict[[2]], "parameters") <- conflicting
   expect_error(tabela_historico(conflict, versao = date), "keys must be unique")
 })
-
