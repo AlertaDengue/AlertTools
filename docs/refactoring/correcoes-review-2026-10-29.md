@@ -41,6 +41,8 @@ O check construiu as vignettes, usou `--no-manual`, desativou a exigência de
 todos os Suggests e a verificação do relógio. A nota de `con` corresponde ao
 default legado preservado por solicitação de compatibilidade; não foi ocultada.
 Os testes bayesianos obrigatórios foram executados separadamente, sem skips.
+A normalização final de linhas vazias em dez arquivos de validação foi conferida
+por AST: nenhuma expressão R mudou; as diferenças estão registradas nas evidências.
 Mensagens nativas de NUMA/`mbind` do contêiner permanecem nos logs; nenhuma
 permissão privilegiada foi acrescentada para suprimi-las.
 
