@@ -1,6 +1,7 @@
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 1L) stop("Usage: Rscript tools/compare-epidemiology.R output-directory")
 devtools::load_all(quiet = TRUE)
+source("tests/reference/frame-comparison.R")
 source("tests/reference/comparison.R")
 output <- args[[1]]
 dir.create(output, recursive = TRUE, showWarnings = FALSE)

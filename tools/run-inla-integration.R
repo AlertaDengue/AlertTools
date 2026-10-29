@@ -16,8 +16,8 @@ results <- devtools::test(filter = "inla-(integration|reference|consumer)", stop
 summary <- as.data.frame(results)
 utils::write.csv(summary[vapply(summary, is.atomic, logical(1))],
                    file.path(output, "test-results.csv"), row.names = FALSE)
-if (nrow(summary) != 2L || any(summary$skipped) ||
+if (nrow(summary) != 3L || any(summary$skipped) ||
     any(summary$failed > 0 | summary$error | summary$warning > 0)) {
-  stop("Real INLA integration did not pass both required core scenarios; inspect the evidence")
+  stop("Real INLA integration did not pass all three required scenarios; inspect the evidence")
 }
 cat("Real INLA integration passed: all required scenarios executed.\n")

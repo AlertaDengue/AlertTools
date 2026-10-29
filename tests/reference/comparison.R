@@ -80,33 +80,6 @@ epidemiological_snapshots <- function(root, scenario, version_date = as.Date("20
   )
 }
 
-compare_epidemiological_frames <- function(reference, candidate, tolerance = 1e-7) {
-  if (nrow(reference) != nrow(candidate) ||
-      !setequal(names(reference), names(candidate))) {
-    stop("Epidemiological output schema/cardinality mismatch.")
-  }
-  do.call(rbind, lapply(names(reference), function(column) {
-    old <- reference[[column]]
-    new <- candidate[[column]]
-    both_na <- is.na(old) & is.na(new)
-    numeric <- is.numeric(old) && is.numeric(new)
-    if (numeric) {
-      finite <- is.finite(old) & is.finite(new)
-      equal <- both_na | (finite & abs(old - new) <= tolerance) |
-        (is.infinite(old) & is.infinite(new) & sign(old) == sign(new))
-      maximum <- if (any(finite)) max(abs(old[finite] - new[finite])) else 0
-    } else {
-      equal <- both_na | (!is.na(old) & !is.na(new) & as.character(old) == as.character(new))
-      maximum <- NA_real_
-    }
-    equal[is.na(equal)] <- FALSE
-    data.frame(metric = column, rows = length(old),
-               differences = sum(!equal), max_abs_difference = maximum,
-               tolerance = if (numeric) tolerance else 0,
-               status = if (all(equal)) "match" else "mismatch")
-  }))
-}
-
 compare_epidemiological_fixture <- function(root, scenario) {
   snapshots <- epidemiological_snapshots(root, scenario)
   report <- lapply(names(snapshots$reference), function(section) {
