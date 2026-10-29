@@ -349,6 +349,14 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
 
 .as_legacy_alert_objects <- function(result) {
       data <- result$data
+      diseases <- unique(c(as.character(data$CID10),
+                           as.character(result$parameters$cid10)))
+      if (!"CID10" %in% names(data) ||
+          !"cid10" %in% names(result$parameters) ||
+          length(diseases) != 1L || anyNA(diseases) || any(!nzchar(diseases))) {
+            stop("The legacy adapter requires exactly one disease in data and parameters.",
+                 call. = FALSE)
+      }
       groups <- split(seq_len(nrow(data)), factor(data$cidade,
                                                    levels = unique(data$cidade)))
       legacy <- lapply(names(groups), function(city) {
