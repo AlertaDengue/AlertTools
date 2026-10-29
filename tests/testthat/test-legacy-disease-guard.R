@@ -8,4 +8,3 @@ test_that("legacy adapter rejects mixed or inconsistent disease results", {
   expect_error(AlertTools:::.as_legacy_alert_objects(inconsistent), "exactly one disease")
   expect_s3_class(AlertTools:::.as_legacy_alert_objects(result)[[1]], "alerta")
 })
-
