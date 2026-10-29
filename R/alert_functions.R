@@ -254,6 +254,8 @@
 #'@param dataini "notif" (default) or "sinpri"
 #'@param writedb TRUE if it should write into the database, default is FALSE.
 #'@param datasource Database connection; defaults to the legacy global `con`.
+#' Zika retains the legacy dengue-parameter fallback with a warning. Use
+#' `fetch_alert_parameters()` for strict disease-specific parameter lookup.
 #'@param workers Positive number of workers. Defaults to portable serial execution.
 #'@param seed Optional seed for stochastic nowcasting.
 #'@param verbose Whether to emit progress messages.
@@ -297,8 +299,9 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
 
       # If cities is a vector of geocodes, the pipeline reads the parameters from the dataframe
       if (class(cities) %in% c("integer","numeric")) {
-            pars_table <- fetch_alert_parameters(conn = datasource, geocodes = cities,
-                                                  disease = cid10)
+            pars_table <- .fetch_alert_parameters_impl(
+                  cities = cities, cid10 = .normalize_disease(cid10), datasource = datasource
+            )
             if (isTRUE(verbose)) message("reading parameters from database")
       } else { # if city contains data already
             if(all(c("municipio_geocodigo","limiar_preseason",
@@ -312,6 +315,9 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
                       call. = FALSE)
       }
 
+      # Parameter provenance may be dengue, but cases and results keep the
+      # requested disease identity at the legacy compatibility boundary.
+      pars_table$cid10 <- .normalize_disease(cid10)
       cidades <- pars_table$municipio_geocodigo
       if (isTRUE(verbose)) message("running analysis for ", length(cidades), " municipalities")
 

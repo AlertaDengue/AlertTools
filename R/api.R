@@ -280,13 +280,30 @@ fetch_alert_parameters <- function(conn, geocodes, disease = "dengue") {
   geocodes <- .validate_geocodes(geocodes)
   cid10 <- .normalize_disease(disease)
   result <- .repo_parameters(conn, geocodes, cid10)
-  if (!nrow(result) || !all(geocodes %in% result$municipio_geocodigo)) {
-    stop("Alert parameters were not found for every requested geocode and disease.",
-         call. = FALSE)
+  missing_codes <- setdiff(geocodes, result$municipio_geocodigo)
+  if (length(missing_codes)) {
+    stop("Alert parameters were not found for disease ", cid10,
+         "; missing municipio_geocodigo: ", paste(missing_codes, collapse = ", "),
+         ".", call. = FALSE)
   }
+  .validate_unique_keys(result, c("municipio_geocodigo", "cid10"), "parameters")
   result <- result[order(match(result$municipio_geocodigo, geocodes)), , drop = FALSE]
   rownames(result) <- NULL
   result
+}
+
+.alert_parameter_coverage <- function(conn, geocodes) {
+  geocodes <- .validate_geocodes(geocodes)
+  rows <- .repo_parameters(conn, geocodes)
+  count <- function(disease) vapply(geocodes, function(code) {
+    sum(rows$municipio_geocodigo == code & rows$cid10 == disease)
+  }, integer(1))
+  zika <- count("A92.8")
+  dengue <- count("A90")
+  data.frame(municipio_geocodigo = geocodes, zika_parameters = zika,
+             dengue_parameters = dengue,
+             status = ifelse(zika == 1L, "specific", ifelse(zika > 1L, "duplicate",
+                              ifelse(dengue == 1L, "legacy_only", "missing"))))
 }
 
 #' Run the alert pipeline
