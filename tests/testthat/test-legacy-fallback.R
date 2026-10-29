@@ -1,4 +1,5 @@
 test_that("municipal fallback preserves distinct parameters without database reads", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   results <- list(review_result(), review_result(3303302, 100))
   parts <- lapply(results, AlertTools:::.as_legacy_alert_objects)
   combined <- do.call(c, parts)
