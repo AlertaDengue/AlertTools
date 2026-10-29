@@ -285,12 +285,19 @@ alerttools_pipeline <- function(cases, climate, parameters, case_records = NULL,
     cid10 = parameters$cid10, stringsAsFactors = FALSE
   )
   group_key <- function(x) paste(x$municipio_geocodigo, x$cid10, sep = "\r")
-  if (!all(group_key(groups) %in% group_key(parameter_groups))) {
-    stop("Parameters are missing for one or more municipality-disease combinations.",
+  missing_groups <- groups[!group_key(groups) %in% group_key(parameter_groups), , drop = FALSE]
+  extra_groups <- parameter_groups[!group_key(parameter_groups) %in% group_key(groups), , drop = FALSE]
+  describe_groups <- function(x) {
+    paste(paste(x$municipio_geocodigo, x$cid10, sep = "/"), collapse = ", ")
+  }
+  if (nrow(missing_groups)) {
+    stop("Parameters are missing for one or more municipality-disease combinations: ",
+         describe_groups(missing_groups), ".",
          call. = FALSE)
   }
-  if (!all(group_key(parameter_groups) %in% group_key(groups))) {
-    stop("Parameters contain municipality-disease combinations absent from `cases`.",
+  if (nrow(extra_groups)) {
+    stop("Parameters contain municipality-disease combinations absent from `cases`: ",
+         describe_groups(extra_groups), ".",
          call. = FALSE)
   }
   groups <- groups[order(groups$municipio_geocodigo, groups$cid10), , drop = FALSE]
@@ -311,6 +318,8 @@ alerttools_pipeline <- function(cases, climate, parameters, case_records = NULL,
     disease <- group$cid10[[1L]]
     city_data <- input[input$cidade == city & input$CID10 == disease &
                          input$SE <= report_week, , drop = FALSE]
+    city_data <- city_data[order(city_data$SE), , drop = FALSE]
+    rownames(city_data) <- NULL
     city_parameters <- parameters[
       parameters$municipio_geocodigo == city & parameters$cid10 == disease,
       , drop = FALSE
