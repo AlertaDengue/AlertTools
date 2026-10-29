@@ -1,0 +1,24 @@
+R version 4.4.3 (2025-02-28)
+Platform: aarch64-apple-darwin20
+Running under: macOS 26.6.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+
+locale:
+[1] C.UTF-8/C.UTF-8/C.UTF-8/C/C.UTF-8/C.UTF-8
+
+time zone: America/Maceio
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base
+
+loaded via a namespace (and not attached):
+ [1] fmesher_0.7.0      Matrix_1.7-5       lattice_0.22-9     magrittr_2.0.4
+ [5] e1071_1.7-17       INLA_24.12.11      splines_4.4.3      KernSmooth_2.23-26
+ [9] lifecycle_1.0.5    classInt_0.4-11    sf_1.1-0           cli_3.6.5
+[13] grid_4.4.3         DBI_1.3.0          withr_3.0.2        proxy_0.4-29
+[17] class_7.3-23       compiler_4.4.3     tools_4.4.3        Rcpp_1.1.1
+[21] otel_0.2.0         rlang_1.1.7        units_1.0-1

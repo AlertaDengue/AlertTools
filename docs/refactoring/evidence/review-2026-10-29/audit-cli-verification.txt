@@ -1,0 +1,1 @@
+Audit command validated only against disposable PostgreSQL 16 alerttools_test. Read-only report, input provenance, output overwrite guard and duplicate-input guard passed. No operational or staging database was audited.

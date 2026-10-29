@@ -1,0 +1,13 @@
+{
+  "master": "e460b3b8c15ab28e8755f482d576cf7280803b34",
+  "codex/alerttools-1.2.0-rc1": "57428ed998032a5d958afeb55a372145cd0b8601",
+  "codex/pr2-legacy-compat": "7213aa10fc9d8c2c2830406b183f4e4c99c55d10",
+  "codex/pr4-deprecation-policy": "0fd9c0da8f3d830d115f7034102f74038f63aefb",
+  "codex/pr5-canonical-inputs": "c6fe5ccd7b7cb87aa8c114e97e57984655eb9bff",
+  "codex/pr6-municipality-disease": "3d62c689633af001ddb97884213b081f862a4768",
+  "codex/pr7-zika-transition": "88efaf004725d1bd031117f59edb5595f629d6a5",
+  "codex/pr8-concurrency-controls": "e7de3e71b7e95e2c79cf6391565a4b760536ea63",
+  "codex/pr9-minimum-history-contract": "2f5ad3e327d36aaea357318875051e2449a469c1",
+  "codex/pr10-epidemiological-equivalence": "1534d94ee7ff0d80fb8562eb46b6b1754f927f22",
+  "codex/pr11-consumer-integration": "15e091501e2ebbf7ea463c51c44a87964b2de724"
+}
