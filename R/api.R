@@ -79,16 +79,17 @@
     stop("`population` must contain a geocode and population column.", call. = FALSE)
   }
   normalized <- data.frame(
-    cidade = as.numeric(population[[code[[1]]]]),
+    municipio_geocodigo = as.numeric(population[[code[[1]]]]),
     pop = as.numeric(population[[value[[1]]]])
   )
   if ("year" %in% names(population)) {
     normalized$year <- as.integer(population$year)
-    normalized <- normalized[order(normalized$cidade, normalized$year), , drop = FALSE]
-    normalized <- normalized[!duplicated(normalized$cidade, fromLast = TRUE), , drop = FALSE]
+    normalized <- normalized[order(normalized$municipio_geocodigo, normalized$year), , drop = FALSE]
+    normalized <- normalized[!duplicated(normalized$municipio_geocodigo, fromLast = TRUE), , drop = FALSE]
     normalized$year <- NULL
   }
-  if (anyNA(normalized) || any(normalized$pop <= 0) || anyDuplicated(normalized$cidade)) {
+  if (anyNA(normalized) || any(normalized$pop <= 0) ||
+      anyDuplicated(normalized$municipio_geocodigo)) {
     stop("`population` must have one positive value per geocode.", call. = FALSE)
   }
   normalized
@@ -97,10 +98,13 @@
 #' Construct validated inputs for the alert pipeline
 #'
 #' `cases` has one row per municipality, disease, and epidemiological week and
-#' must contain `SE`, `cidade`, `CID10`, `casos`, `cas_prov`, `cas_lab`,
+#' must contain `SE`, `municipio_geocodigo`, `CID10`, `casos`, `cas_prov`, `cas_lab`,
 #' `localidade`, and `nome`. It must also contain `pop`, unless `population` is
 #' supplied. `climate` has one row per municipality and week, keyed by
-#' `geocodigo` and `SE`. Rows are ordered by municipality and week.
+#' `municipio_geocodigo` and `SE`. The legacy input aliases `cidade` and
+#' `geocodigo` are accepted and normalized to `municipio_geocodigo`. Duplicate
+#' case and climate keys are rejected before computation. Rows are ordered by
+#' municipality, disease, and week.
 #'
 #' @param cases Weekly case data frame.
 #' @param climate Weekly climate data frame.
@@ -116,18 +120,16 @@
 #' @export
 new_alert_inputs <- function(cases, climate, population = NULL,
                              case_records = NULL, metadata = list()) {
+  canonical <- .canonicalize_pipeline_geocodes(cases, climate)
+  cases <- canonical$cases
+  climate <- canonical$climate
   .validate_columns(
     cases,
-    c("SE", "cidade", "CID10", "casos", "cas_prov", "cas_lab", "localidade", "nome"),
+    c("SE", "municipio_geocodigo", "CID10", "casos", "cas_prov", "cas_lab",
+      "localidade", "nome"),
     "cases"
   )
-  .validate_columns(climate, c("SE", "geocodigo"), "climate")
-  if (!is.numeric(cases$SE) || !is.numeric(cases$cidade) ||
-      !is.numeric(climate$SE) || !is.numeric(climate$geocodigo) ||
-      !all(vapply(cases[c("casos", "cas_prov", "cas_lab")], is.numeric, logical(1)))) {
-    stop("Case and climate keys and counts must be numeric.", call. = FALSE)
-  }
-  .validate_epiweek(c(cases$SE, climate$SE))
+  .validate_pipeline_inputs(cases, climate, require_population = FALSE)
   if (!is.null(case_records) && !is.data.frame(case_records)) {
     stop("`case_records` must be NULL or a data frame.", call. = FALSE)
   }
@@ -138,21 +140,13 @@ new_alert_inputs <- function(cases, climate, population = NULL,
   population <- .normalize_population(population)
   if (!"pop" %in% names(cases)) cases$pop <- NA_real_
   if (!is.null(population)) {
-    matched <- match(cases$cidade, population$cidade)
+    matched <- match(cases$municipio_geocodigo, population$municipio_geocodigo)
     replace <- is.na(cases$pop)
     cases$pop[replace] <- population$pop[matched[replace]]
   }
-  if (anyNA(cases$pop) || any(cases$pop <= 0)) {
-    stop("Every case row must have a positive population.", call. = FALSE)
-  }
-  if (anyDuplicated(cases[c("cidade", "CID10", "SE")])) {
-    stop("`cases` keys (`cidade`, `CID10`, `SE`) must be unique.", call. = FALSE)
-  }
-  if (anyDuplicated(climate[c("geocodigo", "SE")])) {
-    stop("`climate` keys (`geocodigo`, `SE`) must be unique.", call. = FALSE)
-  }
-  cases <- cases[order(cases$cidade, cases$CID10, cases$SE), , drop = FALSE]
-  climate <- climate[order(climate$geocodigo, climate$SE), , drop = FALSE]
+  .validate_pipeline_inputs(cases, climate)
+  cases <- cases[order(cases$municipio_geocodigo, cases$CID10, cases$SE), , drop = FALSE]
+  climate <- climate[order(climate$municipio_geocodigo, climate$SE), , drop = FALSE]
   rownames(cases) <- NULL
   rownames(climate) <- NULL
 
@@ -168,7 +162,7 @@ print.alerttools_inputs <- function(x, ...) {
   cat("<alerttools_inputs>\n")
   cat("  case rows:", nrow(x$cases), "\n")
   cat("  climate rows:", nrow(x$climate), "\n")
-  cat("  municipalities:", length(unique(x$cases$cidade)), "\n")
+  cat("  municipalities:", length(unique(x$cases$municipio_geocodigo)), "\n")
   invisible(x)
 }
 
@@ -334,7 +328,8 @@ run_alert_pipeline <- function(inputs, parameters, report_week = NULL,
 #' @param result An `alerttools_result` object.
 #' @param version_date Explicit model-version date.
 #' @param start_week,end_week Optional inclusive week filter.
-#' @return A data frame keyed by `SE`, `municipio_geocodigo`, and `Localidade_id`.
+#' @return A data frame keyed by `SE`, `municipio_geocodigo`, `CID10`, and
+#'   `Localidade_id`.
 #' @export
 as_alert_history <- function(result, version_date, start_week = NULL, end_week = NULL) {
   if (!inherits(result, "alerttools_result")) {
@@ -349,7 +344,8 @@ as_alert_history <- function(result, version_date, start_week = NULL, end_week =
 #' Write alert results explicitly
 #'
 #' @param conn A valid DBI connection.
-#' @param result An `alerttools_result` object or an alert-history data frame.
+#' @param result An `alerttools_result` object or an alert-history data frame
+#'   containing results for one disease.
 #' @param version_date Explicit model-version date, required when `result` is an
 #'   `alerttools_result`.
 #' @param conflict Conflict policy: `"update"`, `"error"`, or `"ignore"`.
@@ -371,6 +367,10 @@ write_alert_results <- function(conn, result, version_date = NULL,
   } else {
     if (!is.data.frame(result)) stop("`result` must be an alerttools_result or data frame.", call. = FALSE)
     result
+  }
+  if ("CID10" %in% names(history) && length(unique(history$CID10)) > 1L) {
+    stop("`write_alert_results()` persists one disease per call; subset the result by `CID10`.",
+         call. = FALSE)
   }
   .write_alert_results_impl(history, datasource = conn, conflict = conflict,
                             verbose = verbose)

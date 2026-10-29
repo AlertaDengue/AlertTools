@@ -65,12 +65,17 @@ O argumento `disease` aceita nomes de domínio ou os códigos equivalentes:
 
 Campos: `cases`, `climate`, `population`, `case_records` e `metadata`.
 
-- `cases`: chave única `cidade`, `CID10`, `SE`; contagens `casos`, `cas_prov`,
+- `cases`: chave única `municipio_geocodigo`, `CID10`, `SE`; contagens `casos`, `cas_prov`,
   `cas_lab`; população positiva em `pop`; ordenação por cidade, doença e semana;
-- `climate`: chave única `geocodigo`, `SE`; ordenação por município e semana;
-- `population`: opcional, normalizada para `cidade`, `pop`;
+- `climate`: chave única `municipio_geocodigo`, `SE`; ordenação por município e semana;
+- `population`: opcional, normalizada para `municipio_geocodigo`, `pop`;
 - `case_records`: registros individuais opcionais para nowcasting;
 - `metadata`: lista nomeada com proveniência e período.
+
+Os aliases legados `cidade` em casos e `geocodigo` em clima são aceitos apenas na
+fronteira de entrada e normalizados para `municipio_geocodigo`. Os pontos de
+entrada públicos validam tipos, chaves duplicadas e cardinalidade antes dos
+joins.
 
 ### `alerttools_result`
 
@@ -80,9 +85,10 @@ Campos: `data`, `alerts`, `parameters`, `metadata` e `diagnostics`. `data` e
 
 ### Histórico persistível
 
-`as_alert_history()` retorna uma linha por `SE`, `municipio_geocodigo` e
-`Localidade_id`, incluindo contagens, incidência, Rt, nível, indicadores
-climáticos e `versao_modelo`.
+`as_alert_history()` retorna uma linha por `SE`, `municipio_geocodigo`, `CID10`
+e `Localidade_id`, incluindo contagens, incidência, Rt, nível, indicadores
+climáticos e `versao_modelo`. A persistência continua sendo feita uma doença por
+chamada, para direcionar cada histórico à tabela epidemiológica correspondente.
 
 ## Diferenças intencionais
 
