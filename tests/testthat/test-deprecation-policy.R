@@ -11,4 +11,3 @@ test_that("legacy warnings start at 1.3.0 and execute the lifecycle emitter", {
     }
   }
 })
-
