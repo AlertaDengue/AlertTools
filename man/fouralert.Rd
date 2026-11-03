@@ -7,7 +7,10 @@
 fouralert(obj, crit, miss = "last", dy = 4)
 }
 \arguments{
-\item{obj, crit, miss, dy}{Legacy arguments.}
+\item{obj, crit, miss}{Legacy arguments.}
+
+\item{dy}{Reserved legacy argument, currently ignored. Kept for call
+compatibility; no history-based rule is applied.}
 }
 \description{
 Legacy alert classifier

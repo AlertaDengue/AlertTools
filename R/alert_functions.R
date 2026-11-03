@@ -126,8 +126,8 @@
 #'@noRd
 #'@param obj dataset with data to feed the alert, containing the variables specified in crit.
 #'@param crit criteria for the alert colors. See setCriteria()
-#'@param dy if inc > 0, and rt was orange or red at least once in the past
-#'dy weeks -> level yellow. Default: dy=4
+#'@param dy Reserved legacy argument, currently ignored. The historical rule
+#'described in earlier documentation is disabled; no history window is enforced.
 #'@param miss how missing data is treated. "last" if last value is repeated.
 #'It is currently the only option
 #'@return returns an object of class "alerta" containing four elements: the data,
