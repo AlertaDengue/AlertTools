@@ -1,0 +1,5 @@
+"file","context","test","nb","failed","skipped","error","warning","user","system","real","passed"
+"test-inla-consumer.R","inla-consumer","real Bayesian consumer fallback isolates failures and preserves artifacts",7,0,FALSE,FALSE,0,9.201,0.497,25.481,7
+"test-inla-integration.R","inla-integration","real INLA preserves repeated and municipal-parallel results",4,0,FALSE,FALSE,0,26.4,1.829,122.033,4
+"test-inla-integration.R","inla-integration","terminated municipal workers cannot be mistaken for complete output",2,0,FALSE,FALSE,0,0.00500000000000256,0.0169999999999999,0.0240000000000009,2
+"test-inla-reference.R","inla-reference","real INLA agrees with pinned calculations at the historical fitting budget",1,0,FALSE,FALSE,0,8.378,0.52,27.972,1

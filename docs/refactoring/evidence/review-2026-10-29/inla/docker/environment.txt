@@ -1,0 +1,29 @@
+R version 4.6.1 (2026-06-24)
+Platform: aarch64-unknown-linux-gnu
+Running under: Ubuntu 24.04.4 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/aarch64-linux-gnu/blas/libblas.so.3.12.0
+LAPACK: /usr/lib/aarch64-linux-gnu/lapack/liblapack.so.3.12.0  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C
+
+time zone: UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods   base
+
+loaded via a namespace (and not attached):
+ [1] fmesher_0.8.0      Matrix_1.7-6       lattice_0.23-1     e1071_1.7-17
+ [5] INLA_25.12.16      splines_4.6.1      bspm_0.5.8         KernSmooth_2.23-27
+ [9] lifecycle_1.0.5    classInt_0.4-11    sf_1.1-3           cli_3.6.6
+[13] grid_4.6.1         DBI_1.3.0          withr_3.0.3        proxy_0.4-29
+[17] class_7.3-24       compiler_4.6.1     tools_4.6.1        Rcpp_1.1.2
+[21] otel_0.2.0         rlang_1.3.0        units_1.0-1

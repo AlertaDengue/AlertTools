@@ -1,0 +1,22 @@
+"file","context","test","nb","failed","skipped","error","warning","user","system","real","passed"
+"test-api.R","api","new_alert_inputs validates, normalizes, and orders public schemas",14,0,FALSE,FALSE,0,0.055,0.003,0.0589999999999999,14
+"test-api.R","api","run_alert_pipeline is equivalent to the approved pure pipeline",2,0,FALSE,FALSE,0,0.095,0.001,0.097,2
+"test-api.R","api","public computational entry validates canonical keys before joining",4,0,FALSE,FALSE,0,0.012,0.000999999999999994,0.012,4
+"test-api.R","api","database API fetches a complete, explicitly bounded input bundle",9,0,FALSE,FALSE,0,0.125,0.004,0.129,9
+"test-api.R","api","new persistence API writes results and parameters explicitly",5,0,FALSE,FALSE,0,0.116,0.001,0.119,5
+"test-api.R","api","legacy wrappers preserve adapters without warning before 1.3.0",10,0,FALSE,FALSE,0,0.127,0.002,0.13,10
+"test-api.R","api","legacy pipeline and history wrappers preserve their public contracts",8,0,FALSE,FALSE,0,0.058,0.002,0.0599999999999998,8
+"test-api.R","api","snake_case computational aliases preserve baseline results",3,0,FALSE,FALSE,0,0.00800000000000001,0.001,0.0089999999999999,3
+"test-api.R","api","legacy computational wrappers remain equivalent without early warnings",10,0,FALSE,FALSE,0,0.0230000000000001,0.002,0.024,10
+"test-core-pipeline.R","core-pipeline","pure pipeline runs deterministically from in-memory fixtures",10,0,FALSE,FALSE,0,0.0190000000000001,0.002,0.0210000000000001,10
+"test-core-pipeline.R","core-pipeline","pipeline keeps diseases separate within the same municipality",15,0,FALSE,FALSE,0,0.06,0.00299999999999999,0.063,15
+"test-core-pipeline.R","core-pipeline","alerttools_result methods expose a stable result contract",12,0,FALSE,FALSE,0,0.0209999999999999,0.002,0.0229999999999999,12
+"test-core-pipeline.R","core-pipeline","alerttools_result constructor handles empty and invalid inputs",5,0,FALSE,FALSE,0,0.00900000000000012,0.001,0.0089999999999999,5
+"test-core-pipeline.R","core-pipeline","incidence is a pure validated calculation",4,0,FALSE,FALSE,0,0.00599999999999978,0.001,0.006,4
+"test-core-pipeline.R","core-pipeline","pure pipeline validates schemas, workers and nowcasting inputs",4,0,FALSE,FALSE,0,0.00800000000000001,0,0.00800000000000001,4
+"test-core-pipeline.R","core-pipeline","seed scoping does not mutate caller random state",2,0,FALSE,FALSE,0,0.002,0.001,0.002,2
+"test-core-pipeline.R","core-pipeline","portable worker controls are validated",5,0,FALSE,FALSE,0,14.768,0.708,15.509,5
+"test-core-pipeline.R","core-pipeline","computational entry points contain no database or file access",1,0,FALSE,FALSE,0,0.00300000000000011,0,0.00400000000000134,1
+"test-legacy-fallback.R","legacy-fallback","municipal fallback preserves distinct parameters without database reads",6,0,FALSE,FALSE,0,0.0440000000000005,0.003,0.0459999999999994,6
+"test-pipeline-group-keys.R","pipeline-group-keys","municipality-disease mismatches identify the offending pair",2,0,FALSE,FALSE,0,0.00700000000000145,0.001,0.00799999999999912,2
+"test-pipeline-group-order.R","pipeline-group-order","multiple municipality-disease groups equal isolated calculations",2,0,FALSE,FALSE,0,0.0370000000000026,0.001,0.0389999999999979,2
