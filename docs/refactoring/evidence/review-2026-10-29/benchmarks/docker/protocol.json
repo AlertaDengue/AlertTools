@@ -1,0 +1,10 @@
+{
+  "environment": "docker",
+  "source_sha256": "aa37ba34904393205fe2fac4777759b82aceef15a818db65679ad759eb1abd92",
+  "sampling_seconds": 0.1,
+  "memory_limit_mib": 3072.0,
+  "timeout_seconds": 300,
+  "comparison_absolute_tolerance": 1e-07,
+  "comparison_scope": "repetition and municipal/state concurrency at fixed fitting threads",
+  "rss_limitation": "aggregate sampled RSS can double-count shared pages; not a private-memory peak"
+}

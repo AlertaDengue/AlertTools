@@ -12,3 +12,4 @@
 ^tools$
 ^pkgdown-site$
 ^data/(bairro2APS|locs|sinan)\.rda$
+^inla-evidence$

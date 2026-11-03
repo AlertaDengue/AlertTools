@@ -256,7 +256,9 @@
 #'@param datasource Database connection; defaults to the legacy global `con`.
 #' Zika retains the legacy dengue-parameter fallback with a warning. Use
 #' `fetch_alert_parameters()` for strict disease-specific parameter lookup.
-#'@param workers Positive number of workers. Defaults to portable serial execution.
+#'@param workers Compatibility alias for `municipality_workers`.
+#'@param municipality_workers Positive process count, default one.
+#'@param inla_threads Independent INLA fitting thread count, default one.
 #'@param seed Optional seed for stochastic nowcasting.
 #'@param verbose Whether to emit progress messages.
 #'@param version_date Explicit model-version date used when writing results.
@@ -282,7 +284,13 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
                             writedb = FALSE, datasource = con, completetail = NA,
                             dataini = "notific", workers = 1L, seed = NULL,
                             verbose = FALSE, version_date = finalday,
-                            firstday = as.Date("2018-01-01")){
+                            firstday = as.Date("2018-01-01"),
+                            municipality_workers = workers, inla_threads = 1L){
+
+      municipality_workers <- .resolve_concurrency_alias(
+            workers, municipality_workers, "municipality_workers", !missing(workers),
+            !missing(municipality_workers)
+      )
 
       .deprecate_api("pipe_infodengue()", "run_alert_pipeline()")
       .db_validate_connection(datasource)
@@ -343,7 +351,8 @@ pipe_infodengue <- function(cities, cid10="A90", datarelatorio, finalday = NULL,
       )
       res <- run_alert_pipeline(
             inputs = inputs, parameters = pars_table, report_week = datarelatorio,
-            nowcast = nowcasting, workers = workers, seed = seed, verbose = verbose
+            nowcast = nowcasting, municipality_workers = municipality_workers,
+            inla_threads = inla_threads, seed = seed, verbose = verbose
       )
 
       if (writedb == TRUE) {

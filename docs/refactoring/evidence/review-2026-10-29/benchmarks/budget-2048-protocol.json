@@ -1,0 +1,10 @@
+{
+  "environment": "host",
+  "source_sha256": "ed79ecece6180ef83f9273083fb7d056affd5fd574b12fcdbf76a940438d4b55",
+  "sampling_seconds": 0.1,
+  "memory_limit_mib": 2048,
+  "timeout_seconds": 300,
+  "comparison_absolute_tolerance": 1e-07,
+  "comparison_scope": "repetition and municipal/state concurrency at fixed fitting threads",
+  "rss_limitation": "aggregate sampled RSS can double-count shared pages; not a private-memory peak"
+}

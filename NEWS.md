@@ -2,6 +2,10 @@
 
 ## Review follow-up
 
+- Separate municipality process counts from INLA fitting threads, with serial
+  defaults and compatible `workers` aliases. Bound posterior sampling explicitly
+  and forward fixed seeds to INLA without changing global thread options.
+
 - Preserve the legacy dengue-parameter fallback for Zika while retaining A92.8
   in pipeline results. The modern lookup requires disease-specific coverage
   and reports missing municipalities; a read-only operational audit is included.
