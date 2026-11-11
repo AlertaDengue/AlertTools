@@ -1,0 +1,4 @@
+"file","context","test","nb","failed","skipped","error","warning","user","system","real","passed"
+"test-inla-integration.R","inla-integration","real INLA preserves repeated and municipal-parallel results",4,0,FALSE,FALSE,0,30.993,0.31,58.625,4
+"test-inla-integration.R","inla-integration","terminated municipal workers cannot be mistaken for complete output",2,0,FALSE,FALSE,0,0.0110000000000028,0.00800000000000001,0.0210000000000008,2
+"test-inla-reference.R","inla-reference","real INLA agrees with pinned calculations at the historical fitting budget",1,0,FALSE,FALSE,0,10.02,0.136,14.227,1
