@@ -1,0 +1,62 @@
+[
+  {
+    "file": "tests/reference/frame-comparison.R",
+    "before_blob": "a8bdbbb1372b0ad85fc76f988662f9f673b87631",
+    "after_blob": "9f0e19ad1a719c9fd531fea2a336f162f46972fd",
+    "ast_identical": true
+  },
+  {
+    "file": "tests/reference/inla-reference-validation.R",
+    "before_blob": "4c9bd7cebbff8d3ec66ad04e11bcf0a3214188a9",
+    "after_blob": "e6a462ba6dab6aee5ec763641cf880b3145d1201",
+    "ast_identical": true
+  },
+  {
+    "file": "tests/testthat/helper-inla.R",
+    "before_blob": "e27c9b834fdd19a46982f1dbeea6f6c29381ba56",
+    "after_blob": "1638f82f324606a8d4f47033881545e094292383",
+    "ast_identical": true
+  },
+  {
+    "file": "tests/testthat/helper-review.R",
+    "before_blob": "2a688eae350f1fd5cd8ad43558f5386a06460fbb",
+    "after_blob": "d83da45bb0f87f3f0fe2396f6251db4f612f9a50",
+    "ast_identical": true
+  },
+  {
+    "file": "tests/testthat/test-deprecation-policy.R",
+    "before_blob": "f7b77f3574df2b9872439876a106725dc0d43c95",
+    "after_blob": "1a88b6ea509106c49c7fb3402b3ad8829a1fc32c",
+    "ast_identical": true
+  },
+  {
+    "file": "tests/testthat/test-inla-consumer.R",
+    "before_blob": "54a14d557b6779899f209c26993acc6600b81838",
+    "after_blob": "8638d6593191dee597dfd4dbefee2e9efc27c041",
+    "ast_identical": true
+  },
+  {
+    "file": "tests/testthat/test-inla-reference.R",
+    "before_blob": "51c82b665c105cd3971dadc4bf29ab852373c310",
+    "after_blob": "9e020ddbf7e81b39942333e41053a4817ba0b685",
+    "ast_identical": true
+  },
+  {
+    "file": "tests/testthat/test-legacy-disease-guard.R",
+    "before_blob": "b9052f3b4329f4d74fc1631bdb82a5e971a99f03",
+    "after_blob": "77cd0e8711a3b7e8ad559582e28bcd9fc93928f4",
+    "ast_identical": true
+  },
+  {
+    "file": "tests/testthat/test-legacy-fallback.R",
+    "before_blob": "0d5fc21374d368809dd507987cf4596ba7de8429",
+    "after_blob": "3aabf667cf075ddc55b4103aed321ad06fb24ce3",
+    "ast_identical": true
+  },
+  {
+    "file": "tests/testthat/test-pipeline-group-keys.R",
+    "before_blob": "5cdabfcd31a74cbb7ef07cdcc20354de8f3dda35",
+    "after_blob": "74d470e978abf03bc9ce3f57466fe1174a98b151",
+    "ast_identical": true
+  }
+]

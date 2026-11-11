@@ -1,0 +1,77 @@
+"file","context","test","nb","failed","skipped","error","warning","user","system","real","passed"
+"test-alert-rules.R","alert-rules","setCriteria validates inputs and returns the legacy structure",5,0,FALSE,FALSE,0,0.0379999999999999,0.002,0.04,5
+"test-alert-rules.R","alert-rules","setCriteria keeps its legacy delay-list default",2,0,FALSE,FALSE,0,0.004,0.001,0.005,2
+"test-alert-rules.R","alert-rules","alert rules preserve output structure and delayed levels",6,0,FALSE,FALSE,0,0.015,0.001,0.018,6
+"test-api.R","api","new_alert_inputs validates, normalizes, and orders public schemas",14,0,FALSE,FALSE,0,0.042,0.003,0.0449999999999999,14
+"test-api.R","api","run_alert_pipeline is equivalent to the approved pure pipeline",2,0,FALSE,FALSE,0,0.079,0.001,0.081,2
+"test-api.R","api","public computational entry validates canonical keys before joining",4,0,FALSE,FALSE,0,0.0119999999999999,0.001,0.014,4
+"test-api.R","api","database API fetches a complete, explicitly bounded input bundle",9,0,FALSE,FALSE,0,0.114,0.006,0.125,9
+"test-api.R","api","new persistence API writes results and parameters explicitly",5,0,FALSE,FALSE,0,0.123,0.002,0.127,5
+"test-api.R","api","legacy wrappers preserve adapters without warning before 1.3.0",10,0,FALSE,FALSE,0,0.114,0.00299999999999999,0.118,10
+"test-api.R","api","legacy pipeline and history wrappers preserve their public contracts",8,0,FALSE,FALSE,0,0.0640000000000001,0.002,0.0670000000000002,8
+"test-api.R","api","snake_case computational aliases preserve baseline results",3,0,FALSE,FALSE,0,0.00700000000000012,0.002,0.00700000000000012,3
+"test-api.R","api","legacy computational wrappers remain equivalent without early warnings",10,0,FALSE,FALSE,0,0.024,0.002,0.0249999999999999,10
+"test-concurrency.R","concurrency","municipal processes and INLA threads are independently propagated",4,0,FALSE,FALSE,0,0.0150000000000001,0.002,0.016,4
+"test-concurrency.R","concurrency","serial and parallel pipelines preserve epidemiological output",7,0,FALSE,FALSE,0,0.0229999999999999,0.024,0.06,7
+"test-concurrency.R","concurrency","INLA fitting and posterior sampling respect explicit thread budgets",6,0,FALSE,FALSE,0,0.486,0.028,0.518,6
+"test-concurrency.R","concurrency","INLA fitting failures preserve the operational diagnosis",1,0,FALSE,FALSE,0,0.00299999999999989,0,0.004,1
+"test-concurrency.R","concurrency","parallel workers propagate failures instead of returning partial output",2,0,FALSE,FALSE,0,0.004,0.015,0.02,2
+"test-consumer-integration.R","consumer-integration","pinned consumer preserves state, recovery and artifacts on SQLite",29,0,FALSE,FALSE,0,2.492,0.066,2.567,29
+"test-consumer-integration.R","consumer-integration","pinned consumer replays reference and candidate SQL on PostgreSQL",39,0,FALSE,FALSE,0,2.452,0.059,2.763,39
+"test-consumer-integration.R","consumer-integration","SQL export retains numeric precision instead of formatting a character matrix",1,0,FALSE,FALSE,0,0.0270000000000001,0.002,0.0300000000000002,1
+"test-core-pipeline.R","core-pipeline","pure pipeline runs deterministically from in-memory fixtures",10,0,FALSE,FALSE,0,0.0180000000000007,0.003,0.0200000000000005,10
+"test-core-pipeline.R","core-pipeline","pipeline keeps diseases separate within the same municipality",15,0,FALSE,FALSE,0,0.0609999999999999,0.003,0.0640000000000001,15
+"test-core-pipeline.R","core-pipeline","alerttools_result methods expose a stable result contract",12,0,FALSE,FALSE,0,0.0219999999999994,0.003,0.024,12
+"test-core-pipeline.R","core-pipeline","alerttools_result constructor handles empty and invalid inputs",5,0,FALSE,FALSE,0,0.00700000000000056,0.000999999999999945,0.00699999999999967,5
+"test-core-pipeline.R","core-pipeline","incidence is a pure validated calculation",4,0,FALSE,FALSE,0,0.00600000000000023,0.001,0.00699999999999967,4
+"test-core-pipeline.R","core-pipeline","pure pipeline validates schemas, workers and nowcasting inputs",4,0,FALSE,FALSE,0,0.00900000000000034,0,0.00900000000000034,4
+"test-core-pipeline.R","core-pipeline","seed scoping does not mutate caller random state",2,0,FALSE,FALSE,0,0.00199999999999978,0.001,0.00200000000000067,2
+"test-core-pipeline.R","core-pipeline","portable worker controls are validated",5,0,FALSE,FALSE,0,15.387,0.855,16.301,5
+"test-core-pipeline.R","core-pipeline","computational entry points contain no database or file access",1,0,FALSE,FALSE,0,0.00300000000000011,0,0.00400000000000134,1
+"test-data-repository.R","data-repository","repository-backed readers expose stable domain schemas",8,0,FALSE,FALSE,0,0.036999999999999,0.00299999999999989,0.0399999999999991,8
+"test-data-repository.R","data-repository","bound values prevent SQL injection through repository filters",3,0,FALSE,FALSE,0,0.0280000000000022,0.00100000000000011,0.0299999999999976,3
+"test-data-repository.R","data-repository","case-record readers share date and disease normalization",7,0,FALSE,FALSE,0,0.0359999999999978,0.002,0.0390000000000015,7
+"test-data-repository.R","data-repository","climate and tweet repositories filter dates and preserve ordering",6,0,FALSE,FALSE,0,0.0510000000000019,0.002,0.0530000000000008,6
+"test-data-repository.R","data-repository","parameter writes implement explicit conflict policies",4,0,FALSE,FALSE,0,0.0489999999999995,0.00100000000000011,0.0500000000000007,4
+"test-data-repository.R","data-repository","batch write rolls back every row after a conflict",3,0,FALSE,FALSE,0,0.032,0.00100000000000011,0.032,3
+"test-data-repository.R","data-repository","station association updates are batched and transactional",3,0,FALSE,FALSE,0,0.0309999999999988,0.00099999999999989,0.032,3
+"test-data-repository.R","data-repository","alert history writes are batched, idempotent and conflict-aware",6,0,FALSE,FALSE,0,0.0500000000000007,0.002,0.0519999999999996,6
+"test-data-repository.R","data-repository","SQL file export quotes literals instead of interpolating user values",3,0,FALSE,FALSE,0,0.004999999999999,0.00100000000000011,0.00600000000000023,3
+"test-data-repository.R","data-repository","database functions require an explicit connection",2,0,FALSE,FALSE,0,0.0240000000000009,0.00099999999999989,0.0250000000000021,2
+"test-deprecation-policy.R","deprecation-policy","legacy warnings start at 1.3.0 and execute the lifecycle emitter",4,0,FALSE,FALSE,0,0.0160000000000018,0.00100000000000011,0.0169999999999995,4
+"test-documentation-examples.R","documentation-examples","published in-memory example runs in a clean environment",4,0,FALSE,FALSE,0,0.00799999999999912,0.00099999999999989,0.00899999999999679,4
+"test-documentation-examples.R","documentation-examples","published SQLite example runs without credentials or production",4,0,FALSE,FALSE,0,0.0390000000000015,0.00100000000000011,0.0399999999999991,4
+"test-epidemiological-equivalence.R","epidemiological-equivalence","reference integrity is portable across text line endings",2,0,FALSE,FALSE,0,0.00199999999999889,0.00100000000000011,0.00399999999999778,2
+"test-epidemiological-equivalence.R","epidemiological-equivalence","approved dependency and candidate preserve epidemiological outputs",8,0,FALSE,FALSE,0,0.140000000000001,0.00800000000000001,0.149000000000001,8
+"test-epidemiological-equivalence.R","epidemiological-equivalence","comparison fails on numerical, missingness and identity changes",4,0,FALSE,FALSE,0,0.00900000000000034,0,0.00900000000000034,4
+"test-epiweek.R","epiweek","calendar behavior is preserved across epidemiological year boundary",5,0,FALSE,FALSE,0,0.00600000000000023,0.00099999999999989,0.00799999999999912,5
+"test-epiweek.R","epiweek","epidemiological calendar functions preserve types and boundaries",15,0,FALSE,FALSE,0,0.0150000000000006,0.00300000000000011,0.0180000000000007,15
+"test-epiweek.R","epiweek","date conversion results retain their tabular contract",10,0,FALSE,FALSE,0,0.00900000000000034,0.002,0.0100000000000016,10
+"test-epiweek.R","epiweek","algorithmic calendar is equivalent to the legacy SE table",5,0,FALSE,FALSE,0,0.0240000000000009,0.00099999999999989,0.0250000000000021,5
+"test-epiweek.R","epiweek","algorithmic calendar has no fixed annual boundary",5,0,FALSE,FALSE,0,0.328999999999997,0.006,0.336000000000002,5
+"test-epiweek.R","epiweek","epidemiological week validation rejects impossible values",5,0,FALSE,FALSE,0,0.00700000000000145,0.00099999999999989,0.00800000000000267,5
+"test-epiweek.R","epiweek","SE 201815 and its neighbors have consistent bundled boundaries",10,0,FALSE,FALSE,0,0.230999999999998,0.004,0.234999999999999,10
+"test-fetch-cases.R","fetch-cases","getCases has a deterministic SQLite integration contract",13,0,FALSE,FALSE,0,0.0449999999999982,0.00300000000000011,0.0479999999999983,13
+"test-fetch-cases.R","fetch-cases","getCases reproduces its contract on ephemeral PostgreSQL",10,0,FALSE,FALSE,0,0.0470000000000006,0.00499999999999989,0.0779999999999994,10
+"test-fetch-cases.R","fetch-cases","getCases rejects invalid user input before querying",3,0,FALSE,FALSE,0,0.0359999999999978,0.00100000000000011,0.036999999999999,3
+"test-fixture-contracts.R","fixture-contracts","synthetic fixtures preserve tabular schemas and keys",10,0,FALSE,FALSE,0,0.00799999999999912,0.002,0.00999999999999801,10
+"test-inla-consumer.R","inla-consumer","real Bayesian consumer fallback isolates failures and preserves artifacts",1,0,TRUE,FALSE,0,0.00100000000000122,0.00100000000000011,0.00100000000000122,0
+"test-inla-integration.R","inla-integration","real INLA preserves repeated and municipal-parallel results",1,0,TRUE,FALSE,0,0.000999999999997669,0,0.00100000000000122,0
+"test-inla-integration.R","inla-integration","terminated municipal workers cannot be mistaken for complete output",1,0,TRUE,FALSE,0,0.00400000000000134,0.00099999999999989,0.00399999999999778,0
+"test-inla-reference.R","inla-reference","real INLA agrees with pinned calculations at the historical fitting budget",1,0,TRUE,FALSE,0,0.000999999999997669,0,0.000999999999997669,0
+"test-legacy-disease-guard.R","legacy-disease-guard","legacy adapter rejects mixed or inconsistent disease results",3,0,FALSE,FALSE,0,0.00999999999999801,0,0.00999999999999801,3
+"test-legacy-fallback.R","legacy-fallback","municipal fallback preserves distinct parameters without database reads",6,0,FALSE,FALSE,0,0.0440000000000005,0.002,0.0479999999999983,6
+"test-optional-models.R","optional-models","MEM integration is available when its optional dependency is installed",2,0,FALSE,FALSE,0,0.0189999999999984,0.004,0.0330000000000013,2
+"test-optional-models.R","optional-models","INLA integration is available when its optional dependency is installed",2,0,FALSE,FALSE,0,0.00199999999999889,0.00099999999999989,0.00200000000000244,2
+"test-pipe-infodengue-firstday.R","pipe-infodengue-firstday","pipe_infodengue preserves firstday defaults and historical overrides",14,0,FALSE,FALSE,0,0.0429999999999993,0.00299999999999989,0.0459999999999994,14
+"test-pipeline-group-keys.R","pipeline-group-keys","municipality-disease mismatches identify the offending pair",2,0,FALSE,FALSE,0,0.00799999999999912,0.00100000000000011,0.00799999999999912,2
+"test-pipeline-group-order.R","pipeline-group-order","multiple municipality-disease groups equal isolated calculations",2,0,FALSE,FALSE,0,0.0420000000000016,0.002,0.0429999999999993,2
+"test-remove-tweet-historical-alerts.R","remove-tweet-historical-alerts","tabela_historico excludes legacy tweet input",3,0,FALSE,FALSE,0,0.0109999999999992,0.00099999999999989,0.0120000000000005,3
+"test-remove-tweet-historical-alerts.R","remove-tweet-historical-alerts","write_alerta SQL omits tweet for every disease table",12,0,FALSE,FALSE,0,0.0169999999999995,0.002,0.0190000000000019,12
+"test-rt.R","rt","Rt numerical regression baseline is preserved",8,0,FALSE,FALSE,0,0.00799999999999912,0.002,0.0100000000000016,8
+"test-utilities.R","utilities","municipal geocode conversion preserves regular and exceptional cases",6,0,FALSE,FALSE,0,0.00600000000000023,0.00099999999999989,0.0069999999999979,6
+"test-utilities.R","utilities","missing values are filled by the selected deterministic rule",2,0,FALSE,FALSE,0,0.00600000000000023,0.00100000000000011,0.00600000000000023,2
+"test-utilities.R","utilities","temperature extrapolation preserves length and removes tail gaps",3,0,FALSE,FALSE,0,0.0500000000000007,0.002,0.0530000000000008,3
+"test-utilities.R","utilities","database functions validate absent connections and malformed input",9,0,FALSE,FALSE,0,0.0190000000000019,0.00099999999999989,0.0199999999999996,9
+"test-zika-transition.R","zika-transition","modern Zika lookup reports complete, partial and absent coverage",7,0,FALSE,FALSE,0,0.0549999999999997,0.00299999999999989,0.0589999999999975,7
+"test-zika-transition.R","zika-transition","legacy Zika fallback preserves dengue rules and Zika result identity",6,0,FALSE,FALSE,0,0.0769999999999982,0.00200000000000022,0.0800000000000018,6

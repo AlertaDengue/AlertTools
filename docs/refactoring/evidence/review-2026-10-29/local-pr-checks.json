@@ -1,0 +1,48 @@
+[
+  {
+    "pr": 28,
+    "sha": "fe2a2e51ed64aa84e4f5ef9b8e5d26fcde1003f2",
+    "exit_code": 0,
+    "summary": "local-pr-checks/alerttools-review-local-pr28-final.csv"
+  },
+  {
+    "pr": 30,
+    "sha": "ce910aa98fe67223e4b5a4f971476f9840a2c3c4",
+    "exit_code": 0,
+    "summary": "local-pr-checks/alerttools-review-local-pr30-final.csv"
+  },
+  {
+    "pr": 31,
+    "sha": "46963e79c48cd428bb002cd18d16029507753e97",
+    "exit_code": 0,
+    "summary": "local-pr-checks/alerttools-review-local-pr31-final.csv"
+  },
+  {
+    "pr": 32,
+    "sha": "b8d0a64fc6bc2e97f41669ff3e656fc0708d9548",
+    "exit_code": 0,
+    "summary": "local-pr-checks/alerttools-review-local-pr32-final.csv"
+  },
+  {
+    "pr": 33,
+    "sha": "aeb282ffa2a597631756f7cac87aa93da8bd58a9",
+    "exit_code": 0,
+    "summary": "local-pr-checks/alerttools-review-local-pr33-final.csv"
+  },
+  {
+    "pr": 34,
+    "sha": "056c5e49eed254e427d8882642c73daa0d264270",
+    "exit_code": 0,
+    "summary": "local-pr-checks/alerttools-review-local-pr34-final.csv",
+    "inla_exit_code": 0,
+    "inla_evidence": "local-pr34-inla"
+  },
+  {
+    "pr": 36,
+    "sha": "e2ccfd9b3dbaa0474a8853ca55e7802efd40c176",
+    "exit_code": 0,
+    "summary": "local-pr-checks/alerttools-review-local-pr36-final.csv",
+    "inla_exit_code": 0,
+    "inla_evidence": "local-pr36-inla"
+  }
+]

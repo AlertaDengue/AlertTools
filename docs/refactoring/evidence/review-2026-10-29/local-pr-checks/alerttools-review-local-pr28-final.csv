@@ -1,0 +1,13 @@
+"file","context","test","nb","failed","skipped","error","warning","user","system","real","passed"
+"test-alert-rules.R","alert-rules","setCriteria validates inputs and returns the legacy structure",5,0,FALSE,FALSE,0,0.036,0.002,0.0389999999999999,5
+"test-alert-rules.R","alert-rules","setCriteria keeps its legacy delay-list default",2,0,FALSE,FALSE,0,0.004,0.001,0.005,2
+"test-alert-rules.R","alert-rules","alert rules preserve output structure and delayed levels",6,0,FALSE,FALSE,0,0.015,0.001,0.017,6
+"test-api.R","api","new_alert_inputs validates, normalizes, and orders public schemas",9,0,FALSE,FALSE,0,0.0289999999999999,0.00199999999999999,0.031,9
+"test-api.R","api","run_alert_pipeline is equivalent to the approved pure pipeline",2,0,FALSE,FALSE,0,0.056,0.001,0.0579999999999999,2
+"test-api.R","api","database API fetches a complete, explicitly bounded input bundle",9,0,FALSE,FALSE,0,0.123,0.004,0.128,9
+"test-api.R","api","new persistence API writes results and parameters explicitly",5,0,FALSE,FALSE,0,0.121,0.00199999999999999,0.123,5
+"test-api.R","api","legacy wrappers warn and preserve argument and result adapters",11,0,FALSE,FALSE,0,0.162,0.003,0.164,11
+"test-api.R","api","legacy pipeline and history wrappers preserve their public contracts",8,0,FALSE,FALSE,0,0.056,0.002,0.058,8
+"test-api.R","api","snake_case computational aliases preserve baseline results",3,0,FALSE,FALSE,0,0.0069999999999999,0.001,0.00800000000000001,3
+"test-api.R","api","legacy computational wrappers identify replacements and remain equivalent",10,0,FALSE,FALSE,0,0.0509999999999999,0.001,0.052,10
+"test-legacy-fallback.R","legacy-fallback","municipal fallback preserves distinct parameters without database reads",6,0,FALSE,FALSE,0,0.04,0.001,0.042,6

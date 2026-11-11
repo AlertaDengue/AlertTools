@@ -1,0 +1,61 @@
+{
+  "note": "Preparation snapshot before the final evidence-only documentation commit on PR37. Validation-script EOF normalization was checked for identical R ASTs; numerical package sources are unchanged. Resolve the current local branch head and recheck the remote before publication. No branch was pushed.",
+  "consolidated_code_commit": "c587284477eeda5ddcbaa793b97e40bc35d4ab8b",
+  "branches": {
+    "28": {
+      "branch": "codex/review-ready/pr2-legacy-compat",
+      "remote_branch": "codex/pr2-legacy-compat",
+      "expected_remote_head_at_intake": "7213aa10fc9d8c2c2830406b183f4e4c99c55d10",
+      "validation_snapshot_sha": "3a7e7c8735bd3fb19560bfa79c9f2b216efac108"
+    },
+    "30": {
+      "branch": "codex/review-ready/pr4-deprecation-policy",
+      "remote_branch": "codex/pr4-deprecation-policy",
+      "expected_remote_head_at_intake": "0fd9c0da8f3d830d115f7034102f74038f63aefb",
+      "validation_snapshot_sha": "842005f170d008566b33e5729ee94c5fffcf8123"
+    },
+    "31": {
+      "branch": "codex/review-ready/pr5-canonical-inputs",
+      "remote_branch": "codex/pr5-canonical-inputs",
+      "expected_remote_head_at_intake": "c6fe5ccd7b7cb87aa8c114e97e57984655eb9bff",
+      "validation_snapshot_sha": "d4012a317d01464189c7c22a6c0cd37c5c717415"
+    },
+    "32": {
+      "branch": "codex/review-ready/pr6-municipality-disease",
+      "remote_branch": "codex/pr6-municipality-disease",
+      "expected_remote_head_at_intake": "3d62c689633af001ddb97884213b081f862a4768",
+      "validation_snapshot_sha": "b453e84bae944e3fe84269e29ae9abbd5e18c5f8"
+    },
+    "33": {
+      "branch": "codex/review-ready/pr7-zika-transition",
+      "remote_branch": "codex/pr7-zika-transition",
+      "expected_remote_head_at_intake": "88efaf004725d1bd031117f59edb5595f629d6a5",
+      "validation_snapshot_sha": "a8278ed1fc84ab8003b9953389f107996929cfaa"
+    },
+    "34": {
+      "branch": "codex/review-ready/pr8-concurrency-controls",
+      "remote_branch": "codex/pr8-concurrency-controls",
+      "expected_remote_head_at_intake": "e7de3e71b7e95e2c79cf6391565a4b760536ea63",
+      "validation_snapshot_sha": "ba72b474fbee3eecc9e45dfb9e08e361e95eb4f5"
+    },
+    "35": {
+      "branch": "codex/review-ready/pr9-minimum-history-contract",
+      "remote_branch": "codex/pr9-minimum-history-contract",
+      "expected_remote_head_at_intake": "2f5ad3e327d36aaea357318875051e2449a469c1",
+      "validation_snapshot_sha": "c6696b3a20e0e19aee16dbf529f49d770a0082c0"
+    },
+    "36": {
+      "branch": "codex/review-ready/pr10-epidemiological-equivalence",
+      "remote_branch": "codex/pr10-epidemiological-equivalence",
+      "expected_remote_head_at_intake": "1534d94ee7ff0d80fb8562eb46b6b1754f927f22",
+      "validation_snapshot_sha": "cdec43b1c11b3cb993cfcaa6440ced79f1077e6c"
+    },
+    "37": {
+      "branch": "codex/review-ready/pr11-consumer-integration",
+      "remote_branch": "codex/pr11-consumer-integration",
+      "expected_remote_head_at_intake": "15e091501e2ebbf7ea463c51c44a87964b2de724",
+      "validation_snapshot_sha": "d823bb294de7921ea69fdd5ea0495caeaae06005"
+    }
+  },
+  "remote_changes_during_implementation": {}
+}
