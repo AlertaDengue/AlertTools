@@ -2,6 +2,10 @@
 
 ## Review follow-up
 
+- Compare candidate results against the consumer's pinned e460b3b8 calculation
+  and history functions with immutable reference snapshots. Preserve the
+  historical ID format for legacy alert objects; modern result IDs are unchanged.
+
 - Clarify that minimum_history and the legacy dy argument are reserved and
   ignored in 1.2.0. No epidemiological history rule is silently enabled.
 
